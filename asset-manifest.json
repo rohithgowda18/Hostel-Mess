@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/Hostel-Mess/static/css/main.022026c8.css",
+    "main.js": "/Hostel-Mess/static/js/main.9327ecc4.js",
+    "index.html": "/Hostel-Mess/index.html",
+    "main.022026c8.css.map": "/Hostel-Mess/static/css/main.022026c8.css.map",
+    "main.9327ecc4.js.map": "/Hostel-Mess/static/js/main.9327ecc4.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.022026c8.css",
+    "static/js/main.9327ecc4.js"
+  ]
+}
