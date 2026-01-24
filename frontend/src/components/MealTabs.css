@@ -1,0 +1,63 @@
+.meal-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.meal-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 20px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.meal-tab:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+}
+
+.meal-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.meal-emoji {
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+
+.meal-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .meal-tabs {
+    gap: 6px;
+  }
+
+  .meal-tab {
+    padding: 10px 14px;
+    min-width: 75px;
+  }
+
+  .meal-emoji {
+    font-size: 1.3rem;
+  }
+
+  .meal-name {
+    font-size: 0.75rem;
+  }
+}

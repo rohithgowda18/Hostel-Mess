@@ -1,0 +1,21 @@
+package com.hostel.mess.dto;
+
+import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class MealResponse {
+
+    private String mealType;
+
+    private String date;
+
+    private List<String> items;
+
+    private String postedAt;
+}
