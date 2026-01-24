@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://hostel-mess-tht8.onrender.com/api/meals';
+// Use environment variable for API base, fallback to localhost for development
+const API_BASE_URL = process.env.REACT_APP_API_BASE 
+  ? `${process.env.REACT_APP_API_BASE}/meals`
+  : 'http://localhost:8080/api/meals';
 
 const api = {
   /**
