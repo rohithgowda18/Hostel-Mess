@@ -28,4 +28,9 @@ public class MealUpdate {
     private List<String> items;
 
     private Instant postedAt;
+
+    // Crowd moderation fields
+    private int confirmations = 1; // Number of people who confirmed this menu
+
+    private String verificationStatus = "UNVERIFIED"; // UNVERIFIED, VERIFIED, UNCERTAIN
 }

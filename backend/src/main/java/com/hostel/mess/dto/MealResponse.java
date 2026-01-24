@@ -18,4 +18,14 @@ public class MealResponse {
     private List<String> items;
 
     private String postedAt;
+
+    // Crowd moderation fields
+    private int confirmations;
+
+    private String verificationStatus; // UNVERIFIED, VERIFIED, UNCERTAIN
+
+    // Time window info
+    private boolean isUpdateWindowOpen;
+
+    private String updateWindowMessage;
 }
