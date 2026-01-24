@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api/meals';
+const API_BASE_URL = 'https://hostel-mess-tht8.onrender.com/api/meals';
 
 const api = {
   /**
