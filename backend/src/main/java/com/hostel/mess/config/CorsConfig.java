@@ -17,7 +17,8 @@ public class CorsConfig {
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
-                "https://rohithgowda18.github.io"
+                "https://rohithgowda18.github.io",
+                "https://hostel-mess-one.vercel.app"
         ));
         corsConfiguration.setAllowedHeaders(Arrays.asList(
                 "Origin", "Access-Control-Allow-Origin", "Content-Type",
