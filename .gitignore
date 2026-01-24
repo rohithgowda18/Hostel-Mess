@@ -2,6 +2,10 @@
 # Backend - Spring Boot / Maven
 # =========================
 
+# Environment files (secrets)
+.env
+backend/.env
+
 # Compiled class files
 backend/target/
 *.class
