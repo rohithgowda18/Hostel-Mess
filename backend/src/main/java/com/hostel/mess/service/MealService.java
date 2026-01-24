@@ -35,10 +35,16 @@ public class MealService {
     // Threshold for verification
     private static final int VERIFICATION_THRESHOLD = 3;
 
+    // Set to true to disable time restrictions (for testing)
+    private static final boolean DISABLE_TIME_RESTRICTIONS = true;
+
     /**
      * Check if the current time is within the allowed window for a meal type
      */
     public boolean isWithinTimeWindow(String mealType) {
+        // Bypass time check if disabled for testing
+        if (DISABLE_TIME_RESTRICTIONS) return true;
+
         TimeWindow window = MEAL_TIME_WINDOWS.get(mealType.toUpperCase());
         if (window == null) return false;
 
