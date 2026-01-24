@@ -1,25 +1,31 @@
-# Use official Java 17 image
-FROM eclipse-temurin:17-jdk-jammy
+# Use official Maven image with Java 17 for building
+FROM maven:3.9-eclipse-temurin-17 AS build
 
 # Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml
-COPY mvnw .
-COPY .mvn .mvn
+# Copy pom.xml first (for dependency caching)
 COPY pom.xml .
 
 # Download dependencies (cached)
-RUN ./mvnw dependency:go-offline
+RUN mvn dependency:go-offline -B
 
 # Copy source code
 COPY src src
 
 # Build the application
-RUN ./mvnw package -DskipTests
+RUN mvn package -DskipTests -B
+
+# Use lightweight JRE for runtime
+FROM eclipse-temurin:17-jre-jammy
+
+WORKDIR /app
+
+# Copy the built jar from build stage
+COPY --from=build /app/target/*.jar app.jar
 
 # Expose port
 EXPOSE 8080
 
 # Run the application
-CMD ["java", "-jar", "target/mess-breakfast-1.0.0.jar"]
+CMD ["java", "-jar", "app.jar"]
