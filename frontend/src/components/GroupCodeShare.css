@@ -1,0 +1,127 @@
+.group-code-share {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.code-display {
+  margin-bottom: 20px;
+}
+
+.code-label {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.9;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.code-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 15px;
+  backdrop-filter: blur(10px);
+}
+
+.code-text {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
+  flex: 1;
+  word-break: break-all;
+}
+
+.copy-btn {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+.copy-btn:active {
+  transform: translateY(0);
+}
+
+.share-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.share-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  color: #667eea;
+}
+
+.whatsapp-btn {
+  background: #25D366;
+  color: white;
+}
+
+.whatsapp-btn:hover {
+  background: #20BA5C;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.whatsapp-btn:active {
+  transform: translateY(0);
+}
+
+.share-hint {
+  font-size: 13px;
+  opacity: 0.85;
+  margin: 0;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .group-code-share {
+    padding: 16px;
+    margin: 16px 0;
+  }
+
+  .code-text {
+    font-size: 24px;
+  }
+
+  .code-box {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .copy-btn {
+    width: 100%;
+  }
+
+  .share-btn {
+    width: 100%;
+  }
+}

@@ -25,7 +25,7 @@ public class MealResponse {
     private String verificationStatus; // UNVERIFIED, VERIFIED, UNCERTAIN
 
     // Time window info
-    private boolean isUpdateWindowOpen;
+    private boolean updateWindowOpen;
 
     private String updateWindowMessage;
 }

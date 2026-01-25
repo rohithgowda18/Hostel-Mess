@@ -1,0 +1,211 @@
+package com.hostel.mess.controller;
+
+import com.hostel.mess.dto.ComplaintRequest;
+import com.hostel.mess.dto.ComplaintResponse;
+import com.hostel.mess.service.ComplaintService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/complaints")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "https://rohithgowda18.github.io", "https://hostel-mess-one.vercel.app"})
+public class ComplaintController {
+    
+    @Autowired
+    private ComplaintService complaintService;
+    
+    /**
+     * Raise a new complaint against a food item
+     * POST /api/complaints
+     */
+    @PostMapping
+    public ResponseEntity<?> raiseComplaint(@RequestBody ComplaintRequest request) {
+        try {
+            // Validation
+            if (request.getMealType() == null || request.getMealType().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(createErrorResponse("Meal type is required"));
+            }
+            
+            if (request.getFoodItem() == null || request.getFoodItem().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(createErrorResponse("Food item is required"));
+            }
+            
+            ComplaintResponse response = complaintService.raiseComplaint(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("Error raising complaint: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Get all complaints for a specific meal type today
+     * GET /api/complaints/today/{mealType}
+     */
+    @GetMapping("/today/{mealType}")
+    public ResponseEntity<?> getComplaintsToday(@PathVariable String mealType) {
+        try {
+            List<ComplaintResponse> complaints = complaintService.getComplaintsByMealToday(mealType);
+            return ResponseEntity.ok(complaints);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("Error fetching complaints: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Vote on a complaint (AGREE or DISAGREE)
+     * POST /api/complaints/vote
+     * Body: { "complaintId": "abc123", "vote": "AGREE", "userId": "user123" }
+     */
+    @PostMapping("/vote")
+    public ResponseEntity<?> voteOnComplaint(@RequestBody Map<String, String> payload) {
+        try {
+            String complaintId = payload.get("complaintId");
+            String vote = payload.get("vote");
+            String userId = payload.get("userId");
+            
+            // Validation
+            if (complaintId == null || complaintId.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(createErrorResponse("Complaint ID is required"));
+            }
+            
+            if (vote == null || (!vote.equalsIgnoreCase("AGREE") && !vote.equalsIgnoreCase("DISAGREE"))) {
+                return ResponseEntity.badRequest()
+                    .body(createErrorResponse("Vote must be AGREE or DISAGREE"));
+            }
+            
+            if (userId == null || userId.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(createErrorResponse("User ID is required"));
+            }
+            
+            ComplaintResponse response = complaintService.voteOnComplaint(complaintId, vote, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(createErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("Error voting on complaint: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Get all complaints (admin only)
+     * GET /api/complaints/admin/all
+     */
+    @GetMapping("/admin/all")
+    public ResponseEntity<?> getAllComplaints(@RequestHeader(value = "Authorization", required = false) String token) {
+        try {
+            List<ComplaintResponse> complaints = complaintService.getAllComplaints();
+            return ResponseEntity.ok(complaints);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("Error fetching complaints: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Get high-priority complaints (admin dashboard)
+     * GET /api/complaints/admin/high-priority
+     */
+    @GetMapping("/admin/high-priority")
+    public ResponseEntity<?> getHighPriorityComplaints() {
+        try {
+            List<ComplaintResponse> complaints = complaintService.getHighPriorityComplaints();
+            return ResponseEntity.ok(complaints);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("Error: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Get complaints by status (admin filtering)
+     * GET /api/complaints/admin/status/{status}
+     */
+    @GetMapping("/admin/status/{status}")
+    public ResponseEntity<?> getComplaintsByStatus(@PathVariable String status) {
+        try {
+            List<ComplaintResponse> complaints = complaintService.getComplaintsByStatus(status);
+            return ResponseEntity.ok(complaints);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("Error: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Get complaint statistics (admin dashboard)
+     * GET /api/complaints/admin/stats
+     */
+    @GetMapping("/admin/stats")
+    public ResponseEntity<?> getStats() {
+        try {
+            Map<String, Object> stats = complaintService.getComplaintStats();
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("Error: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Update complaint status (admin only)
+     * PUT /api/complaints/admin/{complaintId}/status
+     */
+    @PutMapping("/admin/{complaintId}/status")
+    public ResponseEntity<?> updateComplaintStatus(
+        @PathVariable String complaintId,
+        @RequestBody Map<String, String> payload) {
+        try {
+            String newStatus = payload.get("status");
+            if (newStatus == null || newStatus.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(createErrorResponse("Status is required"));
+            }
+            
+            ComplaintResponse response = complaintService.updateComplaintStatusAdmin(complaintId, newStatus);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("Error: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Delete a complaint (admin only)
+     * DELETE /api/complaints/admin/{complaintId}
+     */
+    @DeleteMapping("/admin/{complaintId}")
+    public ResponseEntity<?> deleteComplaint(@PathVariable String complaintId) {
+        try {
+            complaintService.deleteComplaint(complaintId);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Complaint deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("Error: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Helper method to create error response
+     */
+    private Map<String, String> createErrorResponse(String message) {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", message);
+        return response;
+    }
+}

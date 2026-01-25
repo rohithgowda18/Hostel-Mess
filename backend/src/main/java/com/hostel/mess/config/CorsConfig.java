@@ -17,6 +17,7 @@ public class CorsConfig {
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
+                "http://localhost:3001",
                 "https://rohithgowda18.github.io",
                 "https://hostel-mess-one.vercel.app"
         ));

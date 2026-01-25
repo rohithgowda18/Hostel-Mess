@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/breakfast")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "https://rohithgowda18.github.io", "https://hostel-mess-one.vercel.app"})
 public class BreakfastController {
 
     @Autowired

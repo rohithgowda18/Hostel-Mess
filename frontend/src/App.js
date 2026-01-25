@@ -1,12 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import api from './services/api';
 import MealTabs from './components/MealTabs';
 import FoodGrid from './components/FoodGrid';
 import TodayMenuDisplay from './components/TodayMenuDisplay';
+import MessVoice from './components/MessVoice';
+import GroupDashboard from './components/GroupDashboard';
+import GroupChatPage from './components/GroupChatPage';
+import UniversalChatPage from './components/UniversalChatPage';
 import { getMealDisplayName } from './data/foodData';
 import './App.css';
 
-function App() {
+/**
+ * Main dashboard page component
+ */
+function Dashboard() {
+  // State for navigation between pages
+  const [currentPage, setCurrentPage] = useState('menu'); // 'menu', 'complaints', 'groups'
+
   // State for active meal tab
   const [activeMeal, setActiveMeal] = useState('BREAKFAST');
 
@@ -24,6 +35,7 @@ function App() {
     setLoading(true);
     try {
       const data = await api.getTodayMeal(activeMeal);
+      console.log('Fetched menu data:', data);
       setTodayMenu(data);
     } catch (error) {
       console.error(`Failed to fetch ${activeMeal}:`, error);
@@ -62,7 +74,7 @@ function App() {
   // Handle post menu
   const handlePostMenu = async () => {
     if (selectedItems.length === 0) {
-      setMessage({ type: 'error', text: 'Please select at least one food item.' });
+      setMessage({ type: 'error', text: 'Please select at least one item' });
       return;
     }
 
@@ -70,20 +82,22 @@ function App() {
     setMessage({ type: '', text: '' });
 
     try {
-      // Get today's date in YYYY-MM-DD format
       const today = new Date().toISOString().split('T')[0];
+      const response = await api.updateMeal(activeMeal, today, selectedItems);
 
-      const result = await api.updateMeal(activeMeal, today, selectedItems);
-
-      // Update the display with new data
-      setTodayMenu(result);
-
-      // Clear selection and show success
-      setSelectedItems([]);
-      setMessage({ type: 'success', text: `${getMealDisplayName(activeMeal)} menu posted successfully! 🎉` });
+      if (response && response.mealType) {
+        setMessage({
+          type: 'success',
+          text: `✅ ${getMealDisplayName(activeMeal)} updated successfully!`,
+        });
+        setSelectedItems([]);
+        // Refresh menu
+        await fetchTodayMenu();
+      } else {
+        setMessage({ type: 'error', text: 'Failed to update menu. Please try again.' });
+      }
     } catch (error) {
-      console.error('Failed to post menu:', error);
-      setMessage({ type: 'error', text: 'Failed to post menu. Please try again.' });
+      setMessage({ type: 'error', text: error.message || 'Failed to update menu. Please try again.' });
     } finally {
       setPosting(false);
     }
@@ -93,52 +107,154 @@ function App() {
     <div className="app-container">
       {/* Header */}
       <header className="header">
-        <h1>🍽️ Hostel Mess Live Menu</h1>
-        <p>View and update today's food menu</p>
+        <div className="header-content">
+          <div>
+            <h1>🍽️ Hostel Mess Menu</h1>
+          </div>
+        </div>
       </header>
 
-      {/* Meal Tabs */}
-      <MealTabs activeMeal={activeMeal} onMealChange={handleMealChange} />
+      {/* Navigation Tabs */}
+      <nav className="nav-tabs">
+        <button
+          className={`nav-tab ${currentPage === 'menu' ? 'active' : ''}`}
+          onClick={() => setCurrentPage('menu')}
+        >
+          📋 Menu
+        </button>
+        <button
+          className={`nav-tab ${currentPage === 'groups' ? 'active' : ''}`}
+          onClick={() => setCurrentPage('groups')}
+        >
+          👥 Groups
+        </button>
+        <button
+          className={`nav-tab ${currentPage === 'complaints' ? 'active' : ''}`}
+          onClick={() => setCurrentPage('complaints')}
+        >
+          💬 Feedback
+        </button>
+        <a href="/community" className="nav-tab">
+          🌍 Community Chat
+        </a>
+      </nav>
 
-      {/* Today's Menu Display */}
-      <TodayMenuDisplay
-        mealType={activeMeal}
-        menuData={todayMenu}
-        loading={loading}
-      />
+      {/* Menu Page */}
+      {currentPage === 'menu' && (
+        <>
+          <MealTabs activeMeal={activeMeal} onMealChange={handleMealChange} />
 
-      {/* Post Menu Section */}
-      <div className="post-menu-card">
-        <h2>📝 Update {getMealDisplayName(activeMeal)} Menu</h2>
-        <p className="selection-hint">Click on food items to select them</p>
+          <TodayMenuDisplay
+            mealType={activeMeal}
+            menuData={todayMenu}
+            loading={loading}
+          />
 
-        <FoodGrid
-          mealType={activeMeal}
-          selectedItems={selectedItems}
-          onItemToggle={handleItemToggle}
+          {!loading && (
+            <>
+              <FoodGrid
+                mealType={activeMeal}
+                selectedItems={selectedItems}
+                onItemToggle={handleItemToggle}
+              />
+
+              {selectedItems.length > 0 && (
+                <div className="selected-summary">
+                  <strong>Selected ({selectedItems.length}):</strong> {selectedItems.join(', ')}
+                </div>
+              )}
+
+              <button
+                className="btn btn-primary"
+                onClick={handlePostMenu}
+                disabled={posting || selectedItems.length === 0}
+              >
+                {posting ? 'Posting...' : 'Post Menu'}
+              </button>
+
+              {message.text && (
+                <div className={`message ${message.type}`}>
+                  {message.text}
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+
+      {/* Groups Page */}
+      {currentPage === 'groups' && (
+        <GroupDashboard userId="default-user" />
+      )}
+
+      {/* Feedback Page */}
+      {currentPage === 'complaints' && (
+        <MessVoice />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Main App component with routing
+ */
+function App() {
+  return (
+    <Router>
+      <Routes>
+        {/* Main Dashboard - Default Route */}
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* Community Chat Route */}
+        <Route
+          path="/community"
+          element={
+            <div className="app-container">
+              <header className="header">
+                <div className="header-content">
+                  <div>
+                    <h1>🍽️ Hostel Mess Menu</h1>
+                  </div>
+                </div>
+              </header>
+              <nav className="nav-tabs">
+                <a href="/dashboard" className="nav-tab">📋 Menu</a>
+                <a href="/dashboard" className="nav-tab">👥 Groups</a>
+                <span className="nav-tab active">🌍 Community</span>
+              </nav>
+              <div style={{ padding: '16px', flex: 1, overflow: 'auto' }}>
+                <UniversalChatPage currentUser={{ id: 'default-user', name: 'User' }} />
+              </div>
+            </div>
+          }
         />
 
-        {selectedItems.length > 0 && (
-          <div className="selected-summary">
-            <strong>Selected ({selectedItems.length}):</strong> {selectedItems.join(', ')}
-          </div>
-        )}
-
-        <button
-          className="btn btn-primary"
-          onClick={handlePostMenu}
-          disabled={posting || selectedItems.length === 0}
-        >
-          {posting ? 'Posting...' : 'Post Menu'}
-        </button>
-
-        {message.text && (
-          <div className={`message ${message.type}`}>
-            {message.text}
-          </div>
-        )}
-      </div>
-    </div>
+        {/* Group Chat Route */}
+        <Route
+          path="/groups/:groupId/chat"
+          element={
+            <div className="app-container">
+              <header className="header">
+                <div className="header-content">
+                  <div>
+                    <h1>🍽️ Hostel Mess Menu</h1>
+                  </div>
+                </div>
+              </header>
+              <nav className="nav-tabs">
+                <a href="/dashboard" className="nav-tab">📋 Menu</a>
+                <a href="/dashboard" className="nav-tab">👥 Groups</a>
+                <span className="nav-tab active">💬 Group Chat</span>
+              </nav>
+              <div style={{ padding: '16px', flex: 1, overflow: 'auto' }}>
+                <GroupChatPage currentUser={{ id: 'default-user', name: 'User' }} />
+              </div>
+            </div>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 

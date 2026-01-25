@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +38,14 @@ public class MealService {
 
     // Set to true to disable time restrictions (for testing)
     private static final boolean DISABLE_TIME_RESTRICTIONS = true;
+
+    // Default sample meals for when nothing is in database
+    private static final Map<String, java.util.List<String>> DEFAULT_MEALS = Map.of(
+            "BREAKFAST", Arrays.asList("Idli", "Dosa", "Poori", "Upma"),
+            "LUNCH", Arrays.asList("Rice", "Sambar", "Rasam", "Chapati", "Vegetable Curry"),
+            "SNACKS", Arrays.asList("Tea", "Coffee", "Samosa", "Biscuits"),
+            "DINNER", Arrays.asList("Chapati", "Rice", "Dal", "Curry")
+    );
 
     /**
      * Check if the current time is within the allowed window for a meal type
@@ -80,9 +89,12 @@ public class MealService {
         response.setUpdateWindowMessage(getTimeWindowMessage(mealType));
 
         if (mealOpt.isEmpty()) {
-            response.setItems(null);
+            // Return default sample meals if nothing in database
+            java.util.List<String> defaultItems = DEFAULT_MEALS.getOrDefault(mealType.toUpperCase(), Arrays.asList());
+            System.out.println("DEBUG: Using default meals for " + mealType.toUpperCase() + ": " + defaultItems);
+            response.setItems(defaultItems);
             response.setConfirmations(0);
-            response.setVerificationStatus("UNVERIFIED");
+            response.setVerificationStatus("DEFAULT");
             return response;
         }
 
@@ -93,6 +105,22 @@ public class MealService {
         response.setVerificationStatus(meal.getVerificationStatus());
 
         return response;
+    }
+
+    /**
+     * Delete today's meal for a specific meal type (Admin only)
+     */
+    public boolean deleteTodayMeal(String mealType) {
+        String today = LocalDate.now().format(DATE_FORMATTER);
+        Optional<MealUpdate> mealOpt = mealRepository.findByMealTypeAndDate(
+                mealType.toUpperCase(), today);
+        
+        if (mealOpt.isEmpty()) {
+            return false; // Meal not found
+        }
+        
+        mealRepository.deleteById(mealOpt.get().getId());
+        return true; // Successfully deleted
     }
 
     /**
