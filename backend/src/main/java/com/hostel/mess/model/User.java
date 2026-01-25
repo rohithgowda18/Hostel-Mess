@@ -14,19 +14,23 @@ public class User {
     @Id
     private String id;
     
-    private String name;
-    
     @Indexed(unique = true)
     private String email;
-    
+
     private String password; // BCrypt hashed
-    
+
     private String hostel;
-    
+
+    private String roomNumber;
+
+    private String year;
+
+    private String branch;
+
     private String role = "STUDENT"; // Default role
-    
+
     private Instant createdAt;
-    
+
     private Instant updatedAt;
     
     // Constructors
@@ -35,16 +39,43 @@ public class User {
         this.updatedAt = Instant.now();
         this.role = "STUDENT";
     }
-    
-    public User(String name, String email, String password, String hostel) {
-        this.name = name;
+
+    public User(String email, String password, String hostel, String roomNumber, String year, String branch) {
         this.email = email;
         this.password = password;
         this.hostel = hostel;
+        this.roomNumber = roomNumber;
+        this.year = year;
+        this.branch = branch;
         this.role = "STUDENT";
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
     }
+    // Username removed
+
+        public String getRoomNumber() {
+            return roomNumber;
+        }
+
+        public void setRoomNumber(String roomNumber) {
+            this.roomNumber = roomNumber;
+        }
+
+        public String getYear() {
+            return year;
+        }
+
+        public void setYear(String year) {
+            this.year = year;
+        }
+
+        public String getBranch() {
+            return branch;
+        }
+
+        public void setBranch(String branch) {
+            this.branch = branch;
+        }
     
     // Getters and Setters
     public String getId() {
@@ -55,13 +86,7 @@ public class User {
         this.id = id;
     }
     
-    public String getName() {
-        return name;
-    }
-    
-    public void setName(String name) {
-        this.name = name;
-    }
+    // Name removed
     
     public String getEmail() {
         return email;

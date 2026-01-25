@@ -99,8 +99,12 @@ const MessVoice = () => {
         let anyError = false;
         results.forEach(result => {
           if (result.error) anyError = true;
-          // Map id to _id for all complaints for React key and state update
-          complaintsByMeal[result.mealType] = (result.data || []).map(c => ({ ...c, _id: c._id || c.id }));
+          // Map id and _id for all complaints for React key and state update
+          complaintsByMeal[result.mealType] = (result.data || []).map(c => ({
+            ...c,
+            id: c.id || c._id,
+            _id: c._id || c.id
+          }));
         });
         setComplaints(complaintsByMeal);
         if (anyError) setError('Feedback service unavailable. Try again later.');
@@ -146,31 +150,9 @@ const MessVoice = () => {
           backendMsg = err.response.data;
         }
         console.error('Vote error:', err.response);
-      } else {
-        console.error('Vote error:', err);
       }
       setError(backendMsg);
     }
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedFood(null);
-    setSelectedMeal(null);
-  };
-
-  if (loading && Object.keys(complaints).length === 0) {
-    return (
-      <div className="mess-voice-container">
-        <div className="mess-voice-header">
-          <h1>🗣 Mess Voice</h1>
-          <p>Collective student voice for food quality</p>
-        </div>
-        <div className="loading-state">
-          <p>Loading complaints...</p>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -193,14 +175,12 @@ const MessVoice = () => {
         {MEAL_TYPES.map(mealType => {
           const mealComplaints = complaints[mealType] || [];
           const foodItemsList = FOOD_OPTIONS[mealType] || [];
-          const availableFoods = foodItemsList.map(item => item.name); // Extract just the names
-          
+          const availableFoods = foodItemsList.map(item => item.name);
+
           return (
             <section key={mealType} className="meal-section">
               <div className="meal-header">
-                <h2>
-                  {MEAL_EMOJIS[mealType]} {MEAL_DISPLAY_NAMES[mealType]}
-                </h2>
+                <span className="meal-title">{mealType}</span>
                 <span className="complaint-count">
                   {mealComplaints.length} complaint{mealComplaints.length !== 1 ? 's' : ''}
                 </span>
@@ -208,7 +188,7 @@ const MessVoice = () => {
 
               {mealComplaints.length === 0 && availableFoods.length === 0 ? (
                 <div className="empty-state">
-                  <p>✨ No foods available for {MEAL_DISPLAY_NAMES[mealType]}</p>
+                  <p>✨ No foods available for {mealType}</p>
                 </div>
               ) : (
                 <div className="meal-content">
@@ -220,9 +200,7 @@ const MessVoice = () => {
                           key={complaint._id}
                           complaint={complaint}
                           onVote={(complaintId, voteType) => handleVote(complaintId, voteType)}
-                          onRaiseComplaint={(foodItem) =>
-                            handleRaiseComplaint(foodItem, mealType)
-                          }
+                          onRaiseComplaint={(foodItem) => handleRaiseComplaint(foodItem, mealType)}
                         />
                       ))}
                     </div>
@@ -276,13 +254,13 @@ const MessVoice = () => {
         <ComplaintsModal
           foodItem={selectedFood}
           mealType={selectedMeal}
-          onClose={handleCloseModal}
+          onClose={() => setShowModal(false)}
           onSubmit={handleSubmitComplaint}
           loading={submitLoading}
         />
       )}
     </div>
   );
-};
+}
 
 export default MessVoice;

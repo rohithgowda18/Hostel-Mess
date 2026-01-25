@@ -26,7 +26,7 @@ function UniversalChatPage({ currentUser }) {
   const fetchMessages = useCallback(async () => {
     try {
       const msgs = await api.getMessages('UNIVERSAL', 'GLOBAL');
-      setMessages(msgs);
+      setMessages(msgs.slice().reverse()); // Reverse so newest at bottom
       setMessageCount(msgs.length);
       setError('');
     } catch (err) {

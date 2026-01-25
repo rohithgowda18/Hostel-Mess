@@ -4,6 +4,7 @@ import com.hostel.mess.dto.ChatRequest;
 import com.hostel.mess.dto.ChatResponse;
 import com.hostel.mess.model.ChatMessage;
 import com.hostel.mess.service.ChatService;
+import com.hostel.mess.security.JwtTokenProvider;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,7 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import jakarta.servlet.http.HttpServletRequest;
+// ...existing code...
 
 /**
  * REST Controller for Chat API endpoints
@@ -25,14 +27,27 @@ public class ChatController {
     
     @Autowired
     private ChatService chatService;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
     
+
     /**
-     * Get authenticated user ID - Disabled (no auth required)
-     * 
-     * @return User ID
+     * Extract userId from JWT token in Authorization header
      */
-    private String getAuthenticatedUserId() {
-        return "default-user";
+    private String extractUserIdFromRequest(jakarta.servlet.http.HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        System.out.println("[DEBUG] Authorization header: " + header);
+        if (header != null && header.startsWith("Bearer ")) {
+            String token = header.substring(7);
+            boolean valid = jwtTokenProvider.validateToken(token);
+            System.out.println("[DEBUG] JWT token: " + token);
+            System.out.println("[DEBUG] JWT valid: " + valid);
+            if (valid) {
+                return jwtTokenProvider.getUserIdFromToken(token);
+            }
+        }
+        return null;
     }
     
     /**
@@ -44,14 +59,14 @@ public class ChatController {
      * @return ChatResponse with created message details
      */
     @PostMapping("/send")
-    public ResponseEntity<?> sendMessage(@Valid @RequestBody ChatRequest request) {
+    public ResponseEntity<?> sendMessage(@Valid @RequestBody ChatRequest request, jakarta.servlet.http.HttpServletRequest httpRequest) {
         try {
-            String userId = getAuthenticatedUserId();
+            String userId = extractUserIdFromRequest(httpRequest);
             if (userId == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "User not authenticated"));
             }
-            
+
             // Validate request fields
             if (request.getChatType() == null || request.getChatType().trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -65,7 +80,7 @@ public class ChatController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "message is required"));
             }
-            
+
             // Send message
             ChatMessage chatMessage = chatService.sendMessage(
                 request.getChatType(),
@@ -73,15 +88,16 @@ public class ChatController {
                 userId,
                 request.getMessage()
             );
-            
+
             return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ChatResponse(chatMessage));
-            
+
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace();
+            // TODO: Replace with proper logging
+            System.err.println("Error: " + e.getMessage());
             System.err.println("Chat error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Failed to send message: " + e.getMessage()));
@@ -102,35 +118,40 @@ public class ChatController {
     @GetMapping("/messages")
     public ResponseEntity<?> getMessages(
         @RequestParam(required = true) String chatType,
-        @RequestParam(required = true) String chatId
+        @RequestParam(required = true) String chatId,
+        @RequestParam(required = false, defaultValue = "0") int page,
+        @RequestParam(required = false, defaultValue = "50") int size,
+        jakarta.servlet.http.HttpServletRequest httpRequest
     ) {
         try {
-            String userId = getAuthenticatedUserId();
+            String userId = extractUserIdFromRequest(httpRequest);
+            System.out.println("[DEBUG] /api/chat/messages called");
+            System.out.println("[DEBUG] userId: " + userId);
+            System.out.println("[DEBUG] chatType: " + chatType + ", chatId: " + chatId);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "User not authenticated"));
+                System.out.println("[DEBUG] No valid JWT, request will likely be rejected.");
             }
-            
-            // Validate access for group chats
-            if ("GROUP".equals(chatType)) {
-                if (!chatService.isUserMemberOfGroup(userId, chatId)) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "You don't have access to this group chat"));
-                }
-            }
-            
-            // Get messages (expired messages are filtered automatically)
-            List<ChatMessage> messages = chatService.getMessages(chatType, chatId);
-            List<ChatResponse> responses = messages.stream()
+            // Get paginated messages (expired messages are filtered automatically)
+            var pageResult = chatService.getMessagesPaged(chatType, chatId, page, size);
+            // Convert to DTOs
+            List<ChatResponse> responses = pageResult.getContent().stream()
                 .map(ChatResponse::new)
-                .collect(Collectors.toList());
-            
-            return ResponseEntity.ok(responses);
-            
+                .toList();
+
+            // Return page info and messages
+            return ResponseEntity.ok(Map.of(
+                "messages", responses,
+                "page", pageResult.getNumber(),
+                "size", pageResult.getSize(),
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements()
+            ));
         } catch (IllegalArgumentException e) {
+            System.out.println("[DEBUG] IllegalArgumentException: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            System.out.println("[DEBUG] Exception: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Failed to retrieve messages: " + e.getMessage()));
         }
@@ -145,22 +166,22 @@ public class ChatController {
      * @return Success message or error
      */
     @DeleteMapping("/{messageId}")
-    public ResponseEntity<?> deleteMessage(@PathVariable String messageId) {
+    public ResponseEntity<?> deleteMessage(@PathVariable String messageId, jakarta.servlet.http.HttpServletRequest httpRequest) {
         try {
-            String userId = getAuthenticatedUserId();
+            String userId = extractUserIdFromRequest(httpRequest);
             if (userId == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "User not authenticated"));
             }
-            
+
             // Delete message (service will verify admin role)
             chatService.deleteMessage(messageId, userId);
-            
+
             return ResponseEntity.ok(Map.of(
                 "message", "Message deleted successfully",
                 "messageId", messageId
             ));
-            
+
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", e.getMessage()));

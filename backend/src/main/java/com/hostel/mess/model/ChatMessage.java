@@ -11,9 +11,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * ChatMessage model for group and universal chat
  * Stored in MongoDB collection 'chat_messages'
  */
+import java.io.Serializable;
+
 @Document(collection = "chat_messages")
 @CompoundIndex(name = "chat_type_id_idx", def = "{'chatType': 1, 'chatId': 1}")
-public class ChatMessage {
+public class ChatMessage implements Serializable {
     
     @Id
     private String id;

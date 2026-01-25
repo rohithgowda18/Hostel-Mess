@@ -9,6 +9,10 @@ import GroupDashboard from './components/GroupDashboard';
 import GroupChatPage from './components/GroupChatPage';
 import UniversalChatPage from './components/UniversalChatPage';
 import { getMealDisplayName } from './data/foodData';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './components/Login';
+import Register from './components/Register';
+import { getUser } from './services/authService';
 import './App.css';
 
 /**
@@ -184,7 +188,7 @@ function Dashboard() {
 
       {/* Groups Page */}
       {currentPage === 'groups' && (
-        <GroupDashboard userId="default-user" />
+        <GroupDashboard userId={getUser()?.id || ''} />
       )}
 
       {/* Feedback Page */}
@@ -203,54 +207,73 @@ function App() {
     <Router>
       <Routes>
         {/* Main Dashboard - Default Route */}
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
         {/* Community Chat Route */}
         <Route
           path="/community"
           element={
-            <div className="app-container">
-              <header className="header">
-                <div className="header-content">
-                  <div>
-                    <h1>🍽️ Hostel Mess Menu</h1>
+            <ProtectedRoute>
+              <div className="app-container">
+                <header className="header">
+                  <div className="header-content">
+                    <div>
+                      <h1>🍽️ Hostel Mess Menu</h1>
+                    </div>
                   </div>
+                </header>
+                <nav className="nav-tabs">
+                  <a href="/dashboard" className="nav-tab">📋 Menu</a>
+                  <a href="/dashboard" className="nav-tab">👥 Groups</a>
+                  <span className="nav-tab active">🌍 Community</span>
+                </nav>
+                <div style={{ padding: '16px', flex: 1, overflow: 'auto' }}>
+                  <UniversalChatPage currentUser={getUser() || {}} />
                 </div>
-              </header>
-              <nav className="nav-tabs">
-                <a href="/dashboard" className="nav-tab">📋 Menu</a>
-                <a href="/dashboard" className="nav-tab">👥 Groups</a>
-                <span className="nav-tab active">🌍 Community</span>
-              </nav>
-              <div style={{ padding: '16px', flex: 1, overflow: 'auto' }}>
-                <UniversalChatPage currentUser={{ id: 'default-user', name: 'User' }} />
               </div>
-            </div>
+            </ProtectedRoute>
           }
         />
-
         {/* Group Chat Route */}
         <Route
           path="/groups/:groupId/chat"
           element={
-            <div className="app-container">
-              <header className="header">
-                <div className="header-content">
-                  <div>
-                    <h1>🍽️ Hostel Mess Menu</h1>
+            <ProtectedRoute>
+              <div className="app-container">
+                <header className="header">
+                  <div className="header-content">
+                    <div>
+                      <h1>🍽️ Hostel Mess Menu</h1>
+                    </div>
                   </div>
+                </header>
+                <nav className="nav-tabs">
+                  <a href="/dashboard" className="nav-tab">📋 Menu</a>
+                  <a href="/dashboard" className="nav-tab">👥 Groups</a>
+                  <span className="nav-tab active">💬 Group Chat</span>
+                </nav>
+                <div style={{ padding: '16px', flex: 1, overflow: 'auto' }}>
+                  <GroupChatPage currentUser={getUser() || {}} />
                 </div>
-              </header>
-              <nav className="nav-tabs">
-                <a href="/dashboard" className="nav-tab">📋 Menu</a>
-                <a href="/dashboard" className="nav-tab">👥 Groups</a>
-                <span className="nav-tab active">💬 Group Chat</span>
-              </nav>
-              <div style={{ padding: '16px', flex: 1, overflow: 'auto' }}>
-                <GroupChatPage currentUser={{ id: 'default-user', name: 'User' }} />
               </div>
-            </div>
+            </ProtectedRoute>
           }
         />
       </Routes>

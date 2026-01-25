@@ -57,6 +57,14 @@ public class AuthService {
      */
     public UserInfo getUserInfoById(String userId) {
         User user = getUserById(userId);
-        return new UserInfo(user.getId(), user.getName(), user.getEmail(), user.getHostel());
+        return new UserInfo(
+            user.getId(),
+            user.getEmail(),
+            user.getHostel(),
+            user.getRoomNumber(),
+            user.getYear(),
+            user.getBranch(),
+            user.getRole()
+        );
     }
 }

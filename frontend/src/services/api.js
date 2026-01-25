@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuthHeader } from './authService';
 
 // Use environment variable for API base, fallback to localhost for development
 const API_BASE_URL = process.env.REACT_APP_API_BASE 
@@ -6,12 +7,25 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE
   : 'http://localhost:8080/api';
 
 // Create axios instance with default config
+// Create axios instance with default config
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   }
 });
+
+// Add request interceptor to inject Authorization header if available
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const authHeader = getAuthHeader();
+    if (authHeader.Authorization) {
+      config.headers.Authorization = authHeader.Authorization;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 const api = {
   /**
@@ -160,7 +174,8 @@ const api = {
       const response = await axiosInstance.get('/chat/messages', {
         params: { chatType, chatId }
       });
-      return response.data;
+      // The backend now returns { messages: [...], ...pagination }
+      return response.data.messages || [];
     } catch (error) {
       console.error('Error fetching messages:', error);
       throw error;

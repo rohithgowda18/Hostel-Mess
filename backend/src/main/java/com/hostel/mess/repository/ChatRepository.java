@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 /**
  * MongoDB Repository for ChatMessage
  * Provides custom query methods for fetching messages
@@ -52,6 +55,12 @@ public interface ChatRepository extends MongoRepository<ChatMessage, String> {
      */
     @Query(value = "{ 'chatType': ?0, 'chatId': ?1, 'expiresAt': { '$gt': ?2 } }", sort = "{ 'createdAt': 1 }")
     List<ChatMessage> findNonExpiredByChatTypeAndChatIdSorted(String chatType, String chatId, Instant now);
+
+    /**
+     * Paginated, reverse chronological (newest first) non-expired messages for a chat
+     */
+    @Query(value = "{ 'chatType': ?0, 'chatId': ?1, 'expiresAt': { '$gt': ?2 } }", sort = "{ 'createdAt': -1 }")
+    Page<ChatMessage> findNonExpiredByChatTypeAndChatIdPaged(String chatType, String chatId, Instant now, Pageable pageable);
     
     /**
      * Find messages sent by a specific user in a chat

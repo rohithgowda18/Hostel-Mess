@@ -1,10 +1,11 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { isAuthenticated } from '../services/authService';
 
-/**
- * Protected Route component - Disabled
- * Authentication has been removed, so all routes are public.
- */
 const ProtectedRoute = ({ children }) => {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
   return children;
 };
 

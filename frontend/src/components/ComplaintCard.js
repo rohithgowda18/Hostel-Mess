@@ -65,7 +65,7 @@ const ComplaintCard = ({ complaint, onVote, onRaiseComplaint }) => {
           <p className="reasons-label">Common complaints:</p>
           <ul className="reasons-list">
             {complaint.reasons.map((reason, idx) => (
-              <li key={idx}>• {reason}</li>
+              <li key={complaint._id + '-reason-' + idx}>  {reason}</li>
             ))}
           </ul>
         </div>
@@ -76,12 +76,12 @@ const ComplaintCard = ({ complaint, onVote, onRaiseComplaint }) => {
           <p className="comments-label">Student feedback:</p>
           <div className="comments-list">
             {complaint.comments.slice(0, 2).map((comment, idx) => (
-              <p key={idx} className="comment-item">
+              <p key={complaint._id + '-comment-' + idx} className="comment-item">
                 <em>"{comment}"</em>
               </p>
             ))}
             {complaint.comments.length > 2 && (
-              <p className="comment-item">
+              <p className="comment-item" key={complaint._id + '-more-comments'}>
                 <em>+{complaint.comments.length - 2} more comments...</em>
               </p>
             )}

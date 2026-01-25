@@ -1,69 +1,66 @@
-/**
- * Authentication service - Disabled
- * All authentication has been removed from the application.
- * These functions are kept as stubs for backward compatibility.
- */
 
-/**
- * Stub - Authentication disabled
- */
-export const register = async () => {
-  throw new Error('Authentication has been disabled');
+// Authentication service - JWT based
+const API_BASE_URL = process.env.REACT_APP_API_BASE || 'http://localhost:8080/api';
+
+export const register = async (registerData) => {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(registerData)
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Registration failed');
+  }
+  return await response.json();
 };
 
-/**
- * Stub - Authentication disabled
- */
-export const login = async () => {
-  throw new Error('Authentication has been disabled');
+export const login = async (loginData) => {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(loginData)
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Login failed');
+  }
+  const data = await response.json();
+  localStorage.setItem('jwtToken', data.token);
+  localStorage.setItem('userInfo', JSON.stringify(data.userInfo || {}));
+  return data;
 };
 
-/**
- * Stub - Authentication disabled
- */
 export const logout = () => {
-  console.log('Authentication has been disabled');
+  localStorage.removeItem('jwtToken');
+  localStorage.removeItem('userInfo');
 };
 
-/**
- * Stub - Returns null
- */
 export const getToken = () => {
-  return null;
+  return localStorage.getItem('jwtToken');
 };
 
-/**
- * Stub - Returns null
- */
 export const getUser = () => {
-  return null;
+  const userInfo = localStorage.getItem('userInfo');
+  return userInfo ? JSON.parse(userInfo) : null;
 };
 
-/**
- * Stub - Always returns false
- */
 export const isAuthenticated = () => {
-  return false;
+  return !!getToken();
 };
 
-/**
- * Stub - Returns empty object
- */
 export const getAuthHeader = () => {
-  return {};
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-/**
- * Stub - Direct fetch without auth
- */
 export const authenticatedFetch = async (endpoint, options = {}) => {
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
   const url = `${API_BASE_URL}${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
+    ...getAuthHeader(),
     ...options.headers,
   };
-
   return fetch(url, {
     ...options,
     headers,

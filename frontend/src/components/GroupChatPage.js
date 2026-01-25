@@ -43,7 +43,7 @@ function GroupChatPage({ currentUser }) {
   const fetchMessages = useCallback(async () => {
     try {
       const msgs = await api.getMessages('GROUP', groupId);
-      setMessages(msgs);
+      setMessages(Array.isArray(msgs) ? msgs : []);
       setError('');
     } catch (err) {
       if (err.response?.status !== 403) {

@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 /**
@@ -33,7 +36,7 @@ public class ChatService {
     // Constants
     private static final int UNIVERSAL_CHAT_MESSAGE_MAX_LENGTH = 150;
     private static final int GROUP_CHAT_MESSAGE_MAX_LENGTH = 500;
-    private static final String UNIVERSAL_CHAT_ID = "GLOBAL";
+    // ...existing code...
     private static final String CHAT_TYPE_GROUP = "GROUP";
     private static final String CHAT_TYPE_UNIVERSAL = "UNIVERSAL";
     
@@ -60,7 +63,7 @@ public class ChatService {
         Optional<User> userOpt = userRepository.findById(senderId);
         if (userOpt.isPresent()) {
             User sender = userOpt.get();
-            senderName = sender.getName();
+            senderName = sender.getEmail();
             senderRole = sender.getRole() != null ? sender.getRole() : "STUDENT";
         }
         
@@ -86,16 +89,12 @@ public class ChatService {
         
         // Validate access
         if (chatType.equals(CHAT_TYPE_GROUP)) {
-            // Check if user is member of the group
+            // Optionally, check if group exists (but do not check membership)
             Optional<Group> groupOpt = groupRepository.findById(chatId);
             if (!groupOpt.isPresent()) {
                 throw new IllegalArgumentException("Group not found");
             }
-            
-            Group group = groupOpt.get();
-            if (!group.getMembers().contains(senderId)) {
-                throw new IllegalArgumentException("User is not a member of this group");
-            }
+            // Membership check removed: allow any user to send group messages
         }
         
         // Create message
@@ -140,6 +139,23 @@ public class ChatService {
         
         Instant now = Instant.now();
         return chatRepository.findNonExpiredByChatTypeAndChatIdSorted(chatType, chatId, now);
+    }
+
+    /**
+     * Get paginated messages for a chat (reverse chronological)
+     * @param chatType Type of chat (GROUP or UNIVERSAL)
+     * @param chatId Group ID for GROUP, "GLOBAL" for UNIVERSAL
+     * @param page Page number (0-based)
+     * @param size Page size
+     * @return Page of ChatMessage (newest first)
+     */
+    public Page<ChatMessage> getMessagesPaged(String chatType, String chatId, int page, int size) {
+        if (chatType == null || chatId == null) {
+            throw new IllegalArgumentException("Chat type and chat ID are required");
+        }
+        Instant now = Instant.now();
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return chatRepository.findNonExpiredByChatTypeAndChatIdPaged(chatType, chatId, now, pageable);
     }
     
     /**
