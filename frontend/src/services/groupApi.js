@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE 
-  ? `${process.env.REACT_APP_API_BASE}/api`
-  : 'http://localhost:8080/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE || 'http://localhost:8080/api';
 
 // Create axios instance without auth
 const axiosWithAuth = axios.create({
