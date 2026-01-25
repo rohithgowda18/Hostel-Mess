@@ -3,25 +3,13 @@ import api from '../services/api';
 import CreateGroup from './CreateGroup';
 import JoinGroup from './JoinGroup';
 import GroupCodeShare from './GroupCodeShare';
-import MealGoingButton from './MealGoingButton';
-import GroupStatusList from './GroupStatusList';
 import './GroupDashboard.css';
 
 const GroupDashboard = ({ userId }) => {
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [selectedMeal, setSelectedMeal] = useState('DINNER');
-  const [userGoingStatus, setUserGoingStatus] = useState({});
   const [error, setError] = useState('');
   const [view, setView] = useState('list'); // 'list', 'create', 'join'
-
-  const mealTypes = ['BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'];
-  const mealEmojis = {
-    BREAKFAST: '🍳',
-    LUNCH: '🍛',
-    SNACKS: '☕',
-    DINNER: '🌙'
-  };
 
   // Load user's groups using api service
   const loadUserGroups = async () => {
@@ -39,36 +27,12 @@ const GroupDashboard = ({ userId }) => {
     }
   };
 
-  const loadMealStatus = async (groupId, mealType) => {
-    try {
-      // Call api.getGroupDetails to get meal status
-      const groupData = await api.getGroupDetails(groupId);
-      if (groupData) {
-        const mealStatus = groupData.mealStatus?.[mealType] || {};
-        const isUserGoing = mealStatus.goingUsers?.includes(userId);
-        setUserGoingStatus(prev => ({
-          ...prev,
-          [`${groupId}-${mealType}`]: isUserGoing
-        }));
-      }
-    } catch (err) {
-      console.error('Failed to load meal status:', err);
-    }
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (userId) {
       loadUserGroups();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (selectedGroup) {
-      loadMealStatus(selectedGroup.id, selectedMeal);
-    }
-  }, [selectedGroup, selectedMeal, userId]);
 
   const handleGroupCreated = (newGroup) => {
     setGroups([...groups, newGroup]);
@@ -82,18 +46,6 @@ const GroupDashboard = ({ userId }) => {
     loadUserGroups();
     setView('list');
     setError('');
-  };
-
-  const handleMealVoteChange = (status) => {
-    const key = `${selectedGroup.id}-${selectedMeal}`;
-    const isUserGoing = status.goingUsers?.includes(userId);
-    setUserGoingStatus(prev => ({
-      ...prev,
-      [key]: isUserGoing
-    }));
-    
-    // Reload groups to show updated status
-    loadUserGroups();
   };
 
   // Render create group modal
@@ -181,46 +133,25 @@ const GroupDashboard = ({ userId }) => {
               />
 
               {/* Group Chat Button */}
-              <div className="group-chat-button-section">
+              <div className="group-chat-section">
+                <h3>💬 Group Chat</h3>
+                <p className="chat-description">Chat with your group members to coordinate meals</p>
                 <a href={`/groups/${selectedGroup.id}/chat`} className="btn-group-chat">
                   💬 Open Group Chat
                 </a>
               </div>
 
-              {/* Meal Tabs */}
-              <div className="meal-tabs">
-                {mealTypes.map(meal => (
-                  <button
-                    key={meal}
-                    className={`meal-tab ${selectedMeal === meal ? 'active' : ''}`}
-                    onClick={() => setSelectedMeal(meal)}
-                  >
-                    <span className="emoji">{mealEmojis[meal]}</span>
-                    <span className="label">{meal}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Going Status for Selected Meal */}
-              <div className="meal-section">
-                <h3>{mealEmojis[selectedMeal]} {selectedMeal}</h3>
-
-                <MealGoingButton
-                  groupId={selectedGroup.id}
-                  mealType={selectedMeal}
-                  userId={userId}
-                  onVoteChange={handleMealVoteChange}
-                  isUserGoing={userGoingStatus[`${selectedGroup.id}-${selectedMeal}`] || false}
-                />
-              </div>
-
-              {/* All Meal Status */}
-              <div className="all-meals-section">
-                <GroupStatusList
-                  group={selectedGroup}
-                  groupMembers={selectedGroup.members}
-                  onRefresh={() => loadMealStatus(selectedGroup.id, selectedMeal)}
-                />
+              {/* Group Members */}
+              <div className="group-members-section">
+                <h3>👥 Members ({selectedGroup.memberCount || selectedGroup.members?.length || 0})</h3>
+                <div className="members-list">
+                  {selectedGroup.members?.map((member, index) => (
+                    <div key={index} className="member-item">
+                      <span className="member-avatar">👤</span>
+                      <span className="member-name">{member}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}

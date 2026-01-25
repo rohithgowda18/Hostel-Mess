@@ -107,8 +107,8 @@ public class ChatService {
             // Universal chat messages expire after 24 hours
             expiresAt = now.plus(24, ChronoUnit.HOURS);
         } else {
-            // Group chat messages don't expire (set to far future)
-            expiresAt = now.plus(10, ChronoUnit.YEARS);
+            // Group chat messages don't expire (set to far future - 10 years = ~3650 days)
+            expiresAt = now.plus(3650, ChronoUnit.DAYS);
         }
         
         ChatMessage chatMessage = new ChatMessage(
