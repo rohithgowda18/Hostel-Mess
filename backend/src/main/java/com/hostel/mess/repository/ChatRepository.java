@@ -13,6 +13,13 @@ import java.util.List;
  */
 @Repository
 public interface ChatRepository extends MongoRepository<ChatMessage, String> {
+        /**
+         * Delete universal chat messages older than a given timestamp
+         * @param chatType should be "UNIVERSAL"
+         * @param cutoff cutoff timestamp (24h ago)
+         * @return number of deleted messages
+         */
+        long deleteByChatTypeAndCreatedAtBefore(String chatType, Instant cutoff);
     
     /**
      * Find all messages for a specific chat (by chatType and chatId)

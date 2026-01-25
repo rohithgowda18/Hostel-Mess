@@ -64,6 +64,9 @@ const MessVoice = () => {
   const [selectedMeal, setSelectedMeal] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
 
+  // Debug: log complaints for React key warning
+  console.log('Current complaints:', complaints);
+
   // Generate or retrieve unique user ID for vote tracking
   const getUserId = () => {
     let userId = localStorage.getItem('messVoiceUserId');
@@ -96,7 +99,8 @@ const MessVoice = () => {
         let anyError = false;
         results.forEach(result => {
           if (result.error) anyError = true;
-          complaintsByMeal[result.mealType] = result.data || [];
+          // Map id to _id for all complaints for React key and state update
+          complaintsByMeal[result.mealType] = (result.data || []).map(c => ({ ...c, _id: c._id || c.id }));
         });
         setComplaints(complaintsByMeal);
         if (anyError) setError('Feedback service unavailable. Try again later.');
@@ -120,20 +124,32 @@ const MessVoice = () => {
     try {
       const userId = getUserId();
       const response = await complaintApi.voteOnComplaint(complaintId, vote, userId);
-      // Update the complaint in state
+      console.log('Vote response:', response.data);
+      // Map id to _id for frontend consistency
+      const updatedComplaint = { ...response.data, _id: response.data.id };
       const updatedComplaints = { ...complaints };
-      const mealType = response.data.mealType;
+      const mealType = updatedComplaint.mealType;
       if (updatedComplaints[mealType]) {
         const idx = updatedComplaints[mealType].findIndex(c => c._id === complaintId);
         if (idx !== -1) {
-          updatedComplaints[mealType][idx] = response.data;
+          updatedComplaints[mealType][idx] = updatedComplaint;
           setComplaints(updatedComplaints);
         }
       }
     } catch (err) {
-      // Try to show backend error message if available
-      const backendMsg = err.response?.data?.error || err.response?.data?.message;
-      setError(backendMsg || 'Failed to vote. Please try again.');
+      // Show backend error message to user
+      let backendMsg = 'Failed to vote. Please try again.';
+      if (err.response) {
+        if (err.response.data && (err.response.data.error || err.response.data.message)) {
+          backendMsg = err.response.data.error || err.response.data.message;
+        } else if (typeof err.response.data === 'string') {
+          backendMsg = err.response.data;
+        }
+        console.error('Vote error:', err.response);
+      } else {
+        console.error('Vote error:', err);
+      }
+      setError(backendMsg);
     }
   };
 
@@ -201,9 +217,9 @@ const MessVoice = () => {
                     <div className="complaints-list">
                       {mealComplaints.map(complaint => (
                         <ComplaintCard
-                          key={complaint.id}
+                          key={complaint._id}
                           complaint={complaint}
-                          onVote={handleVote}
+                          onVote={(complaintId, voteType) => handleVote(complaintId, voteType)}
                           onRaiseComplaint={(foodItem) =>
                             handleRaiseComplaint(foodItem, mealType)
                           }

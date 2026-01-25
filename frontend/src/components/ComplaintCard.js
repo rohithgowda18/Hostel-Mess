@@ -7,16 +7,21 @@ const ComplaintCard = ({ complaint, onVote, onRaiseComplaint }) => {
 
   const handleVote = (voteType) => {
     if (hasVoted) return;
-    
     setLoading(true);
-    onVote(complaint.id, voteType)
-      .then(() => {
+    // Always use _id for voting
+    const voteResult = onVote(complaint._id, voteType);
+    if (voteResult && typeof voteResult.then === 'function') {
+      voteResult.then(() => {
         setHasVoted(true);
         setLoading(false);
-      })
-      .catch(() => {
+      }).catch(() => {
         setLoading(false);
       });
+    } else {
+      // fallback: mark as voted immediately
+      setHasVoted(true);
+      setLoading(false);
+    }
   };
 
   const getStatusEmoji = () => {
