@@ -94,7 +94,7 @@ function GroupChatPage({ currentUser }) {
     return (
       <div className="group-chat-page">
         <div className="error-state">
-          <p>⚠️ {error}</p>
+          <p>⚠️ {error || 'Chat service unavailable. Please try again later.'}</p>
           <p className="error-hint">Try refreshing the page or check your group membership</p>
         </div>
       </div>
@@ -120,12 +120,12 @@ function GroupChatPage({ currentUser }) {
       {/* Error message */}
       {error && (
         <div className="warning-banner">
-          ⚠️ {error}
+          ⚠️ {error || 'Chat service unavailable. Please try again later.'}
         </div>
       )}
 
       {/* Chat window */}
-      {!loading && group ? (
+      {!loading && group && !error ? (
         <ChatWindow
           messages={messages}
           currentUserId={currentUser?.id}
@@ -135,9 +135,13 @@ function GroupChatPage({ currentUser }) {
           loading={sending}
           chatType="GROUP"
         />
-      ) : (
+      ) : loading ? (
         <div className="loading-state">
           ⏳ Loading chat...
+        </div>
+      ) : (
+        <div className="loading-state">
+          <span role="img" aria-label="offline">🚫</span> Chat service unavailable. Please try again later.
         </div>
       )}
     </div>

@@ -37,6 +37,13 @@ const TodayMenuDisplay = ({ mealType, menuData, loading }) => {
             Posted at {formatPostedTime(menuData.postedAt)}
           </p>
         </div>
+      ) : menuData && menuData.error ? (
+        <div className="menu-display">
+          <div className="no-menu">
+            <div className="emoji">⚠️</div>
+            <p>Mess data unavailable. Showing default menu.</p>
+          </div>
+        </div>
       ) : (
         <div className="menu-display">
           <div className="no-menu">

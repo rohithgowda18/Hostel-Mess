@@ -22,6 +22,40 @@ const MEAL_DISPLAY_NAMES = {
 };
 
 const MessVoice = () => {
+    // Handle submitting a new complaint
+    const handleSubmitComplaint = async (complaintData) => {
+      setSubmitLoading(true);
+      try {
+        const response = await complaintApi.raiseComplaint(
+          complaintData.mealType,
+          complaintData.foodItem,
+          complaintData.reasons,
+          complaintData.comment
+        );
+        // Update complaints for the meal type
+        const mealType = complaintData.mealType;
+        const updatedComplaints = [...(complaints[mealType] || [])];
+        const existingIndex = updatedComplaints.findIndex(
+          c => c.foodItem === complaintData.foodItem
+        );
+        if (existingIndex >= 0) {
+          updatedComplaints[existingIndex] = response.data;
+        } else {
+          updatedComplaints.push(response.data);
+        }
+        setComplaints({
+          ...complaints,
+          [mealType]: updatedComplaints
+        });
+        setShowModal(false);
+        setSelectedFood(null);
+        setSelectedMeal(null);
+        setSubmitLoading(false);
+      } catch (err) {
+        setError('Failed to submit complaint. Please try again.');
+        setSubmitLoading(false);
+      }
+    };
   const [complaints, setComplaints] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -40,6 +74,8 @@ const MessVoice = () => {
     return userId;
   };
 
+
+
   useEffect(() => {
     fetchAllComplaints();
   }, []);
@@ -57,14 +93,17 @@ const MessVoice = () => {
     Promise.all(promises)
       .then(results => {
         const complaintsByMeal = {};
+        let anyError = false;
         results.forEach(result => {
+          if (result.error) anyError = true;
           complaintsByMeal[result.mealType] = result.data || [];
         });
         setComplaints(complaintsByMeal);
+        if (anyError) setError('Feedback service unavailable. Try again later.');
         setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load complaints. Please try again.');
+        setError('Feedback service unavailable. Try again later.');
         setLoading(false);
       });
   };
@@ -75,67 +114,26 @@ const MessVoice = () => {
     setShowModal(true);
   };
 
-  const handleSubmitComplaint = async (complaintData) => {
-    setSubmitLoading(true);
 
-    try {
-      const response = await complaintApi.raiseComplaint(
-        complaintData.mealType,
-        complaintData.foodItem,
-        complaintData.reasons,
-        complaintData.comment
-      );
-
-      // Update the complaint in state
-      const mealType = complaintData.mealType;
-      const updatedComplaints = [...(complaints[mealType] || [])];
-      const existingIndex = updatedComplaints.findIndex(
-        c => c.foodItem === complaintData.foodItem
-      );
-
-      if (existingIndex >= 0) {
-        updatedComplaints[existingIndex] = response.data;
-      } else {
-        updatedComplaints.push(response.data);
-      }
-
-      setComplaints({
-        ...complaints,
-        [mealType]: updatedComplaints
-      });
-
-      setShowModal(false);
-      setSelectedFood(null);
-      setSelectedMeal(null);
-      setSubmitLoading(false);
-    } catch (err) {
-      setError('Failed to submit complaint. Please try again.');
-      setSubmitLoading(false);
-    }
-  };
-
+  // Handle voting on a complaint
   const handleVote = async (complaintId, vote) => {
     try {
       const userId = getUserId();
       const response = await complaintApi.voteOnComplaint(complaintId, vote, userId);
-
-      // Find and update the complaint in state
-      for (const mealType of MEAL_TYPES) {
-        const mealComplaints = complaints[mealType] || [];
-        const index = mealComplaints.findIndex(c => c.id === complaintId);
-
-        if (index >= 0) {
-          const updated = [...mealComplaints];
-          updated[index] = response.data;
-          setComplaints({
-            ...complaints,
-            [mealType]: updated
-          });
-          return;
+      // Update the complaint in state
+      const updatedComplaints = { ...complaints };
+      const mealType = response.data.mealType;
+      if (updatedComplaints[mealType]) {
+        const idx = updatedComplaints[mealType].findIndex(c => c._id === complaintId);
+        if (idx !== -1) {
+          updatedComplaints[mealType][idx] = response.data;
+          setComplaints(updatedComplaints);
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to vote. Please try again.');
+      // Try to show backend error message if available
+      const backendMsg = err.response?.data?.error || err.response?.data?.message;
+      setError(backendMsg || 'Failed to vote. Please try again.');
     }
   };
 

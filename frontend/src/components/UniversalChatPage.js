@@ -92,12 +92,12 @@ function UniversalChatPage({ currentUser }) {
       {/* Error message */}
       {error && (
         <div className="warning-banner">
-          ⚠️ {error}
+          ⚠️ {error || 'Chat service unavailable. Please try again later.'}
         </div>
       )}
 
       {/* Chat window */}
-      {!loading ? (
+      {!loading && !error ? (
         <ChatWindow
           messages={messages}
           currentUserId={currentUser?.id}
@@ -107,9 +107,13 @@ function UniversalChatPage({ currentUser }) {
           loading={sending}
           chatType="UNIVERSAL"
         />
-      ) : (
+      ) : loading ? (
         <div className="loading-state">
           ⏳ Loading community chat...
+        </div>
+      ) : (
+        <div className="loading-state">
+          <span role="img" aria-label="offline">🚫</span> Chat service unavailable. Please try again later.
         </div>
       )}
 
