@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import ComplaintCard from './ComplaintCard';
 import ComplaintsModal from './ComplaintsModal';
@@ -6,20 +7,6 @@ import { FOOD_OPTIONS } from '../data/foodData';
 import './MessVoice.css';
 
 const MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'];
-
-const MEAL_EMOJIS = {
-  BREAKFAST: '🍳',
-  LUNCH: '🍛',
-  SNACKS: '☕',
-  DINNER: '🌙'
-};
-
-const MEAL_DISPLAY_NAMES = {
-  BREAKFAST: 'Breakfast',
-  LUNCH: 'Lunch',
-  SNACKS: 'Snacks',
-  DINNER: 'Dinner'
-};
 
 const MessVoice = () => {
     // Handle submitting a new complaint
@@ -57,7 +44,6 @@ const MessVoice = () => {
       }
     };
   const [complaints, setComplaints] = useState({});
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
