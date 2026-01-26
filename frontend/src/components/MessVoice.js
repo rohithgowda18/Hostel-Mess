@@ -39,7 +39,7 @@ const MessVoice = () => {
         setSelectedMeal(null);
         setSubmitLoading(false);
       } catch (err) {
-        setError('Failed to submit complaint. Please try again.');
+              // setLoading(true) removed: loading state no longer used
         setSubmitLoading(false);
       }
     };
@@ -61,11 +61,11 @@ const MessVoice = () => {
       localStorage.setItem('messVoiceUserId', userId);
     }
     return userId;
-  };
+              // setLoading(false) removed: loading state no longer used
 
 
 
-  useEffect(() => {
+              // setLoading(false) removed: loading state no longer used
     fetchAllComplaints();
   }, []);
 
