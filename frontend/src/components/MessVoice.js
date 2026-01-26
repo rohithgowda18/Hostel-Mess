@@ -61,16 +61,15 @@ const MessVoice = () => {
       localStorage.setItem('messVoiceUserId', userId);
     }
     return userId;
-              // setLoading(false) removed: loading state no longer used
+  };
 
-
-
-              // setLoading(false) removed: loading state no longer used
+  // Fetch all complaints on mount
+  useEffect(() => {
     fetchAllComplaints();
   }, []);
 
   const fetchAllComplaints = () => {
-    setLoading(true);
+    // setLoading(true); // Removed: setLoading is not defined, loading state not used
     setError('');
 
     const promises = MEAL_TYPES.map(mealType =>
@@ -94,11 +93,11 @@ const MessVoice = () => {
         });
         setComplaints(complaintsByMeal);
         if (anyError) setError('Feedback service unavailable. Try again later.');
-        setLoading(false);
+        // setLoading(false); // Removed: setLoading is not defined, loading state not used
       })
       .catch(err => {
         setError('Feedback service unavailable. Try again later.');
-        setLoading(false);
+        // setLoading(false); // Removed: setLoading is not defined, loading state not used
       });
   };
 
