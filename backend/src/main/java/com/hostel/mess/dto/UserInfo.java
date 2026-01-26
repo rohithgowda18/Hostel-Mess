@@ -24,64 +24,73 @@ public class UserInfo {
         this.branch = branch;
         this.role = role;
     }
-    // Username removed
 
-        public String getRoomNumber() {
-            return roomNumber;
-        }
-
-        public void setRoomNumber(String roomNumber) {
-            this.roomNumber = roomNumber;
-        }
-
-        public String getYear() {
-            return year;
-        }
-
-        public void setYear(String year) {
-            this.year = year;
-        }
-
-        public String getBranch() {
-            return branch;
-        }
-
-        public void setBranch(String branch) {
-            this.branch = branch;
-        }
-
-        public String getRole() {
-            return role;
-        }
-
-        public void setRole(String role) {
-            this.role = role;
-        }
-    
-    // Getters and Setters
     public String getId() {
         return id;
     }
-    
+
     public void setId(String id) {
         this.id = id;
     }
-    
-    // Name removed
-    
+
     public String getEmail() {
         return email;
     }
-    
+
     public void setEmail(String email) {
         this.email = email;
     }
-    
+
     public String getHostel() {
         return hostel;
     }
-    
+
     public void setHostel(String hostel) {
         this.hostel = hostel;
+    }
+
+    public String getRoomNumber() {
+        return roomNumber;
+    }
+
+    public void setRoomNumber(String roomNumber) {
+        this.roomNumber = roomNumber;
+    }
+
+    public String getYear() {
+        return year;
+    }
+
+    public void setYear(String year) {
+        this.year = year;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    @Override
+    public String toString() {
+        return "UserInfo{" +
+                "id='" + id + '\'' +
+                ", email='" + email + '\'' +
+                ", hostel='" + hostel + '\'' +
+                ", roomNumber='" + roomNumber + '\'' +
+                ", year='" + year + '\'' +
+                ", branch='" + branch + '\'' +
+                ", role='" + role + '\'' +
+                '}';
     }
 }
