@@ -1,4 +1,13 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE || '/api';
+const DEFAULT_PROD_API_BASE = 'https://hostel-mess-tht8.onrender.com/api';
+
+function normalizeApiBase(url) {
+  return url.replace(/\/+$/, '');
+}
+
+const configuredApiBase = import.meta.env.VITE_API_BASE;
+const API_BASE_URL = normalizeApiBase(
+  configuredApiBase || (import.meta.env.DEV ? '/api' : DEFAULT_PROD_API_BASE)
+);
 
 const TOKEN_KEY = 'jwtToken';
 const USER_KEY = 'userInfo';
