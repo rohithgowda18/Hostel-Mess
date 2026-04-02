@@ -1,32 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8fafc;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+}
+
+.dark {
+  --background: #0f172a;
+  --card: #111827;
+  --border: #1f2937;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+}
+
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+  @apply border-border;
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  @apply bg-background text-foreground font-sans antialiased;
+  margin: 0;
   min-height: 100vh;
-  padding: 20px;
 }
 
-/* Scrollbar styling */
+#root {
+  min-height: 100vh;
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #667eea;
-  border-radius: 4px;
+  background: #334155;
+  border-radius: 999px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #764ba2;
+.light ::-webkit-scrollbar-thumb {
+  background: #94a3b8;
 }

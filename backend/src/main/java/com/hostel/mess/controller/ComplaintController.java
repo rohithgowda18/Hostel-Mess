@@ -1,20 +1,32 @@
 package com.hostel.mess.controller;
 
-import com.hostel.mess.dto.ComplaintRequest;
-import com.hostel.mess.dto.ComplaintResponse;
-import com.hostel.mess.service.ComplaintService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.hostel.mess.dto.ComplaintRequest;
+import com.hostel.mess.dto.ComplaintResponse;
+import com.hostel.mess.service.ComplaintService;
+
 @RestController
 @RequestMapping("/api/complaints")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "https://rohithgowda18.github.io", "https://hostel-mess-one.vercel.app"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "https://rohithgowda18.github.io", "https://hostel-mess-one.vercel.app"})
 public class ComplaintController {
     
     @Autowired
@@ -64,14 +76,16 @@ public class ComplaintController {
     /**
      * Vote on a complaint (AGREE or DISAGREE)
      * POST /api/complaints/vote
-     * Body: { "complaintId": "abc123", "vote": "AGREE", "userId": "user123" }
+        * Body: { "complaintId": "abc123", "vote": "AGREE" }
      */
     @PostMapping("/vote")
-    public ResponseEntity<?> voteOnComplaint(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<?> voteOnComplaint(
+        @RequestBody Map<String, String> payload,
+        @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String complaintId = payload.get("complaintId");
             String vote = payload.get("vote");
-            String userId = payload.get("userId");
+            String userId = userDetails != null ? userDetails.getUsername() : null;
             
             // Validation
             if (complaintId == null || complaintId.trim().isEmpty()) {
@@ -85,8 +99,8 @@ public class ComplaintController {
             }
             
             if (userId == null || userId.trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                    .body(createErrorResponse("User ID is required"));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(createErrorResponse("Authentication required"));
             }
             
             ComplaintResponse response = complaintService.voteOnComplaint(complaintId, vote, userId);

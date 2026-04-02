@@ -1,0 +1,60 @@
+import { useMemo, useState } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import DashboardLayout from '@/layouts/dashboard-layout';
+import DashboardPage from '@/pages/dashboard-page';
+import LoginPage from '@/pages/login-page';
+import { getUser, isAuthenticated, logout } from '@/services/auth-service';
+
+function App() {
+  const [authenticated, setAuthenticated] = useState(() => isAuthenticated());
+  const [user, setUser] = useState(() => getUser());
+
+  const appUser = useMemo(
+    () => user || { email: 'student@hostel.app', role: 'STUDENT' },
+    [user]
+  );
+
+  const handleLogin = () => {
+    setUser(getUser());
+    setAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setUser(null);
+    setAuthenticated(false);
+  };
+
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          authenticated ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <LoginPage onLogin={handleLogin} />
+          )
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          authenticated ? (
+            <DashboardLayout user={appUser} onLogout={handleLogout}>
+              <DashboardPage />
+            </DashboardLayout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="*"
+        element={<Navigate to={authenticated ? '/dashboard' : '/login'} replace />}
+      />
+    </Routes>
+  );
+}
+
+export default App;
