@@ -3,6 +3,28 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE || '/api';
 const TOKEN_KEY = 'jwtToken';
 const USER_KEY = 'userInfo';
 
+async function parseJsonResponse(response) {
+  const contentType = response.headers.get('content-type') || '';
+  const rawBody = await response.text();
+
+  if (!rawBody) {
+    return {};
+  }
+
+  if (!contentType.includes('application/json')) {
+    throw new Error(
+      `Expected JSON from API but received ${contentType || 'unknown content type'}. ` +
+      `Check VITE_API_BASE and backend deployment. Response starts with: ${rawBody.slice(0, 120)}`
+    );
+  }
+
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    throw new Error(`Invalid JSON response from API. Response starts with: ${rawBody.slice(0, 120)}`);
+  }
+}
+
 export async function register(payload) {
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
     method: 'POST',
@@ -10,7 +32,7 @@ export async function register(payload) {
     body: JSON.stringify(payload)
   });
 
-  const data = await response.json();
+  const data = await parseJsonResponse(response);
   if (!response.ok) {
     throw new Error(data.error || data.message || 'Registration failed');
   }
@@ -32,7 +54,7 @@ export async function login(payload) {
     body: JSON.stringify(payload)
   });
 
-  const data = await response.json();
+  const data = await parseJsonResponse(response);
   if (!response.ok) {
     throw new Error(data.error || data.message || 'Login failed');
   }
@@ -54,7 +76,16 @@ export function getToken() {
 
 export function getUser() {
   const raw = localStorage.getItem(USER_KEY);
-  return raw ? JSON.parse(raw) : null;
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    localStorage.removeItem(USER_KEY);
+    return null;
+  }
 }
 
 export function isAuthenticated() {
