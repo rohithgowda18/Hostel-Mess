@@ -1,9 +1,10 @@
 package com.hostel.mess.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.Instant;
 import java.util.List;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "groups")
 public class Group {
@@ -12,7 +13,8 @@ public class Group {
     
     private String name;
     private String groupCode; // Unique 8-character code to join group (shareable via WhatsApp)
-    private List<String> members; // List of user IDs
+    private List<String> members; // List of user emails
+    private String creator; // Creator email
     private Instant createdAt;
     
     // Constructors
@@ -20,11 +22,12 @@ public class Group {
         this.createdAt = Instant.now();
     }
     
-    public Group(String name, String groupCode, List<String> members) {
+    public Group(String name, String groupCode, List<String> members, String creator) {
         this();
         this.name = name;
         this.groupCode = groupCode;
         this.members = members;
+        this.creator = creator;
     }
     
     // Getters and Setters
@@ -58,6 +61,14 @@ public class Group {
     
     public void setMembers(List<String> members) {
         this.members = members;
+    }
+    
+    public String getCreator() {
+        return creator;
+    }
+    
+    public void setCreator(String creator) {
+        this.creator = creator;
     }
     
     public Instant getCreatedAt() {

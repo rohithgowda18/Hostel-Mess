@@ -1,12 +1,5 @@
 package com.hostel.mess.service;
 
-import com.hostel.mess.dto.MealRequest;
-import com.hostel.mess.dto.MealResponse;
-import com.hostel.mess.model.MealUpdate;
-import com.hostel.mess.repository.MealRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -16,6 +9,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.hostel.mess.dto.MealRequest;
+import com.hostel.mess.dto.MealResponse;
+import com.hostel.mess.model.MealUpdate;
+import com.hostel.mess.repository.MealRepository;
 
 @Service
 public class MealService {
@@ -89,12 +90,10 @@ public class MealService {
         response.setUpdateWindowMessage(getTimeWindowMessage(mealType));
 
         if (mealOpt.isEmpty()) {
-            // Return default sample meals if nothing in database
-            java.util.List<String> defaultItems = DEFAULT_MEALS.getOrDefault(mealType.toUpperCase(), Arrays.asList());
-            System.out.println("DEBUG: Using default meals for " + mealType.toUpperCase() + ": " + defaultItems);
-            response.setItems(defaultItems);
+            // Return empty list if nothing uploaded yet
+            response.setItems(Arrays.asList());
             response.setConfirmations(0);
-            response.setVerificationStatus("DEFAULT");
+            response.setVerificationStatus("EMPTY");
             return response;
         }
 

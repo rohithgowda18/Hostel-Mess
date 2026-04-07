@@ -47,12 +47,12 @@ export const messApi = {
   },
 
   async markGroupMealGoing(groupId, mealType, userId) {
-    const response = await apiClient.post('/group-meal-status/going', { groupId, mealType, userId });
+    const response = await apiClient.post('/group-meal-status/going', { groupId, mealType });
     return response.data;
   },
 
   async cancelGroupMealGoing(groupId, mealType, userId) {
-    const response = await apiClient.delete(`/group-meal-status/${groupId}/${mealType}/${userId}`);
+    const response = await apiClient.delete(`/group-meal-status/${groupId}/${mealType}`);
     return response.data;
   },
 

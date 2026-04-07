@@ -23,7 +23,7 @@ public class GroupMealStatusService {
     /**
      * Mark a user as going to a meal
      */
-    public GroupMealStatus markUserGoing(String groupId, String mealType, String userId) {
+    public GroupMealStatus markUserGoing(String groupId, String mealType, String userId, String userEmail) {
         // Verify group exists and user is member
         Optional<Group> groupOpt = groupRepository.findById(groupId);
         if (groupOpt.isEmpty()) {
@@ -31,7 +31,9 @@ public class GroupMealStatusService {
         }
         
         Group group = groupOpt.get();
-        if (!group.getMembers().contains(userId)) {
+        // Check if user (by email or ID) is a member of the group
+        boolean isMember = group.getMembers().contains(userEmail) || group.getMembers().contains(userId);
+        if (!isMember) {
             throw new RuntimeException("User is not a member of this group");
         }
         
@@ -51,9 +53,10 @@ public class GroupMealStatusService {
             status = new GroupMealStatus(groupId, mealType, new ArrayList<>());
         }
         
-        // Add user if not already there
-        if (!status.getGoingUsers().contains(userId)) {
-            status.getGoingUsers().add(userId);
+        // Add user if not already there (use email for new entries, but support both)
+        String identifierToStore = userEmail;
+        if (!status.getGoingUsers().contains(identifierToStore) && !status.getGoingUsers().contains(userId)) {
+            status.getGoingUsers().add(identifierToStore);
         }
         
         status.setUpdatedAt(Instant.now());

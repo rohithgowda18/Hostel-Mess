@@ -147,6 +147,7 @@ public class GroupController {
             group.getName(),
             group.getGroupCode(),
             group.getMembers(),
+            group.getCreator(),
             group.getCreatedAt()
         );
     }

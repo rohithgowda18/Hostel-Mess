@@ -1,17 +1,23 @@
 package com.hostel.mess.service;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.hostel.mess.dto.ComplaintRequest;
 import com.hostel.mess.dto.ComplaintResponse;
 import com.hostel.mess.model.Complaint;
 import com.hostel.mess.repository.ComplaintRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class ComplaintService {
@@ -104,7 +110,7 @@ public class ComplaintService {
      */
     public List<ComplaintResponse> getComplaintsByMealToday(String mealType) {
         String today = LocalDate.now().format(DATE_FORMATTER);
-        List<Complaint> complaints = complaintRepository.findByMealTypeAndDate(mealType, today);
+        List<Complaint> complaints = complaintRepository.findByMealTypeAndDateOrderByUpdatedAtDesc(mealType, today);
         
         return complaints.stream()
             .map(this::convertToResponse)

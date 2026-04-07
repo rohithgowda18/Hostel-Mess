@@ -1,4 +1,5 @@
 import { ChevronsLeft, ChevronsRight, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +12,21 @@ function AppSidebar({
   mobileOpen,
   onMobileClose
 }) {
+  const navigate = useNavigate();
+
+  const handleItemClick = (item) => {
+    // Navigate based on item key
+    if (item.key === 'groups') {
+      navigate('/groups');
+    } else {
+      // All dashboard items navigate to /dashboard with a tab query parameter
+      navigate(`/dashboard?tab=${item.key}`);
+    }
+    
+    // Update active item for UI feedback
+    onItemSelect(item.key);
+    onMobileClose();
+  };
   return (
     <>
       {mobileOpen ? (
@@ -54,8 +70,7 @@ function AppSidebar({
                 key={item.key}
                 type="button"
                 onClick={() => {
-                  onItemSelect(item.key);
-                  onMobileClose();
+                  handleItemClick(item);
                 }}
                 className={cn(
                   'flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all',

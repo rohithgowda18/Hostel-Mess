@@ -2,11 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   CalendarCheck2,
   FolderCog,
+  MessageCircle,
+  Plus,
   RefreshCcw,
   Send,
   UserCircle2,
   Users,
-  Vote
+  Vote,
+  X
 } from 'lucide-react';
 import CommunityChatPreview from '@/components/dashboard/community-chat-preview';
 import EmptyState from '@/components/dashboard/empty-state';
@@ -17,9 +20,18 @@ import TodaysMenuCard from '@/components/dashboard/todays-menu-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FOOD_OPTIONS, MEAL_TYPES, getMealDisplayName } from '@/data/food-options';
+import { FOOD_OPTIONS, MEAL_TYPES, getMealDisplayName, COMMON_FOODS } from '@/data/food-options';
 import { getUser } from '@/services/auth-service';
 import { messApi } from '@/services/mess-api';
 
@@ -81,49 +93,118 @@ function CurrentMealSection({ mealLabel, items }) {
 
 function FoodSelectionGrid({ mealLabel, foods, selectedItems, onToggle, disabled }) {
   const allFoods = Array.isArray(foods) ? foods : [];
+  const [customFood, setCustomFood] = useState('');
+  const [failedImages, setFailedImages] = useState(new Set());
+
+  const handleAddCustomFood = (e) => {
+    e.preventDefault();
+    if (customFood.trim() && !selectedItems.includes(customFood.trim())) {
+      onToggle(customFood.trim());
+      setCustomFood('');
+    }
+  };
+
+  const handleImageError = (food) => {
+    setFailedImages((prev) => new Set([...prev, food]));
+  };
 
   return (
     <section className="rounded-2xl border border-border bg-card p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Update {mealLabel}</h3>
-          <p className="text-sm text-muted">Click food cards to toggle selection</p>
+          <p className="text-sm text-muted">Add custom food items to today's menu</p>
         </div>
-        <Badge variant="neutral">{selectedItems.length} selected</Badge>
+        <Badge variant="neutral">{selectedItems.length} added</Badge>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-        {allFoods.map((food) => {
-          const isSelected = selectedItems.includes(food);
+      <div className="mb-5 flex gap-2">
+        <Input
+          type="text"
+          placeholder="e.g., Biryani, Butter Chicken..."
+          value={customFood}
+          onChange={(e) => setCustomFood(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleAddCustomFood(e)}
+          disabled={disabled}
+          className="flex-1"
+        />
+        <Button
+          onClick={handleAddCustomFood}
+          disabled={disabled || !customFood.trim() || selectedItems.includes(customFood.trim())}
+          size="sm"
+          className="gap-1"
+        >
+          <Plus size={16} />
+          Add
+        </Button>
+      </div>
 
-          return (
-            <button
-              key={food}
-              type="button"
-              disabled={disabled}
-              onClick={() => onToggle(food)}
-              className={`overflow-hidden rounded-xl border text-left transition-all hover:-translate-y-0.5 ${
-                disabled
-                  ? 'cursor-not-allowed border-border/60 bg-slate-900/10 opacity-60'
-                  : isSelected
-                  ? 'border-primary bg-primary/10 shadow-card'
-                  : 'border-border bg-slate-900/20 hover:border-primary/50'
-              }`}
+      {selectedItems.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedItems.map((item) => (
+            <div
+              key={item}
+              className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary/10 px-3 py-1.5"
             >
-              <img
-                src={getFoodImageUrl(food)}
-                alt={food}
-                loading="lazy"
-                className="h-28 w-full object-cover"
-              />
-              <div className="p-3">
-                <p className="text-sm font-semibold text-foreground">{food}</p>
-                <p className="mt-1 text-xs text-muted">{isSelected ? 'Selected' : 'Tap to select'}</p>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+              <span className="text-sm font-semibold text-foreground">{item}</span>
+              <button
+                type="button"
+                onClick={() => onToggle(item)}
+                className="hover:text-danger"
+                aria-label={`Remove ${item}`}
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {allFoods.length > 0 && (
+        <div className="mt-6">
+          <p className="mb-3 text-sm font-semibold text-muted">Suggested Items:</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+            {allFoods.map((food) => {
+              const isSelected = selectedItems.includes(food);
+              const imageLoaded = !failedImages.has(food);
+
+              return (
+                <button
+                  key={food}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onToggle(food)}
+                  className={`overflow-hidden rounded-xl border text-left transition-all hover:-translate-y-0.5 ${
+                    disabled
+                      ? 'cursor-not-allowed border-border/60 bg-slate-900/10 opacity-60'
+                      : isSelected
+                      ? 'border-primary bg-primary/10 shadow-card'
+                      : 'border-border bg-slate-900/20 hover:border-primary/50'
+                  }`}
+                >
+                  {imageLoaded && (
+                    <img
+                      src={getFoodImageUrl(food)}
+                      alt={food}
+                      loading="lazy"
+                      onError={() => handleImageError(food)}
+                      className="h-28 w-full object-cover"
+                    />
+                  )}
+                  <div className={`${imageLoaded ? 'p-3' : 'p-4'}`}>
+                    <p className={`font-semibold text-foreground ${imageLoaded ? 'text-sm' : 'text-base'}`}>
+                      {food}
+                    </p>
+                    {imageLoaded && (
+                      <p className="mt-1 text-xs text-muted">{isSelected ? 'Added' : 'Tap to add'}</p>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -187,6 +268,11 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
+  const [groupChatOpen, setGroupChatOpen] = useState(false);
+  const [groupChatId, setGroupChatId] = useState('');
+  const [groupChatMessages, setGroupChatMessages] = useState([]);
+  const [groupChatInput, setGroupChatInput] = useState('');
+  const [groupChatLoading, setGroupChatLoading] = useState(false);
   const activeMealSlot = getMealSlotByTime();
 
   const currentUser = getUser() || {};
@@ -227,8 +313,7 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
           mealType: complaint.mealType,
           upVotes: complaint.agreeVotes,
           downVotes: complaint.disagreeVotes
-        }))
-        .sort((a, b) => b.upVotes + b.downVotes - (a.upVotes + a.downVotes)),
+        })),
     [allComplaints]
   );
 
@@ -520,17 +605,26 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
         };
       });
     } catch (voteError) {
-      setError(voteError.message || 'Unable to register vote.');
+      // Handle specific error status codes
+      if (voteError.response?.status === 409) {
+        setError('You can only vote once on this item.');
+      } else if (voteError.response?.status === 400) {
+        setError('Invalid vote. Please try again.');
+      } else if (voteError.response?.status === 401) {
+        setError('Please sign in again to vote.');
+      } else {
+        setError(voteError.message || 'Unable to register vote.');
+      }
     }
   };
 
-  const handleCreatePoll = async ({ itemName, mealType }) => {
+  const handleCreatePoll = async ({ mealType, foodItem, reasons, comment }) => {
     try {
       const created = await messApi.raiseComplaint({
         mealType,
-        foodItem: itemName,
-        reasons: ['General feedback'],
-        comment: 'Raised from dashboard poll'
+        foodItem,
+        reasons,
+        comment
       });
 
       setComplaintsByMeal((prev) => {
@@ -557,6 +651,41 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
       await fetchCommunityMessages();
     } catch (sendError) {
       setError(sendError.message || 'Unable to send message.');
+    }
+  };
+
+  const fetchGroupMessages = async (groupId) => {
+    if (!groupId) return;
+    try {
+      setGroupChatLoading(true);
+      const messages = await messApi.getMessages('GROUP', groupId);
+      setGroupChatMessages(messages || []);
+    } catch (groupChatError) {
+      setError(groupChatError.message || 'Failed to fetch group messages.');
+    } finally {
+      setGroupChatLoading(false);
+    }
+  };
+
+  const handleOpenGroupChat = async (group) => {
+    setGroupChatId(group.id);
+    setGroupChatOpen(true);
+    setGroupChatMessages([]);
+    setGroupChatInput('');
+    await fetchGroupMessages(group.id);
+  };
+
+  const handleSendGroupChat = async () => {
+    if (!groupChatInput.trim() || !groupChatId) {
+      return;
+    }
+
+    try {
+      await messApi.sendMessage('GROUP', groupChatId, groupChatInput.trim());
+      setGroupChatInput('');
+      await fetchGroupMessages(groupChatId);
+    } catch (sendError) {
+      setError(sendError.message || 'Unable to send message to group.');
     }
   };
 
@@ -603,7 +732,7 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
     return (
       <div className="space-y-6">
         <div className="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
-          <TodaysMenuCard menu={dashboardMenu} />
+          <TodaysMenuCard menu={dashboardMenu} currentMeal={activeMealSlot} />
           <CommunityChatPreview messages={communityPreviewMessages} onlineUsers={onlineUsers} />
         </div>
 
@@ -615,6 +744,8 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
             onVote={handleVote}
             onCreatePoll={handleCreatePoll}
             mealTypes={MEAL_TYPES}
+            meals={mealsByType}
+            hideComplaintButton={true}
           />
 
           <Card>
@@ -699,7 +830,7 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
           </div>
 
           <FoodSelectionGrid
-            foods={FOOD_OPTIONS[selectedMeal] || []}
+            foods={COMMON_FOODS[selectedMeal] || []}
             selectedItems={selectedItems}
             onToggle={handleToggleFood}
             mealLabel={getMealDisplayName(selectedMeal)}
@@ -788,19 +919,32 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
             <>
               <div className="grid gap-2 md:grid-cols-2">
                 {groups.map((group) => (
-                  <button
+                  <div
                     key={group.id}
-                    type="button"
-                    onClick={() => setSelectedGroupId(group.id)}
-                    className={`rounded-xl border p-3 text-left transition-colors ${
+                    className={`rounded-xl border p-3 space-y-2 transition-colors ${
                       selectedGroupId === group.id
                         ? 'border-primary bg-primary/20 text-foreground'
                         : 'border-border hover:bg-slate-800/30'
                     }`}
                   >
-                    <p className="font-semibold">{group.name}</p>
-                    <p className="text-xs text-muted">{group.memberCount || group.members?.length || 0} members</p>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedGroupId(group.id)}
+                      className="w-full text-left"
+                    >
+                      <p className="font-semibold">{group.name}</p>
+                      <p className="text-xs text-muted">{group.memberCount || group.members?.length || 0} members</p>
+                    </button>
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleOpenGroupChat(group)}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Chat
+                    </Button>
+                  </div>
                 ))}
               </div>
 
@@ -844,6 +988,63 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={groupChatOpen} onOpenChange={setGroupChatOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {groups.find(g => g.id === groupChatId)?.name || 'Group Chat'}
+            </DialogTitle>
+            <DialogDescription>
+              Group members only
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Messages Container */}
+            <div className="max-h-[400px] overflow-y-auto rounded-xl border border-border bg-slate-900/30 p-4 space-y-3">
+              {groupChatLoading ? (
+                <p className="text-sm text-muted">Loading messages...</p>
+              ) : groupChatMessages.length === 0 ? (
+                <p className="text-sm text-muted text-center py-8">No messages yet. Start the conversation!</p>
+              ) : (
+                [...groupChatMessages]
+                  .sort((a, b) => new Date(a.createdAt || a.timestamp) - new Date(b.createdAt || b.timestamp))
+                  .map((message) => (
+                    <div key={message.id} className="flex flex-col gap-1">
+                      <p className="text-xs font-semibold text-primary">{message.username}</p>
+                      <p className="text-sm text-foreground">{message.message}</p>
+                      <p className="text-xs text-muted">
+                        {new Date(message.createdAt || message.timestamp).toLocaleTimeString()}
+                      </p>
+                    </div>
+                  ))
+              )}
+            </div>
+
+            {/* Message Input */}
+            <div className="flex gap-2">
+              <Input
+                value={groupChatInput}
+                onChange={(e) => setGroupChatInput(e.target.value)}
+                placeholder="Type a message..."
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendGroupChat();
+                  }
+                }}
+              />
+              <Button 
+                onClick={handleSendGroupChat}
+                disabled={!groupChatInput.trim() || groupChatLoading}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
@@ -944,18 +1145,164 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
     </Card>
   );
 
+  const [selectedFoodForComplaint, setSelectedFoodForComplaint] = useState(null);
+  const [complaintDialogOpen, setComplaintDialogOpen] = useState(false);
+  const [complaintText, setComplaintText] = useState('');
+  const [selectedMealTypeForComplaints, setSelectedMealTypeForComplaints] = useState('BREAKFAST');
+  const [selectedReasons, setSelectedReasons] = useState([]);
+
+  const COMPLAINT_REASONS = [
+    'Too salty',
+    'Not fresh',
+    'Poor quality',
+    'Tastes bad',
+    'Cold temperature',
+    'Not cooked properly',
+    'Portion too small',
+    'Other'
+  ];
+
+  const handleReasonToggle = (reason) => {
+    setSelectedReasons((prev) =>
+      prev.includes(reason) ? prev.filter((r) => r !== reason) : [...prev, reason]
+    );
+  };
+
+  const renderCommonFoodsPage = () => {
+    const handleFoodClick = (food, mealType) => {
+      setSelectedFoodForComplaint({ food, mealType });
+      setComplaintDialogOpen(true);
+      setSelectedReasons([]);
+      setComplaintText('');
+    };
+
+    const handleSubmitComplaint = async () => {
+      if (selectedReasons.length === 0) return;
+
+      try {
+        const complaintMessage = selectedReasons.join(', ') + (complaintText ? '. ' + complaintText : '');
+        await messApi.raiseComplaint({
+          foodItem: selectedFoodForComplaint.food,
+          mealType: selectedFoodForComplaint.mealType,
+          complaint: complaintMessage
+        });
+        setComplaintText('');
+        setComplaintDialogOpen(false);
+        setSelectedFoodForComplaint(null);
+        setSelectedReasons([]);
+      } catch (error) {
+        console.error('Failed to submit complaint:', error);
+      }
+    };
+
+    const currentFoods = COMMON_FOODS[selectedMealTypeForComplaints] || [];
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Rate Common Foods</CardTitle>
+            <CardDescription>Click on a meal type to see foods, then raise complaints or suggestions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              {MEAL_TYPES.map((mealType) => (
+                <button
+                  key={mealType}
+                  onClick={() => setSelectedMealTypeForComplaints(mealType)}
+                  className={`rounded-xl border px-4 py-3 text-center transition-all ${
+                    selectedMealTypeForComplaints === mealType
+                      ? 'border-primary bg-primary/10 text-foreground font-semibold'
+                      : 'border-border bg-card text-muted hover:border-primary/50 hover:text-foreground'
+                  }`}
+                >
+                  {getMealDisplayName(mealType)}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{getMealDisplayName(selectedMealTypeForComplaints)} Foods</CardTitle>
+            <CardDescription>Click on any food to raise a complaint or suggestion</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {currentFoods.length === 0 ? (
+              <EmptyState
+                title="No foods available"
+                description={`No common foods configured for ${getMealDisplayName(selectedMealTypeForComplaints)}`}
+              />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {currentFoods.map((food) => (
+                  <button
+                    key={food}
+                    onClick={() => handleFoodClick(food, selectedMealTypeForComplaints)}
+                    className="rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary hover:bg-primary/10"
+                  >
+                    <p className="font-semibold text-foreground">{food}</p>
+                    <p className="mt-1 text-xs text-muted">Click to raise complaint</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Dialog open={complaintDialogOpen} onOpenChange={setComplaintDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Why is it not good?</DialogTitle>
+              <DialogDescription>
+                <strong>{selectedFoodForComplaint?.food}</strong> ({getMealDisplayName(selectedFoodForComplaint?.mealType)})
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-3">
+                {COMPLAINT_REASONS.map((reason) => (
+                  <label key={reason} className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedReasons.includes(reason)}
+                      onChange={() => handleReasonToggle(reason)}
+                      className="w-4 h-4 rounded border-border"
+                    />
+                    <span className="text-sm text-foreground">{reason}</span>
+                  </label>
+                ))}
+              </div>
+
+              {selectedReasons.includes('Other') && (
+                <Input
+                  placeholder="Please describe..."
+                  value={complaintText}
+                  onChange={(e) => setComplaintText(e.target.value)}
+                  className="text-sm"
+                />
+              )}
+
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setComplaintDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSubmitComplaint} disabled={selectedReasons.length === 0}>
+                  Submit Complaint
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  };
+
   const moduleView = {
     dashboard: renderDashboard,
     'weekly-menu': renderWeeklyMenu,
     groups: renderGroups,
-    voting: () => (
-      <GroupVotingSection
-        items={votingItems}
-        onVote={handleVote}
-        onCreatePoll={handleCreatePoll}
-        mealTypes={MEAL_TYPES}
-      />
-    ),
+    voting: renderCommonFoodsPage,
     feedback: () => <RecentFeedbackTable rows={filteredFeedback} onReset={handleRefreshFeedback} />,
     'community-chat': renderCommunityChat,
     profile: renderProfile
@@ -991,7 +1338,7 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
     profile: UserCircle2
   }[activeItem];
 
-  const CurrentView = moduleView[activeItem] || moduleView.dashboard;
+  const currentViewRenderer = moduleView[activeItem] || moduleView.dashboard;
 
   return (
     <div className="space-y-6">
@@ -1013,7 +1360,7 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
         <div className="rounded-xl border border-success/40 bg-success/20 p-3 text-sm text-emerald-200">{menuMessage}</div>
       ) : null}
 
-      <CurrentView />
+      {currentViewRenderer()}
     </div>
   );
 }

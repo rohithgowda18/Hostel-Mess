@@ -13,8 +13,32 @@ const mealLabels = {
   dinner: 'Dinner'
 };
 
-function TodaysMenuCard({ menu }) {
-  const entries = Object.entries(menu || {});
+const mealKeyMap = {
+  BREAKFAST: 'breakfast',
+  LUNCH: 'lunch',
+  SNACKS: 'snacks',
+  DINNER: 'dinner'
+};
+
+const allMeals = [
+  { key: 'BREAKFAST', displayKey: 'breakfast' },
+  { key: 'LUNCH', displayKey: 'lunch' },
+  { key: 'SNACKS', displayKey: 'snacks' },
+  { key: 'DINNER', displayKey: 'dinner' }
+];
+
+function TodaysMenuCard({ menu, currentMeal }) {
+  const currentMealKey = currentMeal ? mealKeyMap[currentMeal] : null;
+
+  // Reorder meals: current meal first, then others
+  const mealOrder = allMeals.sort((a, b) => {
+    const aIsCurrent = a.displayKey === currentMealKey;
+    const bIsCurrent = b.displayKey === currentMealKey;
+    
+    if (aIsCurrent) return -1;
+    if (bIsCurrent) return 1;
+    return 0;
+  });
 
   return (
     <Card className="h-full">
@@ -31,23 +55,38 @@ function TodaysMenuCard({ menu }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {entries.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border bg-slate-800/20 p-4 text-sm text-muted">
-            No meal updates posted yet for today.
-          </p>
-        ) : null}
+        {mealOrder.map(({ key, displayKey }) => {
+          const items = menu?.[displayKey] || [];
+          const isCurrent = displayKey === currentMealKey;
 
-        {entries.map(([mealKey, dishes]) => {
-          const itemList = Array.isArray(dishes) ? dishes : [];
           return (
-            <div key={mealKey} className="rounded-xl border border-border bg-slate-800/30 p-4">
-              <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">{mealLabels[mealKey] || mealKey}</p>
-              {itemList.length === 0 ? (
+            <div
+              key={displayKey}
+              className={`rounded-xl border p-4 transition-all ${
+                isCurrent
+                  ? 'border-primary bg-gradient-to-br from-primary/15 to-primary/5 ring-2 ring-primary/30'
+                  : 'border-border bg-slate-800/20'
+              }`}
+            >
+              <p
+                className={`mb-2 uppercase tracking-wide ${
+                  isCurrent
+                    ? 'text-lg font-bold text-primary'
+                    : 'text-xs font-semibold text-muted'
+                }`}
+              >
+                {mealLabels[key]}
+              </p>
+              {items.length === 0 ? (
                 <p className="text-sm text-muted">No items posted.</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {itemList.map((dish) => (
-                    <Badge key={dish} variant="default">
+                  {items.map((dish) => (
+                    <Badge
+                      key={dish}
+                      variant={isCurrent ? 'default' : 'secondary'}
+                      className={isCurrent ? 'px-2.5 py-1.5' : ''}
+                    >
                       {dish}
                     </Badge>
                   ))}

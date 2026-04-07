@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import DashboardLayout from '@/layouts/dashboard-layout';
 import DashboardPage from '@/pages/dashboard-page';
 import LoginPage from '@/pages/login-page';
+import GroupsPage from '@/pages/groups-page';
+import GroupDetailPage from '@/pages/group-detail-page';
 import { getUser, isAuthenticated, logout } from '@/services/auth-service';
 
 function App() {
@@ -43,6 +45,30 @@ function App() {
           authenticated ? (
             <DashboardLayout user={appUser} onLogout={handleLogout}>
               <DashboardPage />
+            </DashboardLayout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/groups"
+        element={
+          authenticated ? (
+            <DashboardLayout user={appUser} onLogout={handleLogout}>
+              <GroupsPage />
+            </DashboardLayout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/groups/:groupId"
+        element={
+          authenticated ? (
+            <DashboardLayout user={appUser} onLogout={handleLogout}>
+              <GroupDetailPage />
             </DashboardLayout>
           ) : (
             <Navigate to="/login" replace />

@@ -1,14 +1,32 @@
-import { cloneElement, isValidElement, useState } from 'react';
+import { cloneElement, isValidElement, useEffect, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import AppSidebar from '@/components/layout/app-sidebar';
 import TopNavbar from '@/components/layout/top-navbar';
 import { sidebarItems } from '@/config/navigation';
 import { cn } from '@/lib/utils';
 
 function DashboardLayout({ user, onLogout, children }) {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [activeItem, setActiveItem] = useState('dashboard');
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Sync activeItem with current route and query parameters
+  useEffect(() => {
+    if (location.pathname.startsWith('/groups')) {
+      setActiveItem('groups');
+    } else if (location.pathname.startsWith('/dashboard')) {
+      // Check if there's a tab query parameter
+      const tab = searchParams.get('tab');
+      if (tab) {
+        setActiveItem(tab);
+      } else {
+        setActiveItem('dashboard');
+      }
+    }
+  }, [location, searchParams]);
 
   const page = isValidElement(children)
     ? cloneElement(children, {

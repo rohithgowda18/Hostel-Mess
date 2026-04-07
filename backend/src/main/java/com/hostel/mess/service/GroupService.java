@@ -1,7 +1,9 @@
 package com.hostel.mess.service;
 
 import com.hostel.mess.model.Group;
+import com.hostel.mess.model.User;
 import com.hostel.mess.repository.GroupRepository;
+import com.hostel.mess.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
@@ -15,6 +17,9 @@ public class GroupService {
     @Autowired
     private GroupRepository groupRepository;
     
+    @Autowired
+    private UserRepository userRepository;
+    
     private static final String CHAR_SET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // Uppercase + numbers only for WhatsApp compatibility
     private static final int CODE_LENGTH = 8; // 8-character code for sharing
     
@@ -26,12 +31,16 @@ public class GroupService {
             throw new RuntimeException("Group name is required");
         }
         
+        // Fetch user email from userId
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        
         String groupCode = generateUniqueGroupCode();
         
         List<String> members = new ArrayList<>();
-        members.add(userId);
+        members.add(user.getEmail()); // Store email instead of userId
         
-        Group group = new Group(name, groupCode, members);
+        Group group = new Group(name, groupCode, members, user.getEmail()); // Store creator as email
         return groupRepository.save(group);
     }
     
@@ -43,20 +52,25 @@ public class GroupService {
             throw new RuntimeException("Group code is required");
         }
         
+        // Fetch user email from userId
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        
         Optional<Group> groupOpt = groupRepository.findByGroupCode(groupCode.toUpperCase());
         if (groupOpt.isEmpty()) {
             throw new RuntimeException("Group not found with this code");
         }
         
         Group group = groupOpt.get();
+        String userEmail = user.getEmail();
         
         // Check if user already member
-        if (group.getMembers().contains(userId)) {
+        if (group.getMembers().contains(userEmail)) {
             throw new RuntimeException("You are already a member of this group");
         }
         
-        // Add user to group
-        group.getMembers().add(userId);
+        // Add user email to group
+        group.getMembers().add(userEmail);
         return groupRepository.save(group);
     }
     
