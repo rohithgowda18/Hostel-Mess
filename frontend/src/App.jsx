@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
+import { isAuthenticated, getUser } from '@/services/auth-service';
 import { Navigate, Route, Routes } from 'react-router-dom';
+
+
 import DashboardLayout from '@/layouts/dashboard-layout';
 import DashboardPage from '@/pages/dashboard-page';
 import LoginPage from '@/pages/login-page';
 import GroupsPage from '@/pages/groups-page';
 import GroupDetailPage from '@/pages/group-detail-page';
-import { getUser, isAuthenticated, logout } from '@/services/auth-service';
+import StudentFoodPhotosPage from '@/pages/student-food-photos-page';
 
 function App() {
   const [authenticated, setAuthenticated] = useState(() => isAuthenticated());
@@ -45,6 +48,18 @@ function App() {
           authenticated ? (
             <DashboardLayout user={appUser} onLogout={handleLogout}>
               <DashboardPage />
+            </DashboardLayout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/student-photos"
+        element={
+          authenticated ? (
+            <DashboardLayout user={appUser} onLogout={handleLogout}>
+              <StudentFoodPhotosPage />
             </DashboardLayout>
           ) : (
             <Navigate to="/login" replace />

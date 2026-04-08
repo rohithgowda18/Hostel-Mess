@@ -18,11 +18,12 @@ function AppSidebar({
     // Navigate based on item key
     if (item.key === 'groups') {
       navigate('/groups');
+    } else if (item.key === 'student-photos') {
+      navigate('/student-photos');
     } else {
       // All dashboard items navigate to /dashboard with a tab query parameter
       navigate(`/dashboard?tab=${item.key}`);
     }
-    
     // Update active item for UI feedback
     onItemSelect(item.key);
     onMobileClose();
