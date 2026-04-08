@@ -6,7 +6,10 @@ import com.hostel.mess.dto.RegisterRequest;
 import com.hostel.mess.dto.UserInfo;
 import com.hostel.mess.model.User;
 import com.hostel.mess.repository.UserRepository;
+import com.hostel.mess.events.UserRegisteredEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service for authentication operations
@@ -15,18 +18,33 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
     
-    public AuthService(UserRepository userRepository) {
+    public AuthService(UserRepository userRepository, ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
     }
     
     /**
-     * Register a new user - Disabled
+     * Register a new user
+     * Publishes UserRegisteredEvent after successful registration
+     * 
      * @param registerRequest Registration data
      * @return LoginResponse with token and user info
      * @throws RuntimeException if email already exists
      */
+    @Transactional
     public LoginResponse register(RegisterRequest registerRequest) {
+        // TODO: Implement actual registration logic
+        // Placeholder implementation:
+        // 1. Check if email exists
+        // 2. Create new User
+        // 3. Hash password
+        // 4. Save to repository
+        // 5. Generate JWT token
+        // 6. Publish UserRegisteredEvent (after transaction commits)
+        // 7. Return LoginResponse
+        
         throw new RuntimeException("Registration is disabled");
     }
     

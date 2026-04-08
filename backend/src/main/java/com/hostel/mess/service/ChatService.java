@@ -6,8 +6,12 @@ import com.hostel.mess.model.User;
 import com.hostel.mess.repository.ChatRepository;
 import com.hostel.mess.repository.GroupRepository;
 import com.hostel.mess.repository.UserRepository;
+import com.hostel.mess.events.MessageSentEvent;
+import com.hostel.mess.dto.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -20,6 +24,7 @@ import java.util.Optional;
  * Service for handling chat operations
  * Manages sending, retrieving, and deleting messages
  * Handles message validation and expiration
+ * Publishes MessageSentEvent for async WebSocket broadcasting
  */
 @Service
 public class ChatService {
@@ -32,6 +37,9 @@ public class ChatService {
     
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
     
     // Constants
     private static final int UNIVERSAL_CHAT_MESSAGE_MAX_LENGTH = 150;
@@ -50,6 +58,7 @@ public class ChatService {
      * @return Created ChatMessage
      * @throws IllegalArgumentException if validation fails
      */
+    @Transactional
     public ChatMessage sendMessage(String chatType, String chatId, String senderId, String message) {
         
         // Validate inputs
@@ -120,7 +129,23 @@ public class ChatService {
             expiresAt
         );
         
-        return chatRepository.save(chatMessage);
+        ChatMessage savedMessage = chatRepository.save(chatMessage);
+        
+        // Publish event asynchronously (after transaction commits)
+        // ChatEventListener will handle WebSocket broadcasting
+        ChatResponse chatResponse = new ChatResponse(savedMessage);
+        
+        eventPublisher.publishEvent(new MessageSentEvent(
+            this,
+            savedMessage.getId(),
+            savedMessage.getChatType(),
+            savedMessage.getChatId(),
+            chatResponse,
+            senderName,
+            senderId
+        ));
+        
+        return savedMessage;
     }
     
     /**

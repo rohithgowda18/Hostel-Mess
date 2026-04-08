@@ -16,10 +16,24 @@ function AppSidebar({
 
   const handleItemClick = (item) => {
     // Navigate based on item key
-    if (item.key === 'groups') {
+    if (item.key === 'dashboard') {
+      navigate('/dashboard');
+    } else if (item.key === 'daily-meal') {
+      navigate('/daily-meal');
+    } else if (item.key === 'groups') {
       navigate('/groups');
+    } else if (item.key === 'complaints') {
+      navigate('/complaints');
+    } else if (item.key === 'lost-found') {
+      navigate('/lost-found');
+    } else if (item.key === 'roommates') {
+      navigate('/roommates');
+    } else if (item.key === 'post-food') {
+      navigate('/post-food');
+    } else if (item.key === 'voting') {
+      navigate('/voting');
     } else {
-      // All dashboard items navigate to /dashboard with a tab query parameter
+      // Fallback for other items - treat as dashboard tabs
       navigate(`/dashboard?tab=${item.key}`);
     }
     

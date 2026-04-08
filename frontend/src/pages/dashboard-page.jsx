@@ -417,7 +417,7 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
       ]);
 
       setMealsByType(mealMap);
-      setGroups(groupList || []);
+      setGroups(groupList?.data || []);
       setComplaintsByMeal(complaintsMap);
 
       if (groupList?.length) {
@@ -1300,40 +1300,44 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
 
   const moduleView = {
     dashboard: renderDashboard,
-    'weekly-menu': renderWeeklyMenu,
+    'daily-meal': renderWeeklyMenu,
     groups: renderGroups,
-    voting: renderCommonFoodsPage,
-    feedback: () => <RecentFeedbackTable rows={filteredFeedback} onReset={handleRefreshFeedback} />,
+    complaints: () => <div className="text-center py-8 text-muted">Complaints feature - use dedicated page</div>,
+    'lost-found': () => <div className="text-center py-8 text-muted">Lost & Found feature - use dedicated page</div>,
+    roommates: () => <div className="text-center py-8 text-muted">Roommates feature - use dedicated page</div>,
     'community-chat': renderCommunityChat,
     profile: renderProfile
   };
 
   const currentTitle = {
     dashboard: 'Dashboard',
-    'weekly-menu': 'Daily Meal',
+    'daily-meal': 'Daily Meal',
     groups: 'Groups',
-    voting: 'Voting',
-    feedback: 'Feedback',
+    complaints: 'Complaints',
+    'lost-found': 'Lost & Found',
+    roommates: 'Roommates',
     'community-chat': 'Community Chat',
     profile: 'Profile'
   }[activeItem];
 
   const currentDescription = {
     dashboard: 'Hostel mess operations at a glance',
-    'weekly-menu': 'Post today\'s meals with current-time highlight and quick visibility',
+    'daily-meal': 'Post today\'s meals with current-time highlight and quick visibility',
     groups: 'Monitor and coordinate active mess groups',
-    voting: 'Capture food preference with transparent voting',
-    feedback: 'Review student feedback and response trends',
+    complaints: 'Report and track maintenance issues',
+    'lost-found': 'Find lost items or report found items',
+    roommates: 'Connect with compatible roommates',
     'community-chat': 'Watch live community conversations',
     profile: 'Account and role preferences'
   }[activeItem];
 
   const HeaderIcon = {
     dashboard: FolderCog,
-    'weekly-menu': CalendarCheck2,
+    'daily-meal': CalendarCheck2,
     groups: Users,
-    voting: Vote,
-    feedback: FolderCog,
+    complaints: MessageCircle,
+    'lost-found': FolderCog,
+    roommates: Users,
     'community-chat': FolderCog,
     profile: UserCircle2
   }[activeItem];

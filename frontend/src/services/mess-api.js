@@ -1,6 +1,7 @@
 import apiClient from '@/services/api-client';
 
 export const messApi = {
+  // Meal APIs
   async getTodayMeal(mealType) {
     const response = await apiClient.get(`/meals/today/${mealType}`);
     return response.data;
@@ -26,6 +27,7 @@ export const messApi = {
     return Object.fromEntries(results);
   },
 
+  // Group APIs with pagination
   async createGroup(name) {
     const response = await apiClient.post('/groups/create', { name });
     return response.data;
@@ -36,9 +38,18 @@ export const messApi = {
     return response.data;
   },
 
-  async getUserGroups() {
-    const response = await apiClient.get('/groups/my-groups');
-    return response.data;
+  async getUserGroups(page = 0, size = 20) {
+    const response = await apiClient.get('/groups/my-groups', {
+      params: { page, size }
+    });
+    return response.data; // Returns PaginatedResponse
+  },
+
+  async getAllGroups(page = 0, size = 20) {
+    const response = await apiClient.get('/groups/all', {
+      params: { page, size }
+    });
+    return response.data; // Returns PaginatedResponse
   },
 
   async getGroupDetails(groupId) {
@@ -61,11 +72,20 @@ export const messApi = {
     return response.data;
   },
 
+  // Chat APIs with pagination
+  async getMessagesPaginated(chatType, chatId, page = 0, size = 20) {
+    const response = await apiClient.get('/chat/messages', {
+      params: { chatType, chatId, page, size }
+    });
+    return response.data; // Returns PaginatedResponse<ChatResponse>
+  },
+
+  // Deprecated: kept for backwards compatibility
   async getMessages(chatType, chatId, page = 0, size = 50) {
     const response = await apiClient.get('/chat/messages', {
       params: { chatType, chatId, page, size }
     });
-    return response.data.messages || [];
+    return response.data.data || [];
   },
 
   async sendMessage(chatType, chatId, message) {
@@ -82,17 +102,26 @@ export const messApi = {
     return response.data;
   },
 
-  async getComplaintsToday(mealType) {
-    const response = await apiClient.get(`/complaints/today/${mealType}`);
-    return response.data;
+  // Complaint APIs with pagination
+  async getComplaintsTodayPaginated(mealType, page = 0, size = 20) {
+    const response = await apiClient.get(`/complaints/today/${mealType}`, {
+      params: { page, size }
+    });
+    return response.data; // Returns PaginatedResponse<ComplaintResponse>
   },
 
-  async getAllComplaintsByMeal(mealTypes) {
+  // Deprecated: kept for backwards compatibility
+  async getComplaintsToday(mealType) {
+    const response = await apiClient.get(`/complaints/today/${mealType}`);
+    return response.data.data || [];
+  },
+
+  async getAllComplaintsByMeal(mealTypes, page = 0, size = 20) {
     const results = await Promise.all(
       mealTypes.map(async (mealType) => {
         try {
-          const data = await this.getComplaintsToday(mealType);
-          return [mealType, data || []];
+          const data = await this.getComplaintsTodayPaginated(mealType, page, size);
+          return [mealType, data.data || []];
         } catch (error) {
           return [mealType, []];
         }
@@ -115,11 +144,26 @@ export const messApi = {
     return response.data;
   },
 
+  async getComplaintStatsPaginated(status, page = 0, size = 20) {
+    const response = await apiClient.get(`/complaints/admin/status/${status}`, {
+      params: { page, size }
+    });
+    return response.data; // Returns PaginatedResponse<ComplaintResponse>
+  },
+
+  async getAllComplaintsPaginated(page = 0, size = 20) {
+    const response = await apiClient.get('/complaints/admin/all', {
+      params: { page, size }
+    });
+    return response.data; // Returns PaginatedResponse<ComplaintResponse>
+  },
+
   async getComplaintStats() {
     const response = await apiClient.get('/complaints/admin/stats');
     return response.data;
   },
 
+  // User APIs
   async getMyProfile() {
     const response = await apiClient.get('/users/me');
     return response.data;

@@ -1,6 +1,8 @@
 package com.hostel.mess.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.Instant;
 import java.util.List;
@@ -8,12 +10,19 @@ import java.util.Set;
 import java.util.HashSet;
 
 @Document(collection = "food_complaints")
+@CompoundIndex(name = "meal_date_idx", def = "{'mealType': 1, 'date': -1}")
+@CompoundIndex(name = "status_updated_idx", def = "{'status': 1, 'updatedAt': -1}")
 public class Complaint {
     @Id
     private String id;
     
+    @Indexed
     private String mealType;
+    
+    @Indexed
     private String foodItem;
+    
+    @Indexed
     private String date; // yyyy-MM-dd format
     
     private List<String> reasons; // ["Poor taste", "Cold", "Oily", "Repeated often", "Undercooked/Overcooked", "Other"]
@@ -25,8 +34,12 @@ public class Complaint {
     
     private Set<String> votedUserIds; // Track which users have voted to prevent duplicate votes
     
+    @Indexed
     private String status; // PENDING, REMOVAL_REQUESTED, NEEDS_IMPROVEMENT, RESOLVED
+    
+    @Indexed(expireAfterSeconds = 604800) // 7 days auto-deletion
     private Instant createdAt;
+    
     private Instant updatedAt;
     
     // Constructors

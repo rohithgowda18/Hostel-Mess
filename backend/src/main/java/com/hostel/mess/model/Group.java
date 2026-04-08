@@ -4,17 +4,29 @@ import java.time.Instant;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "groups")
+@CompoundIndex(name = "members_created_idx", def = "{'members': 1, 'createdAt': -1}")
 public class Group {
     @Id
     private String id;
     
+    @Indexed
     private String name;
+    
+    @Indexed(unique = true)
     private String groupCode; // Unique 8-character code to join group (shareable via WhatsApp)
+    
+    @Indexed
     private List<String> members; // List of user emails
+    
+    @Indexed
     private String creator; // Creator email
+    
+    @Indexed
     private Instant createdAt;
     
     // Constructors

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hostel.mess.dto.ChatRequest;
 import com.hostel.mess.dto.ChatResponse;
+import com.hostel.mess.dto.PaginatedResponse;
 import com.hostel.mess.model.ChatMessage;
 import com.hostel.mess.security.JwtTokenProvider;
 import com.hostel.mess.service.ChatService;
@@ -114,21 +115,25 @@ public class ChatController {
     
     /**
      * GET /api/chat/messages
-     * Get all messages for a specific chat
-     * Query parameters: chatType (required), chatId (required)
+     * Get paginated messages for a specific chat (newest first for infinite scroll)
+     * Query parameters: chatType (required), chatId (required), page (default 0), size (default 20, max 100)
      * Automatically filters out expired messages
      * Requires authentication
      * 
+     * Uses reverse chronological ordering for better UX in real-time chat
+     * 
      * @param chatType Type of chat (GROUP or UNIVERSAL)
      * @param chatId Group ID for GROUP, "GLOBAL" for UNIVERSAL
-     * @return List of ChatResponse objects
+     * @param page Page number (0-based, default 0)
+     * @param size Page size (default 20, max 100)
+     * @return PaginatedResponse with ChatResponse objects (newest first)
      */
     @GetMapping("/messages")
     public ResponseEntity<?> getMessages(
         @RequestParam(required = true) String chatType,
         @RequestParam(required = true) String chatId,
         @RequestParam(required = false, defaultValue = "0") int page,
-        @RequestParam(required = false, defaultValue = "50") int size,
+        @RequestParam(required = false, defaultValue = "20") int size,
         jakarta.servlet.http.HttpServletRequest httpRequest
     ) {
         try {
@@ -136,24 +141,34 @@ public class ChatController {
             System.out.println("[DEBUG] /api/chat/messages called");
             System.out.println("[DEBUG] userId: " + userId);
             System.out.println("[DEBUG] chatType: " + chatType + ", chatId: " + chatId);
+            
+            // Validate pagination parameters
+            if (page < 0) page = 0;
+            if (size < 1) size = 20;
+            if (size > 100) size = 100; // Max 100 items per page
+            
             if (userId == null) {
                 System.out.println("[DEBUG] No valid JWT, request will likely be rejected.");
             }
+            
             // Get paginated messages (expired messages are filtered automatically)
             var pageResult = chatService.getMessagesPaged(chatType, chatId, page, size);
+            
             // Convert to DTOs
             List<ChatResponse> responses = pageResult.getContent().stream()
                 .map(ChatResponse::new)
                 .toList();
 
-            // Return page info and messages
-            return ResponseEntity.ok(Map.of(
-                "messages", responses,
-                "page", pageResult.getNumber(),
-                "size", pageResult.getSize(),
-                "totalPages", pageResult.getTotalPages(),
-                "totalElements", pageResult.getTotalElements()
-            ));
+            // Return paginated response
+            PaginatedResponse<ChatResponse> response = new PaginatedResponse<>(
+                responses,
+                pageResult.getNumber(),
+                pageResult.getSize(),
+                pageResult.getTotalPages(),
+                pageResult.getTotalElements()
+            );
+            
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             System.out.println("[DEBUG] IllegalArgumentException: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

@@ -1,7 +1,7 @@
-# 🎯 Hostel Mess System - Complete System Guide
+# 🎯 Hostel Mess Management System - Complete System Guide
 
-**Last Updated**: January 25, 2026  
-**Status**: ✅ Production Ready  
+**Last Updated**: April 8, 2026  
+**Status**: ✅ Production Ready with WebSocket Real-time Features  
 **Deployment**: Fully Functional on localhost:3000 (Frontend) & localhost:8080 (Backend)
 
 ---
@@ -164,21 +164,27 @@ The Hostel Mess Live Menu is a comprehensive system for managing hostel dining w
 
 ### Technology Stack
 
-#### Backend
+#### Backend (Java Spring Boot)
 - **Framework**: Spring Boot 3.2.1
-- **Language**: Java 21
-- **Web Server**: Apache Tomcat 10.1.17
-- **Database**: MongoDB 4.11.1
-- **Authentication**: JWT (JJWT 0.12.3)
+- **Language**: Java 17+
+- **Web Server**: Apache Tomcat (Embedded)
+- **Database**: MongoDB 4.0+
+- **Authentication**: JWT (JJWT)
 - **Validation**: Jakarta Bean Validation
-- **Build**: Maven 3+
+- **WebSocket**: Spring WebSocket + STOMP + SockJS
+- **Build Tool**: Maven 3+
+- **Task Scheduling**: Spring Scheduling
 
-#### Frontend
-- **Library**: React 18+
-- **Routing**: React Router v6
-- **HTTP Client**: Axios
-- **Styling**: CSS3
-- **Node**: 16+ with npm
+#### Frontend (React + Vite)
+- **Library**: React 18.2.0
+- **Build Tool**: Vite 7.1.5
+- **Routing**: React Router v6 (6.20.0)
+- **HTTP Client**: Axios 1.6.2
+- **Real-time**: SockJS Client 1.6.1 + STOMP.js 2.3.3
+- **Styling**: Tailwind CSS 3.4.17 + PostCSS
+- **UI Components**: Radix UI (Avatar, Dialog, Dropdown, Tabs)
+- **Icons**: Lucide React 0.543.0
+- **Node**: 18+ with npm
 
 ### Architecture Diagram
 
@@ -457,17 +463,397 @@ Response: 200 OK
 
 ### Chat Endpoints
 
-#### Send Message
+---
+
+## API Documentation
+
+### 🔗 API Base URL
+- **Local Development**: `http://localhost:8080/api`
+- **Production**: `https://your-domain.com/api`
+
+### ✅ Complete REST Endpoints (40+)
+
+#### 🔐 Authentication (`/api/auth`)
+
+##### Register User
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+Request:
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123",      // min 6 characters
+  "hostel": "Boys Hostel A"       // optional
+}
+
+Response: 201 Created
+{
+  "success": true,
+  "message": "Registration successful",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "507f1f77bcf86cd799439011",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "hostel": "Boys Hostel A",
+      "role": "USER"
+    }
+  }
+}
+```
+
+##### Login User
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+Request:
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+Response: 200 OK
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expariesIn": 86400,           // seconds (24 hours)
+    "user": {
+      "id": "507f1f77bcf86cd799439011",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "hostel": "Boys Hostel A",
+      "role": "USER"
+    }
+  }
+}
+```
+
+#### 👤 User Profile (`/api/users`)
+
+##### Get Current User
+```http
+GET /api/users/me
+Authorization: Bearer {token}
+
+Response: 200 OK
+{
+  "id": "507f1f77bcf86cd799439011",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "hostel": "Boys Hostel A",
+  "roomNumber": "A101",
+  "year": "2nd Year",
+  "branch": "Computer Science",
+  "role": "USER",
+  "createdAt": "2026-01-25T12:00:00Z"
+}
+```
+
+##### Get User by ID
+```http
+GET /api/users/{userId}
+
+Response: 200 OK
+{
+  "id": "507f1f77bcf86cd799439011",
+  "name": "John Doe",
+  "hostel": "Boys Hostel A",
+  "roomNumber": "A101"
+}
+```
+
+##### Update User Profile
+```http
+PUT /api/users/me
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request:
+{
+  "roomNumber": "A102",
+  "year": "3rd Year",
+  "branch": "Computer Science"
+}
+
+Response: 200 OK
+{
+  "success": true,
+  "data": { /* updated user object */ }
+}
+```
+
+#### 🍽️ Meals (`/api/meals`)
+
+##### Get Today's Meal by Type
+```http
+GET /api/meals/today/{mealType}
+Authorization: Bearer {token}
+
+Path Parameter:
+- mealType: "BREAKFAST" | "LUNCH" | "SNACKS" | "DINNER"
+
+Response: 200 OK
+{
+  "mealType": "BREAKFAST",
+  "date": "2026-01-25",
+  "items": ["Idli", "Vada", "Sambar", "Chutney"],
+  "postedAt": "2026-01-25T07:30:00Z",
+  "confirmations": 5,
+  "verificationStatus": "VERIFIED",
+  "updateWindowOpen": true,
+  "updateWindowMessage": "Update window open until 09:30"
+}
+```
+
+##### Post/Update Today's Meal
+```http
+POST /api/meals/update
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request:
+{
+  "mealType": "BREAKFAST",
+  "date": "2026-01-25",
+  "items": ["Idli", "Vada", "Sambar"]
+}
+
+Response: 200 OK
+{
+  "mealType": "BREAKFAST",
+  "date": "2026-01-25",
+  "items": ["Idli", "Vada", "Sambar"],
+  "postedAt": "2026-01-25T08:15:00Z",
+  "confirmations": 1,
+  "verificationStatus": "UNVERIFIED"
+}
+```
+
+##### Delete Meal (Admin Only)
+```http
+DELETE /api/meals/admin/{mealType}/today
+Authorization: Bearer {token}
+
+Response: 200 OK
+{
+  "success": true,
+  "message": "Meal deleted successfully"
+}
+```
+
+#### 🥣 Breakfast Specific (`/api/breakfast`)
+
+##### Get Today's Breakfast
+```http
+GET /api/breakfast/today
+
+Response: 200 OK
+{
+  "date": "2026-01-25",
+  "items": ["Idli", "Vada", "Sambar"],
+  "postedAt": "2026-01-25T07:30:00Z"
+}
+```
+
+##### Update Breakfast
+```http
+POST /api/breakfast/update
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request:
+{
+  "date": "2026-01-25",
+  "items": ["Idli", "Vada"]
+}
+
+Response: 200 OK
+{
+  "date": "2026-01-25",
+  "items": ["Idli", "Vada"],
+  "postedAt": "2026-01-25T08:15:00Z"
+}
+```
+
+#### 👥 Groups (`/api/groups`)
+
+##### Create Group
+```http
+POST /api/groups/create
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request:
+{
+  "name": "Night Owls"
+}
+
+Response: 201 Created
+{
+  "id": "507f1f77bcf86cd799439011",
+  "name": "Night Owls",
+  "groupCode": "KJ9L2X4M",        // 8-char unique code
+  "members": ["507f1f77bcf86cd799439011"],
+  "memberCount": 1,
+  "creator": "507f1f77bcf86cd799439011",
+  "createdAt": "2026-01-25T12:00:00Z"
+}
+```
+
+##### Join Group
+```http
+POST /api/groups/join
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request:
+{
+  "groupCode": "KJ9L2X4M"
+}
+
+Response: 200 OK
+{
+  "id": "507f1f77bcf86cd799439011",
+  "name": "Night Owls",
+  "groupCode": "KJ9L2X4M",
+  "members": ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"],
+  "memberCount": 2
+}
+```
+
+##### Get My Groups (Paginated)
+```http
+GET /api/groups/my-groups?page=0&size=20
+Authorization: Bearer {token}
+
+Query Parameters:
+- page: Page number (0-indexed)
+- size: Items per page (max 100)
+
+Response: 200 OK
+{
+  "content": [
+    {
+      "id": "507f1f77bcf86cd799439011",
+      "name": "Night Owls",
+      "groupCode": "KJ9L2X4M",
+      "memberCount": 2
+    }
+  ],
+  "totalPages": 1,
+  "totalElements": 1,
+  "currentPage": 0
+}
+```
+
+##### Get All Groups (Paginated)
+```http
+GET /api/groups/all?page=0&size=20
+
+Response: 200 OK
+{
+  "content": [ /* array of groups */ ],
+  "totalPages": 5,
+  "totalElements": 100,
+  "currentPage": 0
+}
+```
+
+##### Get Group Details
+```http
+GET /api/groups/{groupId}
+
+Path Parameter:
+- groupId: Group ID
+
+Response: 200 OK
+{
+  "id": "507f1f77bcf86cd799439011",
+  "name": "Night Owls",
+  "groupCode": "KJ9L2X4M",
+  "members": ["user_1", "user_2", "user_3"],
+  "memberCount": 3,
+  "creator": "user_1"
+}
+```
+
+#### 🍴 Group Meal Status (`/api/group-meal-status`)
+
+##### Mark "I'm Going" to Meal
+```http
+POST /api/group-meal-status/going
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request:
+{
+  "groupId": "507f1f77bcf86cd799439011",
+  "mealType": "LUNCH"
+}
+
+Response: 201 Created
+{
+  "groupId": "507f1f77bcf86cd799439011",
+  "mealType": "LUNCH",
+  "goingUsers": ["user_1", "user_2"],
+  "goingCount": 2,
+  "expiresAt": "2026-01-25T13:30:00Z"  // 30 min auto-expiry
+}
+```
+
+##### Cancel Meal Attendance
+```http
+DELETE /api/group-meal-status/{groupId}/{mealType}
+Authorization: Bearer {token}
+
+Path Parameters:
+- groupId: Group ID
+- mealType: "BREAKFAST" | "LUNCH" | "SNACKS" | "DINNER"
+
+Response: 200 OK
+{
+  "success": true,
+  "message": "Attendance cancelled"
+}
+```
+
+##### Get Group Meal Status
+```http
+GET /api/group-meal-status/{groupId}/{mealType}
+
+Response: 200 OK
+{
+  "groupId": "507f1f77bcf86cd799439011",
+  "mealType": "LUNCH",
+  "goingUsers": ["user_1", "user_2"],
+  "goingCount": 2
+}
+```
+
+#### 💬 Chat (`/api/chat`)
+
+##### Send Message
 ```http
 POST /api/chat/send
 Authorization: Bearer {token}
 Content-Type: application/json
 
+Request:
 {
-  "chatType": "GROUP",
-  "chatId": "group_507f1f77bcf86cd799439011",
-  "message": "Hey everyone! Let's meet at 12 for lunch?"
+  "chatType": "GROUP",                    // "GROUP" or "UNIVERSAL"
+  "chatId": "507f1f77bcf86cd799439011",  // groupId for GROUP, "GLOBAL" for UNIVERSAL
+  "message": "Hey everyone! Let's meet at 12 for lunch?",
+  "username": "John Doe"                 // optional, uses logged-in name by default
 }
+
+Limits:
+- GROUP chat: 500 characters max
+- UNIVERSAL chat: 150 characters max
 
 Response: 201 Created
 {
@@ -475,39 +861,66 @@ Response: 201 Created
   "username": "John Doe",
   "message": "Hey everyone! Let's meet at 12 for lunch?",
   "timestamp": "2026-01-25T11:45:00Z",
-  "chatType": "GROUP"
+  "chatType": "GROUP",
+  "chatId": "507f1f77bcf86cd799439011"
 }
 ```
 
-#### Get Messages
+##### Get Messages (Paginated)
 ```http
-GET /api/chat/messages?chatType=GROUP&chatId=group_507f1f77bcf86cd799439011
+GET /api/chat/messages?chatType=GROUP&chatId=507f1f77bcf86cd799439011&page=0&size=20
+Authorization: Bearer {token}
+
+Query Parameters:
+- chatType: "GROUP" or "UNIVERSAL"
+- chatId: Group ID or "GLOBAL"
+- page: Page number (0-indexed)
+- size: Items per page
+
+Response: 200 OK
+{
+  "content": [
+    {
+      "id": "507f1f77bcf86cd799439012",
+      "username": "John Doe",
+      "message": "Hey everyone!",
+      "timestamp": "2026-01-25T11:45:00Z",
+      "chatType": "GROUP"
+    }
+  ],
+  "totalPages": 5,
+  "totalElements": 87,
+  "currentPage": 0
+}
+```
+
+##### Delete Message (Admin Only)
+```http
+DELETE /api/chat/{messageId}
 Authorization: Bearer {token}
 
 Response: 200 OK
-[
-  {
-    "id": "507f1f77bcf86cd799439012",
-    "username": "John Doe",
-    "message": "Hey everyone!",
-    "timestamp": "2026-01-25T11:45:00Z"
-  }
-]
+{
+  "success": true,
+  "message": "Message deleted"
+}
 ```
 
-### Complaint Endpoints
+#### ⚠️ Complaints (`/api/complaints`)
 
-#### Create Complaint
+##### Create Complaint
 ```http
-POST /api/complaints/create
+POST /api/complaints/
 Authorization: Bearer {token}
 Content-Type: application/json
 
+Request:
 {
   "foodItem": "Sambar",
   "mealType": "BREAKFAST",
-  "complaintType": "Poor Taste",
-  "comments": "Too salty"
+  "complaintType": "Poor Taste",          // Options: "Poor Taste", "Quality", "Portion",
+                                          //         "Temperature", "Hygiene", "Service"
+  "comments": "Too salty"                 // optional
 }
 
 Response: 201 Created
@@ -517,47 +930,216 @@ Response: 201 Created
   "mealType": "BREAKFAST",
   "complaintType": "Poor Taste",
   "status": "OPEN",
-  "agreementCount": 1,
-  "disagreementCount": 0
+  "agreeVotes": 1,
+  "disagreeVotes": 0,
+  "createdAt": "2026-01-25T07:45:00Z"
 }
 ```
 
-#### Get Today's Complaints
+##### Get Today's Complaints (Paginated)
 ```http
-GET /api/complaints/today?mealType=BREAKFAST
+GET /api/complaints/today/{mealType}?page=0&size=20
 Authorization: Bearer {token}
 
+Path Parameter:
+- mealType: "BREAKFAST" | "LUNCH" | "SNACKS" | "DINNER"
+
+Query Parameters:
+- page: Page number
+- size: Items per page
+
 Response: 200 OK
-[
-  {
-    "id": "507f1f77bcf86cd799439013",
-    "foodItem": "Sambar",
-    "mealType": "BREAKFAST",
-    "complaintType": "Poor Taste",
-    "status": "OPEN",
-    "agreementCount": 5,
-    "disagreementCount": 2
-  }
-]
+{
+  "content": [
+    {
+      "id": "507f1f77bcf86cd799439013",
+      "foodItem": "Sambar",
+      "mealType": "BREAKFAST",
+      "complaintType": "Poor Taste",
+      "status": "OPEN",
+      "agreeVotes": 5,
+      "disagreeVotes": 2
+    }
+  ],
+  "totalPages": 2,
+  "totalElements": 25,
+  "currentPage": 0
+}
 ```
 
-#### Vote on Complaint
+##### Vote on Complaint
 ```http
-POST /api/complaints/{complaintId}/vote
+POST /api/complaints/vote
 Authorization: Bearer {token}
 Content-Type: application/json
 
+Request:
 {
-  "vote": "AGREE"
+  "complaintId": "507f1f77bcf86cd799439013",
+  "vote": "AGREE"                         // "AGREE" or "DISAGREE"
 }
+
+Auto-verification:
+- Status becomes "VERIFIED" when agreeVotes ≥ 3
+- Each user votes only once per complaint
 
 Response: 200 OK
 {
   "id": "507f1f77bcf86cd799439013",
-  "status": "VERIFIED",
-  "agreementCount": 6,
-  "disagreementCount": 2,
-  "message": "Complaint verified - 3 agreements reached!"
+  "status": "VERIFIED",                   // Updated status
+  "agreeVotes": 6,
+  "disagreeVotes": 2,
+  "message": "Complaint verified - 3+ agreements!"
+}
+```
+
+##### Delete Complaint
+```http
+DELETE /api/complaints/{complaintId}
+Authorization: Bearer {token}
+
+Response: 200 OK
+{
+  "success": true,
+  "message": "Complaint deleted"
+}
+```
+
+#### 👨‍💼 Admin (`/api/admin`)
+
+##### Admin Login
+```http
+POST /api/admin/login
+Content-Type: application/json
+
+Request:
+{
+  "username": "admin",
+  "password": "admin_password"
+}
+
+Response: 200 OK
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "admin": {
+      "id": "507f1f77bcf86cd799439011",
+      "username": "admin",
+      "role": "ADMIN",
+      "fullName": "Admin User"
+    }
+  }
+}
+```
+
+##### Admin Dashboard Stats
+```http
+GET /api/admin/dashboard
+Authorization: Bearer {admin_token}
+
+Response: 200 OK
+{
+  "totalUsers": 150,
+  "totalComplaints": 45,
+  "openComplaints": 12,
+  "verifiedComplaints": 25,
+  "totalGroups": 20,
+  "totalMessages": 1250,
+  "lastUpdated": "2026-01-25T12:00:00Z"
+}
+```
+
+##### Get All Admins (Super Admin Only)
+```http
+GET /api/admin/all
+Authorization: Bearer {super_admin_token}
+
+Response: 200 OK
+{
+  "admins": [
+    {
+      "id": "507f1f77bcf86cd799439011",
+      "username": "admin1",
+      "role": "ADMIN",
+      "fullName": "Admin One"
+    }
+  ]
+}
+```
+
+#### 🏥 Health Check (`/api/health`)
+
+##### Application Health
+```http
+GET /api/health
+
+Response: 200 OK
+{
+  "status": "UP",
+  "timestamp": "2026-01-25T12:00:00Z",
+  "database": "Connected",
+  "uptime": "5h 30m"
+}
+```
+
+---
+
+### 🔌 WebSocket Real-time Chat
+
+#### STOMP over SockJS Connection
+```javascript
+// Client Setup
+const stompClient = new StompClient();
+stompClient.connect(
+  'http://localhost:8080/ws',
+  { Authorization: `Bearer ${token}` },
+  onConnect,
+  onError
+);
+```
+
+#### Subscribe to Chat Topics
+
+**Group Chat:**
+```javascript
+stompClient.subscribe(
+  '/topic/chat/GROUP/groupId123',
+  messageHandler
+);
+```
+
+**Community Chat:**
+```javascript
+stompClient.subscribe(
+  '/topic/chat/UNIVERSAL/GLOBAL',
+  messageHandler
+);
+```
+
+#### Send Message via WebSocket
+```javascript
+stompClient.send(
+  '/app/chat/send',
+  {},
+  JSON.stringify({
+    chatType: 'GROUP',
+    chatId: 'groupId123',
+    message: 'Real-time message!',
+    username: 'John Doe'
+  })
+);
+```
+
+#### WebSocket Message Format
+```javascript
+{
+  id: "507f1f77bcf86cd799439012",
+  username: "John Doe",
+  message: "Real-time message!",
+  timestamp: "2026-01-25T11:45:00Z",
+  chatType: "GROUP",
+  chatId: "groupId123"
 }
 ```
 
@@ -565,93 +1147,400 @@ Response: 200 OK
 
 ## Frontend Components
 
-### Core Components
+### Component Tree Structure
 
-#### App.js
-- Main routing component
-- Authentication check
-- Route protection (ProtectedRoute wrapper)
-- Navigation between pages
+```
+src/
+├── App.jsx                              # Main routing component
+├── main.jsx                             # React entry point
+├── index.css                            # Global styles (Tailwind)
+│
+├── components/
+│   ├── WebSocketStatus.jsx              # Real-time status indicator
+│   ├── WEBSOCKET_INTEGRATION_EXAMPLES.jsx  # WebSocket examples
+│   │
+│   ├── daily-meal/                      # Breakfast/Meal selection
+│   │   ├── BreakfastPostedSection.jsx   # Display posted breakfast
+│   │   ├── FoodSelectionGrid.jsx        # Grid UI for food selection
+│   │   ├── SelectedItemsBar.jsx         # Selected items display
+│   │   └── UpdateBreakfastButton.jsx    # Submit breakfast button
+│   │
+│   ├── dashboard/                       # Main dashboard widgets
+│   │   ├── community-chat-preview.jsx   # Real-time chat preview
+│   │   ├── empty-state.jsx              # Empty state placeholder
+│   │   ├── group-voting-section.jsx     # Food complaint voting
+│   │   ├── quick-stats-grid.jsx         # Stats display grid
+│   │   ├── recent-feedback-table.jsx    # Recent complaints table
+│   │   └── todays-menu-card.jsx         # Today's menu card widget
+│   │
+│   ├── layout/
+│   │   ├── app-sidebar.jsx              # Left navigation sidebar
+│   │   └── top-navbar.jsx               # Top header bar
+│   │
+│   └── ui/                              # Reusable Radix UI components
+│       ├── avatar.jsx                   # User avatar component
+│       ├── badge.jsx                    # Badge/tag component
+│       ├── button.jsx                   # Button component
+│       ├── card.jsx                     # Card container
+│       ├── dialog.jsx                   # Modal dialog
+│       ├── dropdown-menu.jsx            # Dropdown menu
+│       ├── input.jsx                    # Input field
+│       ├── skeleton.jsx                 # Loading skeleton
+│       ├── table.jsx                    # Table component
+│       └── tabs.jsx                     # Tab component
+│
+├── pages/                               # Route pages
+│   ├── dashboard-page.jsx               # Main app dashboard (protected)
+│   ├── group-detail-page.jsx            # Group chat & members
+│   ├── groups-page.jsx                  # Groups list & manage
+│   └── login-page.jsx                   # Login/register page
+│
+├── layouts/
+│   └── dashboard-layout.jsx             # Main layout wrapper
+│
+├── services/                            # API & business logic
+│   ├── api-client.js                    # Axios instance + JWT interceptor
+│   ├── auth-service.js                  # Authentication methods
+│   ├── mess-api.js                      # All API endpoints
+│   └── websocket-service.js             # STOMP WebSocket management
+│
+├── hooks/
+│   └── useWebSocket.js                  # React hook for WebSocket
+│
+├── context/
+│   └── theme-context.jsx                # Theme (dark/light) context
+│
+├── config/
+│   └── navigation.js                    # Navigation routes config
+│
+├── data/
+│   └── food-options.js                  # Default food lists
+│
+└── lib/
+    └── utils.js                         # Utility functions
+```
 
-**Key Routes:**
-- `/login` - Login page
-- `/register` - Registration page
-- `/dashboard` - Main app (protected)
-- `/community` - Community chat (public)
-- `/groups/:groupId/chat` - Group chat (public)
+### Core Components Details
 
-#### Dashboard.js
-- Main authenticated page
-- Navigation tabs (Menu, Groups, Complaints, Mess Voice)
-- User info display
-- Logout button
+#### 📄 Page Components
 
-#### MealTabs.js
-- Meal type navigation (BREAKFAST, LUNCH, SNACKS, DINNER)
-- Active meal highlighting
-- Emoji indicators
+**LoginPage.jsx**
+- User registration form
+- User login form
+- Admin login option
+- Form validation
+- Token storage on success
 
-#### FoodGrid.js
-- Grid of available food items
-- Food item selection/deselection
-- Visual feedback for selected items
+**DashboardPage.jsx**
+- Main authenticated dashboard
+- Displays all meal types (BREAKFAST, LUNCH, SNACKS, DINNER)
+- Integrated components:
+  - Today's menu display
+  - Food selection grid
+  - Posted items section
+  - Community chat preview
+  - Group voting section
+  - Feedback table
+  - Quick stats
 
-#### TodayMenuDisplay.js
-- Shows current meal for selected type
-- Displays verification status
-- Shows confirmation count
-- Time window information
+**GroupsPage.jsx**
+- List all user's groups with pagination
+- Create group dialog
+- Join group dialog
+- Group card UI with member count
+- Real-time updates via WebSocket
 
-#### GroupDashboard.js
-- List of user's groups
-- "Going" status tracking
-- Meal-based filtering
-- Create/Join group buttons
-
-#### GroupChatPage.js
+**GroupDetailPage.jsx**
 - Group chat interface
-- Message history
-- Message input
+- Group members list
+- Meal attendance tracking
+- Mark "going" status
+- View meal status for group
 
-#### UniversalChatPage.js
-- Community-wide chat
-- Anonymous messaging
-- Public discussions
+#### 🎨 Dashboard Components
 
-#### MessVoice.js
-- Complaint system interface
-- Complaint list
-- Vote interface (AGREE/DISAGREE)
-- Status display
+**community-chat-preview.jsx**
+- Real-time message display
+- Message input with character count (150 max)
+- WebSocket integration
+- Scrollable message list
+- Timestamp display
+
+**group-voting-section.jsx**
+- Shows today's complaints
+- Voting interface (AGREE/DISAGREE)
+- Status indicator (OPEN, VERIFIED, REJECTED)
+- Vote count display
+- Real-time vote updates
+
+**todays-menu-card.jsx**
+- Displays current meal type
+- Shows items array
+- Verification status badge
+- Confirmation count
+- Time window indicator
+
+**quick-stats-grid.jsx**
+- Total users in system
+- Active groups count
+- Total complaints
+- Recent messages count
+- Helps users understand system activity
+
+**recent-feedback-table.jsx**
+- Lists recent complaints
+- Shows food item, type, complaint category
+- Vote counts
+- Status badges
+- Sortable by date
+
+#### 🍽️ Meal Components
+
+**FoodSelectionGrid.jsx**
+- Grid of food items (predefined list)
+- Toggle selection with click
+- Visual feedback (highlight on select)
+- Responsive grid layout
+- Item counts
+
+**SelectedItemsBar.jsx**
+- Shows currently selected foods
+- Remove button for each item
+- Clear all option
+- Count display
+
+**BreakfastPostedSection.jsx**
+- Displays posted breakfast items
+- Shows posting timestamp
+- Posted by user info
+- Confirmation count
+
+**UpdateBreakfastButton.jsx**
+- Submit breakfast items
+- Confirmation dialog
+- Loading state
+- Success/error handling
+
+#### 💬 Communication Components
+
+**WebSocketStatus.jsx**
+- Shows connection status
+- Green (connected) / Red (disconnected)
+- Reconnection indicator
+- Connection stats
+
+### Layout Components
+
+**top-navbar.jsx**
+- User profile dropdown
+- Logout button
+- App branding
+- Notification center (future)
+
+**app-sidebar.jsx**
+- Navigation links
+- Group shortcuts
+- Meal type selector
+- Theme toggle
+- Mobile responsive
+
+### UI Component Library (Radix + Shadcn)
+
+**Re-usable Components**:
+- `<Button>` - All buttons with variants
+- `<Card>` - Container + header + footer
+- `<Input>` - Form inputs with labels
+- `<Tabs>` - Tab navigation
+- `<Dialog>` - Modal dialogs
+- `<DropdownMenu>` - Context menus
+- `<Table>` - Data tables
+- `<Avatar>` - User avatars
+- `<Badge>` - Status badges
+- `<Skeleton>` - Loading placeholders
+
+---
+
+## Frontend Services & Hooks
+
+### 🔌 Services
+
+#### api-client.js
+```javascript
+// Axios instance with JWT interceptor
+export const apiClient = axios.create({
+  baseURL: 'http://localhost:8080/api'
+});
+
+// Automatically adds Authorization header
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('messApp_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+```
+
+#### auth-service.js
+```javascript
+// Authentication operations
+- register(name, email, password, hostel)
+- login(email, password)
+- logout()
+- getStoredUser()
+- getStoredToken()
+- isAuthenticated()
+- updateUser(userId, data)
+```
+
+#### mess-api.js
+```javascript
+// All mess-related API calls (20+ methods)
+- getMealsByType(mealType)
+- postMealUpdate(mealType, items)
+- createGroup(name)
+- joinGroup(groupCode)
+- getMyGroups(page, size)
+- getAllGroups(page, size)
+- sendMessage(chatType, chatId, message)
+- getMessages(chatType, chatId, page)
+- createComplaint(foodItem, mealType, complaintType, comments)
+- voteOnComplaint(complaintId, vote)
+- getTodaysComplaints(mealType, page)
+- markAsGoing(groupId, mealType)
+- getGroupMealStatus(groupId, mealType)
+```
+
+#### websocket-service.js
+```javascript
+// WebSocket management
+- connect(token, onConnect, onError)
+- subscribe(destination, callback)
+- send(destination, message)
+- disconnect()
+- isConnected()
+
+// Auto-subscribes to:
+// - /topic/chat/GROUP/{groupId}
+// - /topic/chat/UNIVERSAL/GLOBAL
+```
+
+### 🎣 Custom Hooks
+
+#### useWebSocket.js
+```javascript
+// WebSocket connection management
+const {
+  isConnected,
+  messages,
+  sendMessage,
+  subscribe,
+  unsubscribe
+} = useWebSocket();
+
+// Features:
+// - Auto-reconnect on disconnect
+// - Message buffering
+// - Memory cleanup
+// - Error handling
+```
+
+### 📊 Data & Utils
+
+#### food-options.js
+```javascript
+export const MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'];
+
+export const COMMON_FOODS_BY_MEAL = {
+  BREAKFAST: ['Idli', 'Vada', 'Dosa', 'Sambar', 'Chutney', ...],
+  LUNCH: ['Rice', 'Chapati', 'Curry', 'Vegetables', ...],
+  SNACKS: ['Biscuits', 'Chai', 'Juice', ...],
+  DINNER: ['Bread', 'Vegetables', 'Dairy', ...]
+};
+```
+
+#### utils.js
+```javascript
+// Tailwind classname merger
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}
+```
+
+
 
 ---
 
 ## Database Schema
 
-### Collections Overview
+### Collections Overview (8 Collections)
 
-#### Users Collection
+#### 1️⃣ Users Collection
 ```javascript
 {
   _id: ObjectId,
-  name: String,
-  email: String,
-  password: String (hashed),
-  hostel: String,
+  name: String,                    // User's full name
+  email: String,                   // Unique email
+  password: String,                // BCrypt hashed
+  hostel: String,                  // Hostel name (e.g., "Boys Hostel A")
+  roomNumber: String,              // Room number (optional)
+  year: String,                    // Academic year
+  branch: String,                  // Academic branch/stream
+  role: String,                    // "USER" or "ADMIN"
   createdAt: ISODate
 }
+
+// Indexes:
+// { email: 1 } - Unique index
 ```
 
-#### MealUpdate Collection
+#### 2️⃣ Groups Collection
 ```javascript
 {
   _id: ObjectId,
-  mealType: String ("BREAKFAST|LUNCH|SNACKS|DINNER"),
-  date: String ("YYYY-MM-DD"),
-  items: [String],
-  postedAt: ISODate,
-  confirmations: Number,
-  verificationStatus: String ("UNVERIFIED|VERIFIED|UNCERTAIN"),
+  name: String,                    // Group name (e.g., "Night Owls")
+  groupCode: String,               // 8-char unique code (e.g., "KJ9L2X4M")
+  members: [String],               // Array of user IDs
+  creator: String,                 // Creator user ID
+  createdAt: ISODate
+}
+
+// Indexes:
+// { groupCode: 1 } - Unique compound index
+```
+
+#### 3️⃣ ChatMessages Collection
+```javascript
+{
+  _id: ObjectId,
+  chatType: String,                // "GROUP" or "UNIVERSAL"
+  chatId: String,                  // Group ID for GROUP, "GLOBAL" for UNIVERSAL
+  senderId: String,                // User ID who sent message
+  username: String,                // Sender's username display
+  message: String,                 // Message content (max 500 GROUP, 150 UNIVERSAL)
+  timestamp: ISODate,              // When sent
+  createdAt: ISODate,              // Document creation time
+  expiresAt: ISODate               // For TTL index (24h UNIVERSAL only)
+}
+
+// Indexes:
+// { chatType: 1, chatId: 1, timestamp: -1 } - Compound for fetching
+// { expiresAt: 1 }, { expireAfterSeconds: 86400 } - TTL for UNIVERSAL only
+```
+
+#### 4️⃣ MealUpdates Collection
+```javascript
+{
+  _id: ObjectId,
+  mealType: String,                // "BREAKFAST" | "LUNCH" | "SNACKS" | "DINNER"
+  date: String,                    // "YYYY-MM-DD" format
+  items: [String],                 // Array of food items (e.g., ["Idli", "Vada"])
+  postedAt: ISODate,               // When meal was posted
+  confirmations: Number,           // Count of users confirming
+  verificationStatus: String,      // "UNVERIFIED" | "VERIFIED" | "UNCERTAIN"
   createdAt: ISODate
 }
 
@@ -659,53 +1548,332 @@ Response: 200 OK
 // { mealType: 1, date: 1 } - Compound index
 ```
 
-#### Groups Collection
+#### 5️⃣ BreakfastUpdates Collection
 ```javascript
 {
   _id: ObjectId,
-  name: String,
-  groupCode: String (8 chars),
-  members: [String (userId)],
+  date: String,                    // "YYYY-MM-DD" format
+  items: [String],                 // Breakfast items array
+  postedAt: ISODate,               // Posting timestamp
   createdAt: ISODate
 }
 
-// Index: { groupCode: 1 } - Unique
+// Specialized collection for breakfast tracking
 ```
 
-#### ChatMessages Collection
+#### 6️⃣ Complaints Collection
 ```javascript
 {
   _id: ObjectId,
-  username: String,
-  message: String,
-  chatType: String ("GROUP|UNIVERSAL"),
-  chatId: String (groupId or "GLOBAL"),
-  userId: String,
-  timestamp: ISODate,
+  foodItem: String,                // Which food the complaint is about
+  mealType: String,                // "BREAKFAST" | "LUNCH" | "SNACKS" | "DINNER"
+  complaintType: String,           // One of: "Poor Taste", "Quality", "Portion", 
+                                   //        "Temperature", "Hygiene", "Service"
+  userId: String,                  // Who raised complaint
+  comments: String,                // Additional comments (optional)
+  status: String,                  // "OPEN" | "RESOLVED" | "REJECTED"
+  agreeVotes: Number,              // Count of agreements (threshold: 3+)
+  disagreeVotes: Number,           // Count of disagreements
+  voters: {
+    [userId]: String               // "AGREE" or "DISAGREE" per user
+  },
   createdAt: ISODate
 }
 
-// TTL Index: { createdAt: 1 }, expireAfterSeconds: 86400 (24h for UNIVERSAL only)
+// Indexes:
+// { mealType: 1, date: 1 } - For daily complaints
 ```
 
-#### Complaints Collection
+#### 7️⃣ GroupMealStatus Collection
 ```javascript
 {
   _id: ObjectId,
-  foodItem: String,
-  mealType: String,
-  complaintType: String,
-  userId: String,
-  status: String ("OPEN|RESOLVED|REJECTED"),
-  agreementCount: Number,
-  disagreementCount: Number,
-  comments: String,
-  createdAt: ISODate,
-  votes: {
-    [userId]: String ("AGREE|DISAGREE")
-  }
+  groupId: String,                 // Reference to group
+  mealType: String,                // "BREAKFAST" | "LUNCH" | "SNACKS" | "DINNER"
+  goingUsers: [String],            // Array of user IDs marking "I'm going"
+  goingCount: Number,              // Count of going users
+  expiresAt: ISODate,              // Auto-delete after 30 minutes
+  createdAt: ISODate
 }
+
+// Indexes:
+// { expiresAt: 1 }, { expireAfterSeconds: 1800 } - TTL 30 minutes
 ```
+
+#### 8️⃣ Admins Collection
+```javascript
+{
+  _id: ObjectId,
+  username: String,                // Admin username (unique)
+  password: String,                // BCrypt hashed
+  role: String,                    // "ADMIN" | "SUPER_ADMIN"
+  fullName: String,                // Admin's full name
+  createdAt: ISODate
+}
+
+// Indexes:
+// { username: 1 } - Unique index
+```
+
+---
+
+## Backend Implementation Details
+
+### Controllers (12 Total)
+
+**AuthController.java** (`/api/auth`)
+- POST /register - User registration
+- POST /login - User authentication
+- Generates JWT tokens on successful login
+
+**UserController.java** (`/api/users`)
+- GET /me - Current user info
+- GET /{userId} - Public profile
+- PUT /me - Update profile
+
+**MealController.java** (`/api/meals`)
+- GET /today/{mealType} - Get meal by type
+- POST /update - Post/update meal
+- DELETE /admin/{mealType}/today - Admin delete
+
+**BreakfastController.java** (`/api/breakfast`)
+- GET /today - Get breakfast
+- POST /update - Update breakfast
+
+**GroupController.java** (`/api/groups`)
+- POST /create - Create group
+- POST /join - Join group
+- GET /my-groups - User's groups (paginated)
+- GET /all - All groups (paginated)
+- GET /{groupId} - Group details
+
+**GroupMealStatusController.java** (`/api/group-meal-status`)
+- POST /going - Mark as going
+- DELETE /{groupId}/{mealType} - Cancel
+- GET /{groupId}/{mealType} - Status
+
+**ChatController.java** (`/api/chat`)
+- POST /send - Send message
+- GET /messages - Get messages (paginated)
+- DELETE /{messageId} - Delete message
+
+**ChatWebSocketController.java** (WebSocket)
+- Handles STOMP message subscriptions
+- Real-time message broadcasting
+
+**ComplaintController.java** (`/api/complaints`)
+- POST / - Create complaint
+- GET /today/{mealType} - Today's complaints
+- POST /vote - Vote on complaint
+- DELETE /{complaintId} - Delete complaint
+
+**AdminController.java** (`/api/admin`)
+- POST /login - Admin authentication
+- GET /dashboard - Dashboard stats
+- GET /all - List all admins (Super Admin only)
+
+**HealthController.java** (`/api/health`)
+- GET /health - Application health check
+
+**WebSocketController.java**
+- Manages WebSocket connections
+- STOMP endpoint: /ws
+
+### Services (9 Total)
+
+**AuthService.java**
+- User registration with BCrypt hashing
+- Login with JWT token generation
+- Token validation
+- Role assignment (USER/ADMIN)
+
+**UserService.java**
+- User profile management
+- Update user info
+- Get user by ID
+
+**MealService.java**
+- Post meal updates
+- Retrieve current meal
+- Verification status tracking
+- Confirmation count management
+
+**GroupService.java**
+- Create groups with unique 8-char codes
+- Join groups
+- List user groups with pagination
+- Member management
+- Code generation algorithm
+
+**GroupMealStatusService.java**
+- Track "going" status for meals
+- Auto-expiry after 30 minutes
+- Group-based attendance
+
+**ChatService.java**
+- Send messages (GROUP/UNIVERSAL)
+- Retrieve messages with pagination
+- Delete messages (admin)
+- TTL management (24h for UNIVERSAL)
+
+**ComplaintService.java**
+- Create complaints
+- Vote system (AGREE/DISAGREE)
+- Status auto-update (3+ votes = VERIFIED)
+- Prevent duplicate votes
+- Query day-based complaints
+
+**AdminService.java**
+- Admin authentication
+- Dashboard stats computation
+- Admin user management
+
+**WebSocketEventPublisher.java**
+- Real-time event broadcasting
+- Message distribution to subscribed clients
+
+### Repositories (8 Total - MongoDB)
+
+**UserRepository.java**
+```java
+findByEmail(String email)
+existsByEmail(String email)
+// Standard Spring Data MongoDB operations
+```
+
+**GroupRepository.java**
+```java
+findByGroupCode(String groupCode)
+findByMembers(String userId)
+// Pagination support
+```
+
+**ChatMessageRepository.java**
+```java
+findByChatTypeAndChatId(String chatType, String chatId)
+// Pagination + sorting by timestamp
+// TTL index for auto-deletion
+```
+
+**MealRepository.java**
+```java
+findByMealTypeAndDate(String mealType, String date)
+// Compound index: mealType, date
+```
+
+**ComplaintRepository.java**
+```java
+findByMealTypeAndDate(String mealType, String date)
+findById(String complaintId)
+// Pagination support
+```
+
+**GroupMealStatusRepository.java**
+```java
+findByGroupIdAndMealType(String groupId, String mealType)
+// TTL index: 30-minute expiration
+```
+
+**BreakfastRepository.java**
+```java
+findByDate(String date)
+```
+
+**AdminRepository.java**
+```java
+findByUsername(String username)
+```
+
+### Security Layer
+
+**JwtTokenProvider.java**
+- Token generation with userId, username, role
+- Token validation and parsing
+- 24-hour expiration
+- Secure secret key management
+
+**JwtAuthenticationFilter.java**
+- Extracts JWT from Authorization header
+- Validates token signature
+- Sets authenticated principal
+- Returns 401 for invalid tokens
+
+**CustomUserDetailsService.java**
+- Loads user by email
+- Returns UserDetails for Spring Security
+
+**WebSocketAuthenticationHandler.java**
+- JWT validation for WebSocket connections
+- Secure STOMP handshake
+
+### Configuration
+
+**SecurityConfig.java**
+```java
+- CORS configuration (localhost:3000)
+- JWT filter registration
+- Protected endpoint definitions
+- CSRF disabled for API
+- Session management (STATELESS)
+```
+
+**WebSocketConfig.java**
+```java
+- STOMP endpoint: /ws
+- Application destination prefix: /app
+- Broker configuration
+- SockJS fallback enabled
+```
+
+**CorsConfig.java**
+```java
+- Allowed origins: localhost:3000
+- Allowed methods: GET, POST, PUT, DELETE, OPTIONS
+- Allowed headers: Authorization, Content-Type
+- Credentials: true
+```
+
+**CleanupScheduler.java**
+```java
+- Scheduled tasks for data cleanup
+- TTL enforcement for expired records
+- Database maintenance tasks
+```
+
+### DTOs (Data Transfer Objects - 19 Total)
+
+**Authentication DTOs**
+- LoginRequest - email, password
+- LoginResponse - token, expiresIn, user
+- RegisterRequest - name, email, password, hostel
+- AdminLoginRequest - username, password
+- AdminLoginResponse - token, admin info
+
+**User DTOs**
+- UserInfo - id, name, email, hostel, roomNumber, year, branch
+
+**Meal DTOs**
+- MealRequest - mealType, date, items
+- MealResponse - full meal with status
+- BreakfastRequest - date, items
+- BreakfastResponse - with posting info
+
+**Group DTOs**
+- GroupResponse - id, name, code, members, count
+
+**Chat DTOs**
+- ChatRequest - chatType, chatId, message
+- ChatResponse - message with metadata
+
+**Complaint DTOs**
+- ComplaintRequest - foodItem, mealType, type, comments
+- ComplaintResponse - with vote counts
+
+**Other DTOs**
+- ApiResponse - Generic wrapper {success, message, data}
+- CursorPaginatedResponse - nextCursor-based pagination
+- PaginatedResponse - Offset-based pagination {content, totalPages, totalElements}
+- GroupMealStatusResponse - Group attendance info
 
 ---
 
@@ -902,83 +2070,599 @@ PORT=3001 npm start
 
 ## Development Tips
 
-### Adding a New Feature
+### Project Structure & Organization
 
-1. **Backend**:
-   - Create model class in `model/`
-   - Create repository interface extending MongoRepository
-   - Create service class with business logic
-   - Create controller with REST endpoints
-   - Create DTO classes for request/response
+#### Backend Directory Layout
+```
+backend/
+├── pom.xml                          # Maven configuration
+├── src/main/java/com/hostel/mess/
+│   ├── MessBreakfastApplication.java     # Application entry point
+│   ├── config/                           # Configuration classes (4)
+│   ├── controller/                       # REST controllers (12)
+│   ├── dto/                              # Data transfer objects (19)
+│   ├── model/                            # Entity models (8)
+│   ├── repository/                       # Database repositories (8)
+│   ├── security/                         # Security implementation (4)
+│   └── service/                          # Business logic (9)
+├── src/main/resources/
+│   └── application.properties            # Configuration file
+└── target/                               # Build output
+```
 
-2. **Frontend**:
-   - Create component in `components/`
-   - Create CSS file in same directory
-   - Add method in `api.js` for API calls
-   - Import and use component in `App.js` or parent
+#### Frontend Directory Layout
+```
+frontend/
+├── package.json                     # Node dependencies
+├── vite.config.js                   # Vite configuration
+├── postcss.config.js                # PostCSS for Tailwind
+├── tailwind.config.js               # Tailwind configuration
+├── index.html                       # HTML entry point
+└── src/
+    ├── App.jsx                      # Main component
+    ├── main.jsx                     # React entry point
+    ├── index.css                    # Global Tailwind styles
+    ├── components/                  # React components (20+)
+    ├── pages/                       # Route pages (4)
+    ├── services/                    # API & business logic
+    ├── hooks/                       # Custom React hooks
+    ├── context/                     # React context
+    ├── config/                      # Configuration
+    ├── data/                        # Static data
+    └── lib/                         # Utility functions
+```
 
-3. **Database**:
-   - Add collection reference in model's @Document annotation
-   - Create necessary indexes in MongoRepository
-   - Update authentication if new protected endpoint
+### Adding a New Feature (Step-by-Step)
 
-### Debugging
+#### 1. Backend Feature Addition
 
-**Backend Logs**:
+**Create Entity Model** (`src/main/java/com/hostel/mess/model/`)
+```java
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.annotation.Id;
+
+@Document(collection = "my_collection")
+public class MyEntity {
+    @Id
+    private String id;
+    
+    private String name;
+    private LocalDateTime createdAt;
+    
+    // Getters & setters
+}
+```
+
+**Create Repository** (`src/main/java/com/hostel/mess/repository/`)
+```java
+import org.springframework.data.mongodb.repository.MongoRepository;
+import java.util.Optional;
+
+public interface MyEntityRepository extends MongoRepository<MyEntity, String> {
+    Optional<MyEntity> findByName(String name);
+}
+```
+
+**Create Service** (`src/main/java/com/hostel/mess/service/`)
+```java
+@Service
+public class MyEntityService {
+    @Autowired
+    private MyEntityRepository repository;
+    
+    public MyEntity create(MyEntity entity) {
+        return repository.save(entity);
+    }
+    
+    public MyEntity findById(String id) {
+        return repository.findById(id).orElse(null);
+    }
+}
+```
+
+**Create DTOs** (`src/main/java/com/hostel/mess/dto/`)
+```java
+public class MyEntityRequest {
+    private String name;
+    // Getters & setters
+}
+
+public class MyEntityResponse {
+    private String id;
+    private String name;
+    private LocalDateTime createdAt;
+    // Getters & setters
+}
+```
+
+**Create Controller** (`src/main/java/com/hostel/mess/controller/`)
+```java
+@RestController
+@RequestMapping("/api/my-entity")
+public class MyEntityController {
+    @Autowired
+    private MyEntityService service;
+    
+    @PostMapping("/create")
+    public ResponseEntity<ApiResponse> create(@RequestBody MyEntityRequest request) {
+        var entity = service.create(new MyEntity(request.getName()));
+        return ResponseEntity.ok(new ApiResponse(true, "Created", entity));
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<MyEntity> get(@PathVariable String id) {
+        return ResponseEntity.ok(service.findById(id));
+    }
+}
+```
+
+#### 2. Frontend Feature Addition
+
+**Create Component** (`frontend/src/components/`)
+```jsx
+import React, { useState, useEffect } from 'react';
+import { apiClient } from '../services/api-client';
+
+export function MyComponent() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await apiClient.get('/my-entity/123');
+        setData(response.data);
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+  
+  return (
+    <div>
+      {loading && <span>Loading...</span>}
+      {data && <div>{data.name}</div>}
+    </div>
+  );
+}
+```
+
+**Add API Method** (`frontend/src/services/mess-api.js`)
+```javascript
+export const myEntityApi = {
+  create: (data) => apiClient.post('/my-entity/create', data),
+  get: (id) => apiClient.get(`/my-entity/${id}`),
+  list: () => apiClient.get('/my-entity/all')
+};
+```
+
+**Update Routing** (`frontend/src/App.jsx`)
+```jsx
+import MyComponent from './components/MyComponent';
+
+<Route path="/my-feature" element={<MyComponent />} />
+```
+
+#### 3. Database Configuration
+
+**Add Indexes**
+```java
+// In MongoRepository interface or configuration
+@Document(collection = "my_collection")
+@NoArgsConstructor
+public class MyEntity {
+    @Indexed(unique = true)
+    private String email;
+    
+    @Indexed
+    private String status;
+}
+```
+
+**TTL Index** (for auto-expiring documents):
+```java
+@Document(collection = "temporary_data")
+public class TemporaryData {
+    @Indexed(expireAfter = "PT30M")  // 30 minutes
+    private LocalDateTime expiresAt;
+}
+```
+
+### Code Standards & Best Practices
+
+#### Backend
+- Use dependency injection (@Autowired, @Inject)
+- Follow REST conventions (/api/resource)
+- Return ApiResponse wrapper
+- Implement pagination for large datasets
+- Use proper HTTP status codes
+- Validate all input with annotations
+- Handle exceptions globally
+
+#### Frontend
+- Use functional components with hooks
+- Keep components small and focused
+- Use custom hooks for reusable logic
+- Implement error boundaries
+- Show loading states
+- Use consistent naming conventions
+- Prop validation with PropTypes (optional)
+
+### Debugging & Troubleshooting
+
+**Backend Logs**
 ```bash
-# Check application logs
-tail -f backend/logs/spring.log
+# View logs in real-time
+tail -f target/logs/spring.log
 
-# Enable debug logging
-# Set in application.properties:
+# Or enable debug mode in application.properties
 logging.level.com.hostel.mess=DEBUG
 logging.level.org.springframework.security=DEBUG
+logging.level.org.springframework.data.mongodb=DEBUG
 ```
 
-**Frontend Debugging**:
+**Frontend Debugging**
 ```javascript
-// Add debug logs
-console.debug('API request:', {token, url, method});
+// Check JWT token
+console.log('Token:', localStorage.getItem('messApp_token'));
 
-// Check network requests
-// Browser DevTools → Network tab → API calls
+// Check user info
+console.log('User:', localStorage.getItem('messApp_user'));
 
-// Check localStorage
-console.log(localStorage.getItem('messApp_token'));
+// API debugging
+apiClient.interceptors.response.use(
+  response => { console.log('Response:', response); return response; },
+  error => { console.error('API Error:', error); return Promise.reject(error); }
+);
 ```
 
-**Database Inspection**:
+**MongoDB Inspection**
 ```bash
 # Connect to MongoDB
 mongosh
 
-# Show collections
+# List all collections
 show collections
 
-# Query meals
-db.mealUpdate.find()
+# Query specific collection with pagination
+db.mealUpdate.find().limit(10).skip(0)
 
-# Query complaints
-db.complaints.find()
+# Check TTL indexes
+db.chatMessages.getIndexes()
+
+# Count documents by status
+db.complaints.countDocuments({ status: "OPEN" })
+
+# Analyze collection size
+db.mealUpdate.stats()
+```
+
+**Network Debugging**
+```javascript
+// Browser DevTools → Network tab
+// Filter by API calls
+// Check headers, payload, response
+// Verify Content-Type and Authorization
+
+// Frontend → Console tab
+// Check console errors
+// Verify CORS headers in response
+```
+
+### Testing Tips
+
+**Manual Testing Checklist**
+- [ ] User registration works
+- [ ] JWT token is stored in localStorage
+- [ ] Protected routes require token
+- [ ] Meal updates display correctly
+- [ ] Group creation succeeds
+- [ ] Chat messages send/receive
+- [ ] WebSocket connection works
+- [ ] Complaints voting updates
+- [ ] Admin endpoints are protected
+
+**API Testing with cURL**
+```bash
+# Register user
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test","email":"test@test.com","password":"test123","hostel":"Hostel A"}'
+
+# Get meal with token
+curl -X GET "http://localhost:8080/api/meals/today/BREAKFAST" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Create complaint
+curl -X POST "http://localhost:8080/api/complaints/" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"foodItem":"Rice","mealType":"LUNCH","complaintType":"Poor Taste"}'
 ```
 
 ---
 
-## Next Steps
+## Production Deployment
 
-### To Deploy to Production
+### Pre-Deployment Checklist
 
-1. **Backend**:
-   - Build JAR: `mvn clean package -DskipTests`
-   - Update `application.properties` with production MongoDB URI
-   - Set production JWT secret (longer, random string)
-   - Deploy JAR to server (e.g., AWS EC2, Heroku)
+- [ ] All tests pass
+- [ ] No console errors
+- [ ] No sensitive data in code
+- [ ] Environment variables configured
+- [ ] Database backups set up
+- [ ] HTTPS/SSL certificates ready
+- [ ] Monitoring/logging configured
+- [ ] CORS origins updated
+- [ ] JWT secret changed
+- [ ] Admin credentials changed
 
-2. **Frontend**:
-   - Build: `npm run build`
-   - Update API base URL for production backend
-   - Deploy to static hosting (GitHub Pages, Netlify, Vercel)
-   - Update CORS allowed origins in backend
+### Backend Deployment
+
+**Build Production JAR**
+```bash
+cd backend
+mvn clean package -DskipTests
+
+# Output: target/mess-breakfast-1.0.0.jar
+```
+
+**Deploy to Server**
+```bash
+# Copy JAR to server
+scp target/mess-breakfast-1.0.0.jar user@server:/app/
+
+# Connect to server and run
+ssh user@server
+cd /app
+java -jar mess-breakfast-1.0.0.jar \
+  --spring.data.mongodb.uri=mongodb+srv://user:pass@cluster.mongodb.net/hostel_mess \
+  --server.port=8080 \
+  --server.servlet.context-path=/api
+```
+
+**Environment Configuration** (`application.properties`)
+```properties
+# MongoDB
+spring.data.mongodb.uri=mongodb+srv://user:password@cluster.mongodb.net/database
+
+# JWT
+jwt.secret=your-super-secret-key-should-be-very-long-random-string
+jwt.expiration=86400000
+
+# Server
+server.port=8080
+server.servlet.context-path=/api
+
+# Logging
+logging.level.root=WARN
+logging.level.com.hostel.mess=INFO
+logging.file.name=/var/log/mess-app/app.log
+```
+
+### Frontend Deployment
+
+**Build Production Build**
+```bash
+cd frontend
+npm run build
+
+# Output: dist/ directory (contains optimized files)
+```
+
+**Deploy to Hosting**
+
+**Option 1: Vercel (Recommended)**
+```bash
+npm install -g vercel
+vercel
+# Follow prompts and connect to your domain
+```
+
+**Option 2: Netlify**
+```bash
+npm install -g netlify-cli
+netlify deploy --prod --dir=dist
+```
+
+**Option 3: GitHub Pages**
+```bash
+# Add to vite.config.js
+export default {
+  base: '/hostel-mess/'
+}
+
+npm run build
+# Deploy dist/ to gh-pages branch
+```
+
+**Update API Base URL for Production**
+```javascript
+// frontend/src/services/api-client.js
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.yourdomain.com';
+```
+
+### Database Setup (MongoDB Atlas)
+
+1. Create MongoDB Atlas cluster
+2. Add IP whitelist
+3. Create database user
+4. Get connection string
+5. Update in application.properties
+
+```
+mongodb+srv://username:password@cluster-name.mongodb.net/database-name
+```
+
+### Security Hardening
+
+**HTTPS/SSL**
+```bash
+# Get certificate from Let's Encrypt
+certbot certonly --standalone -d yourdomain.com
+```
+
+**JWT Secret Management**
+```bash
+# Generate strong secret
+openssl rand -base64 32
+```
+
+**Update CORS** (`SecurityConfig.java`)
+```java
+.cors(cors -> cors.configurationSource(request -> {
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(Arrays.asList("https://yourdomain.com"));
+    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+    return config;
+}))
+```
+
+**Database Security**
+```bash
+# Create limited-scope MongoDB user
+# Don't use admin account in production
+```
+
+### Monitoring & Logging
+
+**Application Logs**
+```bash
+# Check real-time logs
+tail -f /var/log/mess-app/app.log
+
+# Aggregate logs with tools like ELK Stack or Datadog
+```
+
+**Performance Monitoring**
+- Use tools like:
+  - New Relic
+  - Datadog
+  - Sentry (for error tracking)
+  - CloudWatch (AWS)
+
+**Database Monitoring**
+```bash
+# MongoDB Atlas has built-in monitoring
+# Check:
+# - Query performance
+# - Disk usage
+# - Connection count
+```
+
+### Backup & Recovery
+
+**MongoDB Backup**
+```bash
+# Automated backups on MongoDB Atlas
+# Or manual backup:
+mongodump --uri="mongodb+srv://..." --out=/backup
+```
+
+**Database Restore**
+```bash
+mongorestore --uri="mongodb+srv://..." ./backup
+```
+
+---
+
+## Performance Optimization
+
+### Backend Optimization
+
+**Implement Caching**
+```java
+@Cacheable("meals")
+public Meal getMeal(String mealType, String date) {
+    return repository.findByMealTypeAndDate(mealType, date);
+}
+```
+
+**Add Pagination**
+```java
+@GetMapping("/list")
+public Page<MyEntity> list(
+    @RequestParam(defaultValue = "0") int page,
+    @RequestParam(defaultValue = "20") int size
+) {
+    return repository.findAll(PageRequest.of(page, size));
+}
+```
+
+**Database Indexes**
+```java
+// Compound index for frequent queries
+@Indexed(unique = false)
+@CompoundIndex(name = "date_type_index", def = "{ 'date': 1, 'mealType': 1 }")
+```
+
+### Frontend Optimization
+
+**Lazy Loading Components**
+```jsx
+const MyComponent = lazy(() => import('./MyComponent'));
+
+<Suspense fallback={<Skeleton />}>
+  <MyComponent />
+</Suspense>
+```
+
+**Memoization**
+```jsx
+const Memoized = memo(MyComponent, (prevProps, nextProps) => 
+  prevProps.id === nextProps.id
+);
+```
+
+**Code Splitting**
+```jsx
+// Vite automatically splits at route boundaries
+// Configure in vite.config.js if needed
+```
+
+### Network Optimization
+
+**API Response Compression**
+```java
+// Add to application.properties
+server.compression.enabled=true
+server.compression.min-response-size=1024
+```
+
+**CDN for Static Assets**
+```javascript
+// Update image/asset URLs to CDN
+const CDN_URL = 'https://cdn.yourdomain.com';
+```
+
+---
+
+## Support & Resources
+
+### Documentation Files
+- **START_HERE.md** - Quick start guide
+- **PROJECT_STRUCTURE.md** - Detailed file organization
+- **WEBSOCKET_IMPLEMENTATION.md** - Real-time features
+- **DEPLOYMENT_CHECKLIST.md** - Deployment steps
+- **AUTHENTICATION_REMOVAL_SUMMARY.md** - Auth changes
+
+### External Resources
+- Spring Boot: https://spring.io/projects/spring-boot
+- React: https://react.dev
+- MongoDB: https://docs.mongodb.com
+- Tailwind CSS: https://tailwindcss.com
+
+### Getting Help
+- Check existing GitHub issues
+- Review error messages in logs
+- Test endpoints with Postman
+- Use browser DevTools for frontend debugging
+- Check MongoDB Atlas monitoring for database issues
 
 3. **Database**:
    - Set up MongoDB Atlas (cloud)

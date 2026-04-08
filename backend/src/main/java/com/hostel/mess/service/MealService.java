@@ -11,10 +11,13 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hostel.mess.dto.MealRequest;
 import com.hostel.mess.dto.MealResponse;
+import com.hostel.mess.events.MealUpdatedEvent;
 import com.hostel.mess.model.MealUpdate;
 import com.hostel.mess.repository.MealRepository;
 
@@ -23,6 +26,9 @@ public class MealService {
 
     @Autowired
     private MealRepository mealRepository;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -109,6 +115,7 @@ public class MealService {
     /**
      * Delete today's meal for a specific meal type (Admin only)
      */
+    @Transactional
     public boolean deleteTodayMeal(String mealType) {
         String today = LocalDate.now().format(DATE_FORMATTER);
         Optional<MealUpdate> mealOpt = mealRepository.findByMealTypeAndDate(
@@ -118,13 +125,31 @@ public class MealService {
             return false; // Meal not found
         }
         
-        mealRepository.deleteById(mealOpt.get().getId());
+        MealUpdate meal = mealOpt.get();
+        mealRepository.deleteById(meal.getId());
+        
+        // Publish deletion event
+        MealResponse response = new MealResponse();
+        response.setMealType(meal.getMealType());
+        response.setDate(meal.getDate());
+        response.setItems(meal.getItems());
+        
+        eventPublisher.publishEvent(new MealUpdatedEvent(
+            this,
+            meal.getId(),
+            meal.getMealType(),
+            response,
+            "DELETE",
+            null // System event, no specific user
+        ));
+        
         return true; // Successfully deleted
     }
 
     /**
      * Update or create today's meal for a specific meal type
      */
+    @Transactional
     public MealResponse updateMeal(MealRequest request) {
         String mealType = request.getMealType().toUpperCase();
 
@@ -142,8 +167,10 @@ public class MealService {
         Optional<MealUpdate> existingOpt = mealRepository.findByMealTypeAndDate(mealType, request.getDate());
 
         MealUpdate meal;
+        String actionType = "CREATE";
         if (existingOpt.isPresent()) {
             meal = existingOpt.get();
+            actionType = "UPDATE";
 
             // Check if the items are the same (confirmation) or different (new update)
             Set<String> existingItems = new HashSet<>(meal.getItems());
@@ -190,6 +217,16 @@ public class MealService {
         response.setVerificationStatus(saved.getVerificationStatus());
         response.setUpdateWindowOpen(true);
         response.setUpdateWindowMessage(getTimeWindowMessage(mealType));
+
+        // Publish event asynchronously (after transaction commits)
+        eventPublisher.publishEvent(new MealUpdatedEvent(
+            this,
+            saved.getId(),
+            saved.getMealType(),
+            response,
+            actionType,
+            null // System event
+        ));
 
         return response;
     }

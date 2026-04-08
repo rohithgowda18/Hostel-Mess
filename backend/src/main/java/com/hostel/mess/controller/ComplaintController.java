@@ -17,10 +17,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hostel.mess.dto.ComplaintRequest;
 import com.hostel.mess.dto.ComplaintResponse;
+import com.hostel.mess.dto.PaginatedResponse;
 import com.hostel.mess.service.ComplaintService;
 
 @RestController
@@ -57,14 +59,46 @@ public class ComplaintController {
     }
     
     /**
-     * Get all complaints for a specific meal type today
-     * GET /api/complaints/today/{mealType}
+     * Get paginated complaints for a specific meal type today
+     * GET /api/complaints/today/{mealType}?page=0&size=20
      */
     @GetMapping("/today/{mealType}")
-    public ResponseEntity<?> getComplaintsToday(@PathVariable String mealType) {
+    public ResponseEntity<?> getComplaintsToday(
+        @PathVariable String mealType,
+        @RequestParam(required = false, defaultValue = "0") int page,
+        @RequestParam(required = false, defaultValue = "20") int size
+    ) {
         try {
-            List<ComplaintResponse> complaints = complaintService.getComplaintsByMealToday(mealType);
-            return ResponseEntity.ok(complaints);
+            // Validate pagination parameters
+            if (page < 0) page = 0;
+            if (size < 1) size = 20;
+            if (size > 100) size = 100; // Max 100 items per page
+            
+            var pageResult = complaintService.getComplaintsByMealTypePaged(mealType, page, size);
+            List<ComplaintResponse> responses = pageResult.getContent().stream()
+                .map(complaint -> new ComplaintResponse(
+                    complaint.getId(),
+                    complaint.getMealType(),
+                    complaint.getFoodItem(),
+                    complaint.getDate(),
+                    complaint.getReasons(),
+                    complaint.getComments(),
+                    complaint.getComplaintCount(),
+                    complaint.getAgreeVotes(),
+                    complaint.getDisagreeVotes(),
+                    complaint.getStatus()
+                ))
+                .toList();
+            
+            PaginatedResponse<ComplaintResponse> response = new PaginatedResponse<>(
+                responses,
+                pageResult.getNumber(),
+                pageResult.getSize(),
+                pageResult.getTotalPages(),
+                pageResult.getTotalElements()
+            );
+            
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(createErrorResponse("Error fetching complaints: " + e.getMessage()));
@@ -113,14 +147,46 @@ public class ComplaintController {
     }
     
     /**
-     * Get all complaints (admin only)
-     * GET /api/complaints/admin/all
+     * Get paginated all complaints (admin only)
+     * GET /api/complaints/admin/all?page=0&size=20
      */
     @GetMapping("/admin/all")
-    public ResponseEntity<?> getAllComplaints(@RequestHeader(value = "Authorization", required = false) String token) {
+    public ResponseEntity<?> getAllComplaints(
+        @RequestHeader(value = "Authorization", required = false) String token,
+        @RequestParam(required = false, defaultValue = "0") int page,
+        @RequestParam(required = false, defaultValue = "20") int size
+    ) {
         try {
-            List<ComplaintResponse> complaints = complaintService.getAllComplaints();
-            return ResponseEntity.ok(complaints);
+            // Validate pagination parameters
+            if (page < 0) page = 0;
+            if (size < 1) size = 20;
+            if (size > 100) size = 100; // Max 100 items per page
+            
+            var pageResult = complaintService.getAllComplaintsPaged(page, size);
+            List<ComplaintResponse> responses = pageResult.getContent().stream()
+                .map(complaint -> new ComplaintResponse(
+                    complaint.getId(),
+                    complaint.getMealType(),
+                    complaint.getFoodItem(),
+                    complaint.getDate(),
+                    complaint.getReasons(),
+                    complaint.getComments(),
+                    complaint.getComplaintCount(),
+                    complaint.getAgreeVotes(),
+                    complaint.getDisagreeVotes(),
+                    complaint.getStatus()
+                ))
+                .toList();
+            
+            PaginatedResponse<ComplaintResponse> response = new PaginatedResponse<>(
+                responses,
+                pageResult.getNumber(),
+                pageResult.getSize(),
+                pageResult.getTotalPages(),
+                pageResult.getTotalElements()
+            );
+            
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(createErrorResponse("Error fetching complaints: " + e.getMessage()));
@@ -143,14 +209,46 @@ public class ComplaintController {
     }
     
     /**
-     * Get complaints by status (admin filtering)
-     * GET /api/complaints/admin/status/{status}
+     * Get paginated complaints by status (admin filtering)
+     * GET /api/complaints/admin/status/{status}?page=0&size=20
      */
     @GetMapping("/admin/status/{status}")
-    public ResponseEntity<?> getComplaintsByStatus(@PathVariable String status) {
+    public ResponseEntity<?> getComplaintsByStatus(
+        @PathVariable String status,
+        @RequestParam(required = false, defaultValue = "0") int page,
+        @RequestParam(required = false, defaultValue = "20") int size
+    ) {
         try {
-            List<ComplaintResponse> complaints = complaintService.getComplaintsByStatus(status);
-            return ResponseEntity.ok(complaints);
+            // Validate pagination parameters
+            if (page < 0) page = 0;
+            if (size < 1) size = 20;
+            if (size > 100) size = 100; // Max 100 items per page
+            
+            var pageResult = complaintService.getComplaintsByStatusPaged(status, page, size);
+            List<ComplaintResponse> responses = pageResult.getContent().stream()
+                .map(complaint -> new ComplaintResponse(
+                    complaint.getId(),
+                    complaint.getMealType(),
+                    complaint.getFoodItem(),
+                    complaint.getDate(),
+                    complaint.getReasons(),
+                    complaint.getComments(),
+                    complaint.getComplaintCount(),
+                    complaint.getAgreeVotes(),
+                    complaint.getDisagreeVotes(),
+                    complaint.getStatus()
+                ))
+                .toList();
+            
+            PaginatedResponse<ComplaintResponse> response = new PaginatedResponse<>(
+                responses,
+                pageResult.getNumber(),
+                pageResult.getSize(),
+                pageResult.getTotalPages(),
+                pageResult.getTotalElements()
+            );
+            
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(createErrorResponse("Error: " + e.getMessage()));

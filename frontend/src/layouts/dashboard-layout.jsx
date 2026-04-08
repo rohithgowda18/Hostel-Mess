@@ -15,7 +15,15 @@ function DashboardLayout({ user, onLogout, children }) {
 
   // Sync activeItem with current route and query parameters
   useEffect(() => {
-    if (location.pathname.startsWith('/groups')) {
+    if (location.pathname.startsWith('/complaints')) {
+      setActiveItem('complaints');
+    } else if (location.pathname.startsWith('/lost-found')) {
+      setActiveItem('lost-found');
+    } else if (location.pathname.startsWith('/roommates')) {
+      setActiveItem('roommates');
+    } else if (location.pathname.startsWith('/daily-meal')) {
+      setActiveItem('daily-meal');
+    } else if (location.pathname.startsWith('/groups')) {
       setActiveItem('groups');
     } else if (location.pathname.startsWith('/dashboard')) {
       // Check if there's a tab query parameter
@@ -25,6 +33,10 @@ function DashboardLayout({ user, onLogout, children }) {
       } else {
         setActiveItem('dashboard');
       }
+    } else if (location.pathname.startsWith('/post-food')) {
+      setActiveItem('post-food');
+    } else if (location.pathname.startsWith('/voting')) {
+      setActiveItem('voting');
     }
   }, [location, searchParams]);
 

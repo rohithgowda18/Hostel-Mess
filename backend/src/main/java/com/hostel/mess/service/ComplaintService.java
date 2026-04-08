@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.hostel.mess.dto.ComplaintRequest;
@@ -28,6 +30,9 @@ public class ComplaintService {
     
     @Autowired
     private ComplaintRepository complaintRepository;
+    
+    @Autowired(required = false)
+    private WebSocketEventPublisher webSocketEventPublisher;
     
     /**
      * Raise a new complaint against a food item
@@ -102,6 +107,12 @@ public class ComplaintService {
         updateComplaintStatus(complaint);
         
         Complaint updated = complaintRepository.save(complaint);
+        
+        // Publish to WebSocket subscribers if available
+        if (webSocketEventPublisher != null) {
+            webSocketEventPublisher.publishComplaintVote(updated);
+        }
+        
         return convertToResponse(updated);
     }
     
@@ -248,6 +259,42 @@ public class ComplaintService {
         stats.put("byMealType", byMealType);
         
         return stats;
+    }
+
+    /**
+     * Get paginated complaints for a specific meal type
+     * @param mealType Type of meal
+     * @param page Page number (0-based)
+     * @param size Page size
+     * @return Page of ComPlaintResponse
+     */
+    public Page<Complaint> getComplaintsByMealTypePaged(String mealType, int page, int size) {
+        String today = LocalDate.now().format(DATE_FORMATTER);
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return complaintRepository.findByMealTypeAndDateOrderByUpdatedAtDesc(mealType, today, pageable);
+    }
+
+    /**
+     * Get paginated all complaints (admin)
+     * @param page Page number (0-based)
+     * @param size Page size
+     * @return Page of Complaint
+     */
+    public Page<Complaint> getAllComplaintsPaged(int page, int size) {
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return complaintRepository.findAll(pageable);
+    }
+
+    /**
+     * Get paginated complaints by status (admin)
+     * @param status Complaint status
+     * @param page Page number (0-based)
+     * @param size Page size
+     * @return Page of Complaint
+     */
+    public Page<Complaint> getComplaintsByStatusPaged(String status, int page, int size) {
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return complaintRepository.findByStatus(status, pageable);
     }
 
     /**

@@ -5,6 +5,8 @@ import com.hostel.mess.model.User;
 import com.hostel.mess.repository.GroupRepository;
 import com.hostel.mess.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,6 +92,29 @@ public class GroupService {
             throw new RuntimeException("Group not found");
         }
         return groupOpt.get();
+    }
+    
+    /**
+     * Get paginated groups for a user
+     * @param userId User ID
+     * @param page Page number (0-based)
+     * @param size Page size
+     * @return Page of Group
+     */
+    public Page<Group> getUserGroupsPaged(String userId, int page, int size) {
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return groupRepository.findByMembersContaining(userId, pageable);
+    }
+
+    /**
+     * Get paginated all groups (admin)
+     * @param page Page number (0-based)
+     * @param size Page size
+     * @return Page of Group
+     */
+    public Page<Group> getAllGroupsPaged(int page, int size) {
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return groupRepository.findAll(pageable);
     }
     
     /**

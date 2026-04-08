@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hostel.mess.dto.GroupResponse;
+import com.hostel.mess.dto.PaginatedResponse;
 import com.hostel.mess.model.Group;
 import com.hostel.mess.service.GroupService;
 
@@ -95,22 +97,41 @@ public class GroupController {
     }
     
     /**
-     * GET /api/groups/my-groups
-     * Get all groups for authenticated user (requires authentication)
+     * GET /api/groups/my-groups?page=0&size=20
+     * Get paginated groups for authenticated user (requires authentication)
      */
     @GetMapping("/my-groups")
-    public ResponseEntity<?> getUserGroups(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<?> getUserGroups(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @RequestParam(required = false, defaultValue = "0") int page,
+        @RequestParam(required = false, defaultValue = "20") int size
+    ) {
         try {
             String userId = userDetails != null ? userDetails.getUsername() : null;
             if (userId == null || userId.trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Authentication required"));
             }
-            List<Group> groups = groupService.getUserGroups(userId);
-            List<GroupResponse> responses = groups.stream()
+            
+            // Validate pagination parameters
+            if (page < 0) page = 0;
+            if (size < 1) size = 20;
+            if (size > 100) size = 100; // Max 100 items per page
+            
+            var pageResult = groupService.getUserGroupsPaged(userId, page, size);
+            List<GroupResponse> responses = pageResult.getContent().stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
-            return ResponseEntity.ok(responses);
+            
+            PaginatedResponse<GroupResponse> response = new PaginatedResponse<>(
+                responses,
+                pageResult.getNumber(),
+                pageResult.getSize(),
+                pageResult.getTotalPages(),
+                pageResult.getTotalElements()
+            );
+            
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("error", e.getMessage()));
