@@ -45,7 +45,7 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/", "/index.html", "/static/**", "/public/**").permitAll()
+                .requestMatchers("/api/auth/**", "/", "/index.html", "/static/**", "/public/**", "/uploads/**").permitAll()
                 .requestMatchers("/api/groups/create", "/api/groups/join", "/api/groups/my-groups").authenticated()
                 .requestMatchers("/api/meals/update").authenticated()
                 .requestMatchers("/api/complaints/vote").authenticated()

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { isAuthenticated, getUser } from '@/services/auth-service';
+import { isAuthenticated, getUser, logout } from '@/services/auth-service';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 

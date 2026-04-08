@@ -1298,47 +1298,52 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
     );
   };
 
+  const FeedbackView = () => <RecentFeedbackTable rows={filteredFeedback} onReset={handleRefreshFeedback} />;
+
   const moduleView = {
     dashboard: renderDashboard,
     'weekly-menu': renderWeeklyMenu,
     groups: renderGroups,
     voting: renderCommonFoodsPage,
-    feedback: () => <RecentFeedbackTable rows={filteredFeedback} onReset={handleRefreshFeedback} />,
+    feedback: FeedbackView,
     'community-chat': renderCommunityChat,
     profile: renderProfile
   };
 
-  const currentTitle = {
-    dashboard: 'Dashboard',
-    'weekly-menu': 'Daily Meal',
-    groups: 'Groups',
-    voting: 'Voting',
-    feedback: 'Feedback',
-    'community-chat': 'Community Chat',
-    profile: 'Profile'
-  }[activeItem];
+  const currentTitle =
+    {
+      dashboard: 'Dashboard',
+      'weekly-menu': 'Daily Meal',
+      groups: 'Groups',
+      voting: 'Voting',
+      feedback: 'Feedback',
+      'community-chat': 'Community Chat',
+      profile: 'Profile'
+    }[activeItem] || 'Dashboard';
 
-  const currentDescription = {
-    dashboard: 'Hostel mess operations at a glance',
-    'weekly-menu': 'Post today\'s meals with current-time highlight and quick visibility',
-    groups: 'Monitor and coordinate active mess groups',
-    voting: 'Capture food preference with transparent voting',
-    feedback: 'Review student feedback and response trends',
-    'community-chat': 'Watch live community conversations',
-    profile: 'Account and role preferences'
-  }[activeItem];
+  const currentDescription =
+    {
+      dashboard: 'Hostel mess operations at a glance',
+      'weekly-menu': 'Post today\'s meals with current-time highlight and quick visibility',
+      groups: 'Monitor and coordinate active mess groups',
+      voting: 'Capture food preference with transparent voting',
+      feedback: 'Review student feedback and response trends',
+      'community-chat': 'Watch live community conversations',
+      profile: 'Account and role preferences'
+    }[activeItem] || 'Hostel mess operations at a glance';
 
-  const HeaderIcon = {
-    dashboard: FolderCog,
-    'weekly-menu': CalendarCheck2,
-    groups: Users,
-    voting: Vote,
-    feedback: FolderCog,
-    'community-chat': FolderCog,
-    profile: UserCircle2
-  }[activeItem];
+  const HeaderIcon =
+    {
+      dashboard: FolderCog,
+      'weekly-menu': CalendarCheck2,
+      groups: Users,
+      voting: Vote,
+      feedback: FolderCog,
+      'community-chat': FolderCog,
+      profile: UserCircle2
+    }[activeItem] || FolderCog;
 
-  const currentViewRenderer = moduleView[activeItem] || moduleView.dashboard;
+  const View = typeof moduleView[activeItem] === 'function' ? moduleView[activeItem] : null;
 
   return (
     <div className="space-y-6">
@@ -1360,7 +1365,7 @@ function DashboardPage({ activeItem = 'dashboard', searchQuery = '' }) {
         <div className="rounded-xl border border-success/40 bg-success/20 p-3 text-sm text-emerald-200">{menuMessage}</div>
       ) : null}
 
-      {currentViewRenderer()}
+      {View ? <View /> : <div>View not found</div>}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import "./student-food-photos.css";
+import { API_BASE_URL } from "@/services/auth-service";
 
 const MEAL_LABELS = {
   BREAKFAST: "🍳 Breakfast",
@@ -26,8 +27,26 @@ function StudentFoodPhotosPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef();
 
+  const backendOrigin = (() => {
+    if (API_BASE_URL.startsWith("http://") || API_BASE_URL.startsWith("https://")) {
+      return new URL(API_BASE_URL).origin;
+    }
+    return window.location.origin;
+  })();
+
+  const resolveImageUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    if (url.startsWith("/")) {
+      return `${backendOrigin}${url}`;
+    }
+    return `${backendOrigin}/${url}`;
+  };
+
   useEffect(() => {
-    fetch("/api/student-photos/today")
+    fetch(`${API_BASE_URL}/student-photos/today`)
       .then((r) => r.json())
       .then((data) => setPhotos(data.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))));
   }, []);
@@ -52,7 +71,7 @@ function StudentFoodPhotosPage() {
     const formData = new FormData();
     imageFiles.forEach((file) => formData.append("images", file));
     if (description) formData.append("description", description);
-    const res = await fetch("/api/student-photos/upload", {
+    const res = await fetch(`${API_BASE_URL}/student-photos/upload`, {
       method: "POST",
       body: formData
     });
@@ -118,7 +137,7 @@ function StudentFoodPhotosPage() {
               <div className="photos-list">
                 {grouped[mealType].map((photo) => (
                   <div className="photo-card" key={photo.id}>
-                    <PhotoCarousel imageUrls={photo.imageUrls || []} />
+                    <PhotoCarousel imageUrls={(photo.imageUrls || []).map(resolveImageUrl)} />
                     {photo.description && <div className="photo-desc">{photo.description}</div>}
                   </div>
                 ))}
