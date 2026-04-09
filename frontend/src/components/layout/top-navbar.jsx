@@ -1,6 +1,7 @@
 import { Bell, LogOut, Menu, Moon, Search, Settings, Sun, UserRound } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { InstallButton } from '@/components/InstallButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +58,8 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
         </div>
 
         <div className="flex items-center gap-2">
+          <InstallButton />
+
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-4 w-4" />
             <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-danger" />

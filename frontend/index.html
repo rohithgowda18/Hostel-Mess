@@ -6,9 +6,18 @@
     <meta name="theme-color" content="#0F172A" />
     <meta name="description" content="Hostel Mess Management SaaS dashboard" />
     <title>Hostel Mess Management</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js');
+        });
+      }
+    </script>
   </body>
 </html>
