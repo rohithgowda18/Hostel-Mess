@@ -1,0 +1,48 @@
+[
+  {
+    "_id": { "$oid": "66b3b2000000000000000001" },
+    "weekStartDate": "2026-08-03",
+    "monday": {
+      "BREAKFAST": ["Idli", "Sambar", "Coconut Chutney", "Tea"],
+      "LUNCH": ["Steamed Rice", "Sambar", "Rasam", "Beans Palya", "Curd"],
+      "SNACKS": ["Onion Pakoda", "Tea"],
+      "DINNER": ["Chapati", "Dal Tadka", "Steamed Rice", "Rasam"]
+    },
+    "tuesday": {
+      "BREAKFAST": ["Masala Dosa", "Potato Palya", "Coconut Chutney", "Coffee"],
+      "LUNCH": ["Steamed Rice", "Majjige Huli", "Cabbage Palya", "Rasam", "Curd"],
+      "SNACKS": ["Mangalore Bonda", "Tea"],
+      "DINNER": ["Chapati", "Veg Kurma", "Steamed Rice", "Rasam"]
+    },
+    "wednesday": {
+      "BREAKFAST": ["Khara Bath", "Kesari Bath", "Coffee"],
+      "LUNCH": ["Vegetable Pulao", "Sambar", "Rasam", "Curd"],
+      "SNACKS": ["Samosa", "Coffee"],
+      "DINNER": ["Chapati", "Paneer Butter Masala", "Steamed Rice", "Rasam"]
+    },
+    "thursday": {
+      "BREAKFAST": ["Poori", "Vegetable Sagu", "Tea"],
+      "LUNCH": ["Bisibele Bath", "Curd Rice", "Papad", "Pickle"],
+      "SNACKS": ["Chilli Bajji", "Tea"],
+      "DINNER": ["Chapati", "Aloo Gobi", "Steamed Rice", "Rasam"]
+    },
+    "friday": {
+      "BREAKFAST": ["Rava Idli", "Vegetable Sagu", "Coconut Chutney", "Tea"],
+      "LUNCH": ["Lemon Rice", "Sambar", "Beetroot Palya", "Rasam", "Curd"],
+      "SNACKS": ["Veg Puff", "Tea"],
+      "DINNER": ["Chapati", "Dal Fry", "Steamed Rice", "Rasam", "Gulab Jamun"]
+    },
+    "saturday": {
+      "BREAKFAST": ["Avalakki", "Groundnut Chutney", "Tea"],
+      "LUNCH": ["Tomato Bath", "Majjige Huli", "Potato Fry", "Curd"],
+      "SNACKS": ["Cutlet", "Coffee"],
+      "DINNER": ["Chapati", "Mixed Vegetable Curry", "Steamed Rice", "Rasam"]
+    },
+    "sunday": {
+      "BREAKFAST": ["Set Dosa", "Vegetable Kurma", "Coffee"],
+      "LUNCH": ["Jeera Rice", "Dal Tadka", "Paneer Butter Masala", "Mysore Pak"],
+      "SNACKS": ["Sweet Corn", "Tea"],
+      "DINNER": ["Chapati", "Palak Paneer", "Steamed Rice", "Rasam", "Ice Cream"]
+    }
+  }
+]

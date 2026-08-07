@@ -1,0 +1,70 @@
+[
+  {
+    "_id": { "$oid": "66b3b1000000000000000001" },
+    "email": "admin@msrit.edu",
+    "password": "$2a$10$e8e9s/d.v.F90832h1v10O4k014z5932598",
+    "hostel": "Admin Block",
+    "roomNumber": "101",
+    "year": "4th Year",
+    "branch": "ADMIN",
+    "role": "ADMIN",
+    "points": 500,
+    "directoryVisible": true,
+    "createdAt": { "$date": "2026-08-01T00:00:00Z" }
+  },
+  {
+    "_id": { "$oid": "66b3b1000000000000000002" },
+    "email": "warden@msrit.edu",
+    "password": "$2a$10$e8e9s/d.v.F90832h1v10O4k014z5932598",
+    "hostel": "Central Mess",
+    "roomNumber": "W-1",
+    "year": "Staff",
+    "branch": "WARDEN",
+    "role": "ADMIN",
+    "points": 500,
+    "directoryVisible": true,
+    "createdAt": { "$date": "2026-08-01T00:00:00Z" }
+  },
+  {
+    "_id": { "$oid": "66b3b1000000000000000003" },
+    "email": "student1@msrit.edu",
+    "password": "$2a$10$e8e9s/d.v.F90832h1v10O4k014z5932598",
+    "hostel": "MSRIT Boys Block A",
+    "roomNumber": "101",
+    "year": "3rd Year",
+    "branch": "CSE",
+    "role": "STUDENT",
+    "points": 240,
+    "badges": ["Top Reporter", "Mess Verified", "Consensus Hero"],
+    "directoryVisible": true,
+    "createdAt": { "$date": "2026-08-01T00:00:00Z" }
+  },
+  {
+    "_id": { "$oid": "66b3b1000000000000000004" },
+    "email": "student2@msrit.edu",
+    "password": "$2a$10$e8e9s/d.v.F90832h1v10O4k014z5932598",
+    "hostel": "MSRIT Boys Block B",
+    "roomNumber": "102",
+    "year": "2nd Year",
+    "branch": "ISE",
+    "role": "STUDENT",
+    "points": 180,
+    "badges": ["Active Reporter", "Mess Foodie"],
+    "directoryVisible": true,
+    "createdAt": { "$date": "2026-08-01T00:00:00Z" }
+  },
+  {
+    "_id": { "$oid": "66b3b1000000000000000005" },
+    "email": "student3@msrit.edu",
+    "password": "$2a$10$e8e9s/d.v.F90832h1v10O4k014z5932598",
+    "hostel": "MSRIT Girls Block D",
+    "roomNumber": "201",
+    "year": "4th Year",
+    "branch": "ECE",
+    "role": "STUDENT",
+    "points": 110,
+    "badges": ["Active Reporter"],
+    "directoryVisible": true,
+    "createdAt": { "$date": "2026-08-01T00:00:00Z" }
+  }
+]
