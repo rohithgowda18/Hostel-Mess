@@ -22,20 +22,13 @@ public class CorsConfig {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowCredentials(true);
         
-        List<String> origins = new ArrayList<>(Arrays.asList(
-                "http://localhost:3000",
-                "http://localhost:3001",
-                "http://localhost:5173",
-                "https://rohithgowda18.github.io",
-                "https://hostel-mess-one.vercel.app"
+        corsConfiguration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "https://hostel-hub.rohith.app",
+                "https://*.vercel.app",
+                "https://*.onrender.com"
         ));
-        
-        // Add frontend URL from environment variable if set
-        if (frontendUrl != null && !frontendUrl.isEmpty()) {
-            origins.add(frontendUrl);
-        }
-        
-        corsConfiguration.setAllowedOrigins(origins);
         corsConfiguration.setAllowedHeaders(Arrays.asList(
                 "Origin", "Access-Control-Allow-Origin", "Content-Type",
                 "Accept", "Authorization", "Origin, Accept", "X-Requested-With",
