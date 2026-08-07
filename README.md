@@ -1,210 +1,74 @@
-# 🍽️ Hostel Mess Live Menu
+# 🍽️ Hostel Mess Live Menu Coordination System
 
-A web application that allows hostel students to view and update today's food menu for all meal times in real time.
+A production-grade, democracy-driven web application built with **Spring Boot** and **React** that allows hostel students to view, coordinate, and update today's food menu for all meal times in real time. It features private coordination groups, feedback voting, chat capabilities, and meal photo uploads.
 
-## 🎯 Features
+---
 
-- **View Today's Menu** - See the current food items for Breakfast, Lunch, Evening Snacks, and Dinner
-- **Post Menu Updates** - Select food items using image cards and post the current menu
-- **Visual Food Selection** - Card-based UI with food images for easy identification
-- **Real-time Updates** - Menu updates are visible to everyone immediately
-- **Responsive Design** - Works on desktop, tablet, and mobile devices
-- **Meal Type Tabs** - Easy navigation between different meal types
+## 📖 Deep-Dive Subsystem Documentation Index
 
-## 🍳 Meal Types & Food Options
+For exhaustive developer guides and specifications on each architecture layer, refer to the following documents in the `docs` folder:
 
-### Breakfast
-Idli, Dosa, Poori, Upma, Pongal, Bread & Jam, Rice Bath, Vada
+*   💻 **[Frontend Architecture Guide (docs/FRONTEND.md)](file:///c:/Users/rohit/Desktop/study/projects/Mess/docs/FRONTEND.md)**: Details on the React + Vite single page application, Radix UI component states, Tailwind CSS variables, theme switching contexts, routing config, and API services integration.
+*   ⚙️ **[Backend Service Guide (docs/BACKEND.md)](file:///c:/Users/rohit/Desktop/study/projects/Mess/docs/BACKEND.md)**: Explanations of Spring Boot REST controllers, controller parameters, business logic service beans, schedules for expired records cleanup, and file uploads.
+*   🔐 **[Security Design Guide (docs/SECURITY.md)](file:///c:/Users/rohit/Desktop/study/projects/Mess/docs/SECURITY.md)**: Explains the Spring Security filters, stateless session handling, BCrypt hashing mechanism, custom JWT token validation, and CORS configurations.
+*   🗄️ **[Database Specifications (docs/DATABASE.md)](file:///c:/Users/rohit/Desktop/study/projects/Mess/docs/DATABASE.md)**: Details on the MongoDB schemas, unique compound indexes, Repository interfaces, and document structure examples.
 
-### Lunch
-Rice, Sambar, Rasam, Chapati, Vegetable Curry, Curd, Pickle, Sweet
+---
 
-### Evening Snacks
-Tea, Coffee, Samosa, Bajji, Bonda, Biscuits, Puff
+## 🎯 Core Features
 
-### Dinner
-Chapati, Rice, Dal, Curry, Curd, Buttermilk
+- **Live Menu Management**: Displays real-time meal items (Breakfast, Lunch, Snacks, Dinner) with validation badges.
+- **Buddy Groups**: Create/join groups with unique 8-character codes to coordinate dining schedules.
+- **Group Meal Status**: Signal if you are "going" to a meal with automated 30-minute status expiry.
+- **Chat System**: Includes Universal Community Chat (public) and private Group Chat for individual buddy groups.
+- **Mess Voice (Complaints)**: Democracy-driven feedback system where students vote (AGREE/DISAGREE) on food quality issues.
+- **Student Photo Submissions**: Multi-image photo uploads showing actual mess food items.
 
-## 🛠️ Tech Stack
+---
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | React (JavaScript), CSS |
-| Backend | Spring Boot (Java 17) |
-| Database | MongoDB |
-| API | REST |
+## 🛠️ Technology Stack
+
+| Layer | Technology | Description |
+|---|---|---|
+| **Frontend** | React 18, Vite, TailwindCSS, Radix UI | User Interface |
+| **Backend** | Spring Boot 3.2, Java 17+, WebSockets | Server Application |
+| **Database** | MongoDB | Document Store |
+| **Security** | Spring Security, JJWT, BCrypt | Auth & Encryption |
+
+---
 
 ## 📋 Prerequisites
 
-Before running this application, make sure you have the following installed:
+Before running the application, make sure you have:
+- **Node.js** (v18 or higher)
+- **Java JDK 17** or higher
+- **Maven** (3.6+)
+- **MongoDB** (running on port `27017`)
 
-- **Node.js** (v18 or higher) - [Download](https://nodejs.org/)
-- **Java 17** or higher - [Download](https://adoptium.net/)
-- **Maven** (3.6+) - [Download](https://maven.apache.org/)
-- **MongoDB** (running on localhost:27017) - [Download](https://www.mongodb.com/try/download/community)
+---
 
 ## 🚀 Getting Started
 
 ### 1. Start MongoDB
+Ensure MongoDB is running locally on default port `27017`.
 
-Make sure MongoDB is running on `localhost:27017`:
-
-```bash
-# Windows
-net start MongoDB
-
-# macOS/Linux
-sudo systemctl start mongod
+### 2. Configure Environment variables
+Create `.env` inside `frontend/` (using `frontend/.env.example` as a template):
+```env
+VITE_API_BASE=http://localhost:8080/api
 ```
 
-### 2. Start the Backend (Spring Boot)
-
+### 3. Run Backend (Spring Boot)
 ```bash
 cd backend
 mvn spring-boot:run
 ```
+The server will run on `http://localhost:8080`.
 
-The backend will start on `http://localhost:8080`
-
-### 3. Start the Frontend (React)
-
+### 4. Run Frontend (React + Vite)
 ```bash
 cd frontend
 npm install
-npm start
+npm run dev
 ```
-
-The frontend will start on `http://localhost:3000`
-
-### 4. Open the Application
-
-Open your browser and navigate to `http://localhost:3000`
-
-## 📡 API Endpoints
-
-### GET /api/meals/today/{mealType}
-Fetch today's food for a given meal type.
-
-**Parameters:**
-- `mealType` - One of: `BREAKFAST`, `LUNCH`, `SNACKS`, `DINNER`
-
-**Response:**
-```json
-{
-  "mealType": "BREAKFAST",
-  "date": "2026-01-24",
-  "items": ["Idli", "Vada"],
-  "postedAt": "2026-01-24T08:30:00Z"
-}
-```
-Returns `null` if not updated.
-
-### POST /api/meals/update
-Save/Update today's food for a meal.
-
-**Request Body:**
-```json
-{
-  "mealType": "BREAKFAST",
-  "date": "2026-01-24",
-  "items": ["Idli", "Vada"]
-}
-```
-
-**Response:**
-```json
-{
-  "mealType": "BREAKFAST",
-  "date": "2026-01-24",
-  "items": ["Idli", "Vada"],
-  "postedAt": "2026-01-24T08:30:00Z"
-}
-```
-
-## 📁 Project Structure
-
-```
-Mess/
-├── backend/
-│   ├── src/main/java/com/hostel/mess/
-│   │   ├── MessBreakfastApplication.java
-│   │   ├── config/
-│   │   │   └── CorsConfig.java
-│   │   ├── controller/
-│   │   │   └── MealController.java
-│   │   ├── dto/
-│   │   │   ├── MealRequest.java
-│   │   │   └── MealResponse.java
-│   │   ├── model/
-│   │   │   └── MealUpdate.java
-│   │   ├── repository/
-│   │   │   └── MealRepository.java
-│   │   └── service/
-│   │       └── MealService.java
-│   ├── src/main/resources/
-│   │   └── application.properties
-│   └── pom.xml
-│
-├── frontend/
-│   ├── public/
-│   │   └── index.html
-│   ├── src/
-│   │   ├── App.js
-│   │   ├── App.css
-│   │   ├── index.js
-│   │   ├── index.css
-│   │   ├── components/
-│   │   │   ├── MealTabs.js
-│   │   │   ├── MealTabs.css
-│   │   │   ├── FoodCard.js
-│   │   │   ├── FoodCard.css
-│   │   │   ├── FoodGrid.js
-│   │   │   ├── FoodGrid.css
-│   │   │   ├── TodayMenuDisplay.js
-│   │   │   └── TodayMenuDisplay.css
-│   │   ├── data/
-│   │   │   └── foodData.js
-│   │   └── services/
-│   │       └── api.js
-│   └── package.json
-│
-└── README.md
-```
-
-## 🗄️ MongoDB Schema
-
-**Collection:** `meal_updates`
-
-```json
-{
-  "_id": "ObjectId",
-  "mealType": "BREAKFAST | LUNCH | SNACKS | DINNER",
-  "date": "YYYY-MM-DD",
-  "items": ["Idli", "Vada"],
-  "postedAt": "ISO_TIMESTAMP"
-}
-```
-
-**Rules:**
-- One document per `mealType` + `date` combination
-- If posted again → overwrites existing record
-
-## 🔮 Future Improvements
-
-- Add user authentication for posting menus
-- Implement rating system for food items
-- Add admin panel for menu management
-- Support multiple hostels
-- Add push notifications for menu updates
-- Historical menu data and analytics
-
-## 📝 Notes
-
-- MongoDB must be running on `localhost:27017`
-- CORS is configured to allow requests from `http://localhost:3000`
-- Food images are loaded from public URLs
-- The food items list is configured in `frontend/src/data/foodData.js`
-
-## 📄 License
-
-This project is for educational purposes.
+The dev server will run on `http://localhost:3000`.

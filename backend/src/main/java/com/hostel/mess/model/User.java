@@ -1,6 +1,8 @@
 package com.hostel.mess.model;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -18,6 +20,8 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
+    private List<String> favoriteFoods = new ArrayList<>();
+
     private String password; // BCrypt hashed
 
     private String hostel;
@@ -30,15 +34,28 @@ public class User {
 
     private String role = "STUDENT"; // Default role
 
+    private Integer floor;
+
+    private Boolean directoryVisible = true;
+
+    private String phoneNumber;
+
+    private String profilePhoto;
+
     private Instant createdAt;
 
     private Instant updatedAt;
+
+    private int points = 0;
+
+    private List<String> badges = new ArrayList<>();
     
     // Constructors
     public User() {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
         this.role = "STUDENT";
+        this.directoryVisible = true;
     }
 
     public User(String email, String password, String hostel, String roomNumber, String year, String branch) {
@@ -49,8 +66,41 @@ public class User {
         this.year = year;
         this.branch = branch;
         this.role = "STUDENT";
+        this.directoryVisible = true;
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
+    }
+
+    public Integer getFloor() {
+        return floor;
+    }
+
+    public void setFloor(Integer floor) {
+        this.floor = floor;
+    }
+
+    public Boolean getDirectoryVisible() {
+        return directoryVisible != null ? directoryVisible : true;
+    }
+
+    public void setDirectoryVisible(Boolean directoryVisible) {
+        this.directoryVisible = directoryVisible;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getProfilePhoto() {
+        return profilePhoto;
+    }
+
+    public void setProfilePhoto(String profilePhoto) {
+        this.profilePhoto = profilePhoto;
     }
 
     public String getId() {
@@ -131,6 +181,34 @@ public class User {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<String> getFavoriteFoods() {
+        return favoriteFoods != null ? favoriteFoods : new ArrayList<>();
+    }
+
+    public void setFavoriteFoods(List<String> favoriteFoods) {
+        this.favoriteFoods = favoriteFoods;
+    }
+
+    public int getPoints() {
+        return points;
+    }
+
+    public void setPoints(int points) {
+        this.points = points;
+    }
+
+    public void addPoints(int pts) {
+        this.points += pts;
+    }
+
+    public List<String> getBadges() {
+        return badges != null ? badges : new ArrayList<>();
+    }
+
+    public void setBadges(List<String> badges) {
+        this.badges = badges;
     }
 
     @Override

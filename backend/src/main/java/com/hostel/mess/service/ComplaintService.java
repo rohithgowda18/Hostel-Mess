@@ -28,6 +28,9 @@ public class ComplaintService {
     
     @Autowired
     private ComplaintRepository complaintRepository;
+
+    @Autowired
+    private WebSocketEventService wsService;
     
     /**
      * Raise a new complaint against a food item
@@ -69,7 +72,12 @@ public class ComplaintService {
         updateComplaintStatus(complaint);
         
         Complaint saved = complaintRepository.save(complaint);
-        return convertToResponse(saved);
+        ComplaintResponse response = convertToResponse(saved);
+        
+        // Broadcast in real-time
+        wsService.broadcastAppEvent("COMPLAINT_UPDATED", response);
+        
+        return response;
     }
     
     /**
@@ -102,7 +110,12 @@ public class ComplaintService {
         updateComplaintStatus(complaint);
         
         Complaint updated = complaintRepository.save(complaint);
-        return convertToResponse(updated);
+        ComplaintResponse response = convertToResponse(updated);
+        
+        // Broadcast in real-time
+        wsService.broadcastAppEvent("COMPLAINT_UPDATED", response);
+        
+        return response;
     }
     
     /**

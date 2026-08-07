@@ -64,7 +64,12 @@ public class AuthService {
             user.getRoomNumber(),
             user.getYear(),
             user.getBranch(),
-            user.getRole()
+            user.getRole(),
+            user.getFloor(),
+            user.getDirectoryVisible(),
+            user.getPhoneNumber(),
+            user.getProfilePhoto(),
+            user.getFavoriteFoods()
         );
     }
 }

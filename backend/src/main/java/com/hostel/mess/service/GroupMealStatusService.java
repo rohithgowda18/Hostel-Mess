@@ -2,8 +2,10 @@ package com.hostel.mess.service;
 
 import com.hostel.mess.model.Group;
 import com.hostel.mess.model.GroupMealStatus;
+import com.hostel.mess.model.User;
 import com.hostel.mess.repository.GroupMealStatusRepository;
 import com.hostel.mess.repository.GroupRepository;
+import com.hostel.mess.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
@@ -19,6 +21,12 @@ public class GroupMealStatusService {
     
     @Autowired
     private GroupRepository groupRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private WebSocketEventService wsService;
     
     /**
      * Mark a user as going to a meal
@@ -60,7 +68,12 @@ public class GroupMealStatusService {
         }
         
         status.setUpdatedAt(Instant.now());
-        return groupMealStatusRepository.save(status);
+        GroupMealStatus saved = groupMealStatusRepository.save(status);
+        
+        // Broadcast in real-time
+        wsService.broadcastAppEvent("GOING_UPDATED", saved);
+        
+        return saved;
     }
     
     /**
@@ -73,11 +86,19 @@ public class GroupMealStatusService {
             throw new RuntimeException("No going status found for this meal");
         }
         
-        GroupMealStatus status = statusOpt.get();
-        status.getGoingUsers().remove(userId);
-        status.setUpdatedAt(Instant.now());
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found: " + userId));
         
-        return groupMealStatusRepository.save(status);
+        GroupMealStatus status = statusOpt.get();
+        status.getGoingUsers().remove(user.getEmail());
+        status.getGoingUsers().remove(userId); // fallback
+        status.setUpdatedAt(Instant.now());
+        GroupMealStatus saved = groupMealStatusRepository.save(status);
+        
+        // Broadcast in real-time
+        wsService.broadcastAppEvent("GOING_UPDATED", saved);
+        
+        return saved;
     }
     
     /**

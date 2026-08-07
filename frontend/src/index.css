@@ -1,31 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
+  --background: #f8f9fa;
   --card: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-}
-
-.dark {
-  --background: #0f172a;
-  --card: #111827;
-  --border: #1f2937;
-  --text-primary: #e5e7eb;
-  --text-secondary: #9ca3af;
-}
-
-* {
-  @apply border-border;
+  --border: #c2c6d4;
+  --text-primary: #191c1d;
+  --text-secondary: #424752;
 }
 
 body {
-  @apply bg-background text-foreground font-sans antialiased;
+  @apply bg-background text-on-surface antialiased font-sans;
+  font-family: 'Inter', sans-serif;
   margin: 0;
   min-height: 100vh;
 }
@@ -34,9 +24,23 @@ body {
   min-height: 100vh;
 }
 
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.input-field {
+  @apply w-full bg-[#F1F3F5] border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 text-on-surface transition-colors duration-200 py-3 px-4 rounded-t-DEFAULT outline-none;
+}
+
+.input-label {
+  @apply block text-on-surface-variant font-medium text-sm mb-1;
+}
+
 ::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -44,10 +48,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #c2c6d4;
   border-radius: 999px;
 }
 
-.light ::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-}

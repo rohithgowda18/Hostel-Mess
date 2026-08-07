@@ -71,7 +71,8 @@ public class AuthController {
         // Prepare response
         UserInfo userInfo = new UserInfo(
                 user.getId(), user.getEmail(), user.getHostel(),
-                user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole()
+                user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
+                user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
         );
         String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -94,7 +95,8 @@ public class AuthController {
 
                 UserInfo userInfo = new UserInfo(
                                 user.getId(), user.getEmail(), user.getHostel(),
-                                user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole()
+                                user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
+                                user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
                 );
                 String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
                 return ResponseEntity.ok(new LoginResponse(token, userInfo));
