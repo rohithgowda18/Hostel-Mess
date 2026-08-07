@@ -113,31 +113,31 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto font-[Inter,sans-serif] pb-24 md:pb-8">
+    <div className="flex-1 overflow-y-auto font-[Inter,sans-serif] bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] pb-24 md:pb-8 transition-colors duration-200">
       <main className="p-4 md:p-6 mt-4 md:mt-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-[36px] md:text-[45px] font-semibold text-[#003f87] leading-10 md:leading-[52px]">Feedback & Complaints</h1>
-          <p className="text-base text-[#424752]">Share your dining experience or report issues to improve mess services.</p>
+          <h1 className="text-[36px] md:text-[45px] font-semibold text-[#003f87] dark:text-[#3B82F6] leading-10 md:leading-[52px]">Feedback & Complaints</h1>
+          <p className="text-base text-[#424752] dark:text-[#94A3B8]">Share your dining experience or report issues to improve mess services.</p>
         </div>
 
         {/* Feedback Alert Status Banner */}
         {feedbackStatusMsg && (
-          <div className="mb-6 p-3 bg-[#e8f5ea] border border-[#006e25]/30 text-[#006e25] rounded-lg text-sm font-medium">
+          <div className="mb-6 p-3 bg-[#e8f5ea] dark:bg-[#22C55E]/10 border border-[#006e25]/30 dark:border-[#22C55E]/30 text-[#006e25] dark:text-[#22C55E] rounded-lg text-sm font-medium">
             {feedbackStatusMsg}
           </div>
         )}
 
         {/* Tabs Navigation */}
-        <div className="flex border-b border-[#c2c6d4] mb-6 overflow-x-auto no-scrollbar gap-6">
+        <div className="flex border-b border-[#c2c6d4] dark:border-[#334155] mb-6 overflow-x-auto no-scrollbar gap-6">
           {TABS.filter(t => t.id !== 'admin' || isAdmin).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`pb-3 text-sm font-medium whitespace-nowrap flex items-center gap-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'text-[#003f87] border-b-2 border-[#003f87] font-bold'
-                  : 'text-[#424752] hover:text-[#003f87]'
+                  ? 'text-[#003f87] dark:text-[#3B82F6] border-b-2 border-[#003f87] dark:border-[#3B82F6] font-bold'
+                  : 'text-[#424752] dark:text-[#CBD5E1] hover:text-[#003f87] dark:hover:text-[#3B82F6]'
               } ${tab.right ? 'md:ml-auto' : ''}`}
             >
               <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>

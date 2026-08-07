@@ -184,32 +184,32 @@ export default function DirectoryPage() {
             {isAdmin && (
               <button
                 onClick={() => setShowModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-[#003f87] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                className="px-4 py-2 bg-[#006e25] dark:bg-[#22C55E] text-white dark:text-slate-950 font-bold rounded-xl text-xs hover:opacity-90 active:scale-95 transition flex items-center gap-1.5 shadow-sm"
               >
-                <span className="material-symbols-outlined text-[18px]">add</span>
+                <span className="material-symbols-outlined text-base">add_circle</span>
                 Add Room
               </button>
             )}
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white border border-[#c2c6d4] rounded-xl p-5 flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-[#424752] mb-2">
+          <div className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-xl p-5 flex flex-col justify-between shadow-sm">
+            <div className="flex items-center gap-2 text-[#424752] dark:text-[#CBD5E1] mb-2">
               <span className="material-symbols-outlined text-[20px]">groups</span>
               <span className="text-sm font-medium">Total Students</span>
             </div>
-            <div className="text-[45px] font-semibold text-[#191c1d] leading-none">
+            <div className="text-[45px] font-semibold text-[#191c1d] dark:text-[#F8FAFC] leading-none">
               {occupancyStats.totalStudents || students.length}
             </div>
           </div>
-          <div className="bg-white border border-[#c2c6d4] rounded-xl p-5 flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-[#424752] mb-2">
+          <div className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-xl p-5 flex flex-col justify-between shadow-sm">
+            <div className="flex items-center gap-2 text-[#424752] dark:text-[#CBD5E1] mb-2">
               <span className="material-symbols-outlined text-[20px]">meeting_room</span>
               <span className="text-sm font-medium">Occupied Rooms</span>
             </div>
-            <div className="text-[45px] font-semibold text-[#191c1d] leading-none">
+            <div className="text-[45px] font-semibold text-[#191c1d] dark:text-[#F8FAFC] leading-none">
               {occupancyStats.occupiedRooms}
             </div>
           </div>

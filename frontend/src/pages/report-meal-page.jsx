@@ -51,8 +51,30 @@ export default function ReportMealPage() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoUrl(reader.result);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 800;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          setPhotoUrl(compressedDataUrl);
+        };
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -60,8 +82,8 @@ export default function ReportMealPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedItems.length === 0) {
-      alert('Please select at least 1 food item being served!');
+    if (selectedItems.length === 0 && !photoUrl) {
+      alert('Please select at least 1 food item OR upload a photo of the meal being served!');
       return;
     }
 
@@ -84,29 +106,29 @@ export default function ReportMealPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#f8f9fa] text-[#191c1d] p-4 md:p-6 pb-24 md:pb-8 font-[Inter,sans-serif]">
+    <div className="flex-1 overflow-y-auto bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] p-4 md:p-6 pb-24 md:pb-8 font-[Inter,sans-serif] transition-colors duration-200">
       <main className="max-w-4xl mx-auto space-y-6">
         
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between pt-2">
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-1.5 text-xs text-[#003f87] font-semibold hover:underline transition"
+            className="flex items-center gap-1.5 text-xs text-[#003f87] dark:text-[#3B82F6] font-semibold hover:underline transition"
           >
             <span className="material-symbols-outlined text-base">arrow_back</span>
             Back to Dashboard
           </button>
-          <span className="text-xs font-bold text-[#006e25] bg-[#e8f5ea] border border-[#006e25]/30 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold text-[#006e25] dark:text-[#22C55E] bg-[#e8f5ea] dark:bg-[#22C55E]/20 border border-[#006e25]/30 dark:border-[#22C55E]/40 px-3 py-1 rounded-full">
             🏆 Earn up to +35 Contribution Pts
           </span>
         </div>
 
         {/* Page Title Header */}
         <div>
-          <h1 className="text-3xl font-bold text-[#003f87] flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-[#003f87] dark:text-[#3B82F6] flex items-center gap-2">
             <span>🍲</span> Report Today's Meal
           </h1>
-          <p className="text-xs text-[#424752] mt-1">
+          <p className="text-xs text-[#424752] dark:text-[#94A3B8] mt-1">
             Help your hostel peers by reporting what is actually being served right now. Select items from the catalog below.
           </p>
         </div>
@@ -295,11 +317,17 @@ export default function ReportMealPage() {
             </button>
             <button
               type="submit"
-              disabled={submitting || selectedItems.length === 0}
+              disabled={submitting || (selectedItems.length === 0 && !photoUrl)}
               className="w-full sm:w-auto min-h-[52px] px-8 rounded-xl text-sm font-extrabold text-white bg-[#006e25] hover:opacity-90 disabled:opacity-50 shadow-md transition active:scale-95 flex items-center justify-center gap-2"
             >
               <span className="material-symbols-outlined text-xl">send</span>
-              {submitting ? 'Submitting Report...' : `Submit Menu Report (${selectedItems.length} Items)`}
+              {submitting
+                ? 'Submitting Report...'
+                : photoUrl && selectedItems.length > 0
+                ? `Submit Report (${selectedItems.length} Items + Photo)`
+                : photoUrl
+                ? 'Submit Serving Photo (+5 Pts)'
+                : `Submit Menu Report (${selectedItems.length} Items)`}
             </button>
           </div>
 

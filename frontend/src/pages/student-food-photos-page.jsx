@@ -32,17 +32,17 @@ export default function StudentFoodPhotosPage() {
   const currentPhoto = lightboxIndex !== null ? filtered[lightboxIndex] : null;
 
   return (
-    <div className="flex-1 flex flex-col md:ml-0 h-full overflow-hidden font-[Inter,sans-serif]">
-      <main className="flex-1 overflow-y-auto bg-[#f8f9fa] text-[#191c1d] p-3 md:p-6 pb-24 md:pb-8">
+    <div className="flex-1 flex flex-col md:ml-0 h-full overflow-hidden font-[Inter,sans-serif] bg-[#f8f9fa] dark:bg-[#0F172A] transition-colors duration-200">
+      <main className="flex-1 overflow-y-auto bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] p-3 md:p-6 pb-24 md:pb-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mt-2">
           <div>
-            <h2 className="text-[32px] md:text-[45px] font-semibold text-[#003f87] leading-9 md:leading-[52px]">Community Food Gallery</h2>
-            <p className="text-xs text-[#424752] mt-1">Live photos uploaded by students during meal reports today.</p>
+            <h2 className="text-[32px] md:text-[45px] font-semibold text-[#003f87] dark:text-[#3B82F6] leading-9 md:leading-[52px]">Community Food Gallery</h2>
+            <p className="text-xs text-[#424752] dark:text-[#94A3B8] mt-1">Live photos uploaded by students during meal reports today.</p>
           </div>
           <button
             onClick={() => navigate('/report-meal')}
-            className="w-full sm:w-auto min-h-[48px] px-5 bg-[#006e25] text-white font-bold rounded-xl text-xs shadow-sm hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2"
+            className="w-full sm:w-auto min-h-[48px] px-5 bg-[#006e25] dark:bg-[#22C55E] text-white dark:text-slate-950 font-bold rounded-xl text-xs shadow-sm hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-[20px]">rate_review</span>
             Report Served Meal & Add Photo
@@ -50,7 +50,7 @@ export default function StudentFoodPhotosPage() {
         </div>
 
         {/* Read-only Information Banner */}
-        <div className="mb-6 p-4 bg-[#e8f5ea] border border-[#006e25]/30 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#006e25]">
+        <div className="mb-6 p-4 bg-[#e8f5ea] dark:bg-[#22C55E]/10 border border-[#006e25]/30 dark:border-[#22C55E]/30 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#006e25] dark:text-[#22C55E]">
           <div className="flex items-center gap-2">
             <span className="text-base">💡</span>
             <span>Photos are automatically contributed when you report today's served meal (+5 Bonus Pts).</span>
@@ -61,7 +61,7 @@ export default function StudentFoodPhotosPage() {
         </div>
 
         {/* Filters Bar */}
-        <div className="bg-white border border-[#c2c6d4] rounded-xl p-3 mb-6 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-xl p-3 mb-6 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="flex items-center gap-2 overflow-x-auto w-full no-scrollbar">
             {['All Meals', 'Breakfast', 'Lunch', 'Snacks', 'Dinner'].map((f) => (
               <button
@@ -69,8 +69,8 @@ export default function StudentFoodPhotosPage() {
                 onClick={() => { setActiveFilter(f); setLightboxIndex(null); }}
                 className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
                   activeFilter === f
-                    ? 'bg-[#003f87] text-white shadow-sm'
-                    : 'bg-[#f3f4f5] text-[#191c1d] border border-[#c2c6d4] hover:bg-[#e1e3e4]'
+                    ? 'bg-[#003f87] dark:bg-[#3B82F6] text-white shadow-sm font-bold'
+                    : 'bg-[#f3f4f5] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#CBD5E1] border border-[#c2c6d4] dark:border-[#334155] hover:bg-[#e1e3e4] dark:hover:bg-[#334155]'
                 }`}
               >
                 {f}

@@ -78,27 +78,27 @@ export default function LoginPage({ onLogin }) {
   const switchToLogin = () => { setView('login'); setError(''); };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-4 font-[Inter,sans-serif]">
+    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] flex items-center justify-center p-4 font-[Inter,sans-serif] transition-colors duration-200">
       {/* Background Blobs */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[#0056b3]/20 blur-[100px]" />
-        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[40%] rounded-full bg-[#80f98b]/20 blur-[100px]" />
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[#0056b3]/20 dark:bg-[#3B82F6]/10 blur-[100px]" />
+        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[40%] rounded-full bg-[#80f98b]/20 dark:bg-[#22C55E]/10 blur-[100px]" />
       </div>
 
       {/* Main Card */}
-      <div className="relative z-10 w-full max-w-[500px] bg-white rounded-xl shadow-sm border border-[#c2c6d4] p-5 md:p-7 my-8">
+      <div className="relative z-10 w-full max-w-[500px] bg-white dark:bg-[#1E293B] rounded-xl shadow-sm border border-[#c2c6d4] dark:border-[#334155] p-5 md:p-7 my-8">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-[#0056b3]/10 mb-4 text-[#003f87]">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-[#0056b3]/10 dark:bg-[#3B82F6]/20 mb-4 text-[#003f87] dark:text-[#3B82F6]">
             <span className="material-symbols-outlined text-[48px]" style={{ fontVariationSettings: "'FILL' 1" }}>restaurant</span>
           </div>
-          <h1 className="text-[32px] font-bold text-[#003f87] leading-10">MessMaster</h1>
-          <p className="text-sm text-[#424752] mt-1">University Hostel Dining Portal</p>
+          <h1 className="text-[32px] font-bold text-[#003f87] dark:text-[#3B82F6] leading-10">MessMaster</h1>
+          <p className="text-sm text-[#424752] dark:text-[#94A3B8] mt-1">University Hostel Dining Portal</p>
         </div>
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-4 p-3 bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#93000a] rounded-lg text-sm font-medium flex items-center gap-2">
+          <div className="mb-4 p-3 bg-[#ffdad6] dark:bg-[#EF4444]/20 border border-[#ba1a1a]/30 dark:border-[#EF4444]/30 text-[#93000a] dark:text-[#EF4444] rounded-lg text-sm font-medium flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">error</span>
             {error}
           </div>
@@ -107,7 +107,7 @@ export default function LoginPage({ onLogin }) {
         {/* ─────────────── LOGIN VIEW ─────────────── */}
         {view === 'login' && (
           <div>
-            <h2 className="text-[22px] font-medium text-[#191c1d] mb-6 text-center">Welcome Back</h2>
+            <h2 className="text-[22px] font-medium text-[#191c1d] dark:text-[#F8FAFC] mb-6 text-center">Welcome Back</h2>
             <form className="space-y-4" onSubmit={handleLogin} noValidate>
               {/* Email */}
               <div>

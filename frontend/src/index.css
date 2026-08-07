@@ -6,22 +6,57 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8f9fa;
-  --card: #ffffff;
-  --border: #c2c6d4;
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #f3f4f5;
+  --card-bg: #ffffff;
+  --hover-bg: #e5e7eb;
+  --border-color: #c2c6d4;
+  --primary-color: #003f87;
+  --success-color: #006e25;
+  --warning-color: #d97706;
+  --danger-color: #ba1a1a;
   --text-primary: #191c1d;
   --text-secondary: #424752;
+  --text-muted: #6b7280;
+}
+
+html.dark {
+  --bg-primary: #0F172A;
+  --bg-secondary: #111827;
+  --card-bg: #1E293B;
+  --hover-bg: #334155;
+  --border-color: #334155;
+  --primary-color: #3B82F6;
+  --success-color: #22C55E;
+  --warning-color: #F59E0B;
+  --danger-color: #EF4444;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+}
+
+*, ::before, ::after {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
 }
 
 body {
-  @apply bg-background text-on-surface antialiased font-sans;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   margin: 0;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 #root {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+html.dark body {
+  background-color: #0F172A;
+  color: #F8FAFC;
 }
 
 .glass-panel {
@@ -30,12 +65,18 @@ body {
   -webkit-backdrop-filter: blur(12px);
 }
 
+html.dark .glass-panel {
+  background: rgba(30, 41, 59, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 .input-field {
-  @apply w-full bg-[#F1F3F5] border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 text-on-surface transition-colors duration-200 py-3 px-4 rounded-t-DEFAULT outline-none;
+  @apply w-full bg-[#F1F3F5] dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] focus:border-[#003f87] dark:focus:border-[#3B82F6] text-[#191c1d] dark:text-[#F8FAFC] py-3 px-4 rounded-xl outline-none transition-colors;
 }
 
 .input-label {
-  @apply block text-on-surface-variant font-medium text-sm mb-1;
+  @apply block text-sm font-semibold text-[#424752] dark:text-[#CBD5E1] mb-1;
 }
 
 ::-webkit-scrollbar {
@@ -52,3 +93,6 @@ body {
   border-radius: 999px;
 }
 
+html.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}

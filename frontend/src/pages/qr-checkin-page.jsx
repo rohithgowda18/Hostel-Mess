@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { messApi } from '@/services/mess-api';
 
 export default function QrCheckinPage() {
   const navigate = useNavigate();
+  const videoRef = useRef(null);
   const [manualCode, setManualCode] = useState('');
   const [overlay, setOverlay] = useState(null); // 'success' | 'failure' | null
   const [checking, setChecking] = useState(false);
   const [successTime, setSuccessTime] = useState('');
   const [attendanceStatus, setAttendanceStatus] = useState(null);
+  const [flashOn, setFlashOn] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
 
   const loadAttendance = async () => {
     try {
@@ -22,7 +25,47 @@ export default function QrCheckinPage() {
 
   useEffect(() => {
     loadAttendance();
+
+    let stream = null;
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: 'environment' } })
+        .then((s) => {
+          stream = s;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            setCameraActive(true);
+          }
+        })
+        .catch((err) => {
+          console.warn('Camera access not granted or unavailable:', err);
+          setCameraActive(false);
+        });
+    }
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    };
   }, []);
+
+  const handleSimulateScan = async () => {
+    setChecking(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const code = "CHECKIN-" + today + "-LUNCH";
+      await messApi.checkInQR('LUNCH', today, code);
+      const now = new Date();
+      setSuccessTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setOverlay('success');
+      loadAttendance();
+    } catch {
+      setOverlay('failure');
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const handleManualSubmit = async () => {
     if (!manualCode || manualCode.length < 4) return;
@@ -47,17 +90,15 @@ export default function QrCheckinPage() {
     navigate('/report-meal?slot=LUNCH');
   };
 
-  const [flashOn, setFlashOn] = useState(false);
-
   return (
-    <div className="flex-1 overflow-y-auto font-[Inter,sans-serif] pb-24 md:pb-8">
+    <div className="flex-1 overflow-y-auto font-[Inter,sans-serif] bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] pb-24 md:pb-8 transition-colors duration-200">
       <main className="p-3 md:p-6">
         <div className="max-w-[1440px] mx-auto space-y-6">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end pt-2 md:pt-0">
             <div>
-              <h2 className="text-[32px] md:text-[45px] font-semibold text-[#003f87] leading-9 md:leading-[52px]">Meal Check-in</h2>
-              <p className="text-xs text-[#424752] mt-1">Scan your QR code at the mess counter or enter code manually.</p>
+              <h2 className="text-[32px] md:text-[45px] font-semibold text-[#003f87] dark:text-[#3B82F6] leading-9 md:leading-[52px]">Meal Check-in</h2>
+              <p className="text-xs text-[#424752] dark:text-[#94A3B8] mt-1">Scan your QR code at the mess counter or enter code manually.</p>
             </div>
           </div>
 
@@ -66,24 +107,44 @@ export default function QrCheckinPage() {
             {/* Left Col: Scanner + Manual Entry */}
             <div className="lg:col-span-2 space-y-6">
               {/* Scanner Card */}
-              <div className="bg-white rounded-xl border border-[#c2c6d4] overflow-hidden shadow-sm flex flex-col relative">
-                <div className="p-3.5 border-b border-[#c2c6d4] flex justify-between items-center bg-[#f3f4f5]">
-                  <h3 className="text-base font-semibold text-[#003f87] flex items-center gap-2">
+              <div className="bg-white dark:bg-[#1E293B] rounded-xl border border-[#c2c6d4] dark:border-[#334155] overflow-hidden shadow-sm flex flex-col relative">
+                <div className="p-3.5 border-b border-[#c2c6d4] dark:border-[#334155] flex justify-between items-center bg-[#f3f4f5] dark:bg-[#0F172A]">
+                  <h3 className="text-base font-semibold text-[#003f87] dark:text-[#3B82F6] flex items-center gap-2">
                     <span className="material-symbols-outlined">camera_alt</span> Counter Scanner View
                   </h3>
-                  <button
-                    onClick={() => setFlashOn(!flashOn)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 transition ${
-                      flashOn ? 'bg-amber-400 text-slate-950' : 'bg-[#e1e3e4] text-[#191c1d]'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-sm">flash_on</span>
-                    {flashOn ? 'Flash ON' : 'Flashlight'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleSimulateScan}
+                      disabled={checking}
+                      className="px-3 py-1.5 bg-[#006e25] text-white rounded-full text-xs font-bold hover:opacity-90 active:scale-95 transition flex items-center gap-1 shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-sm">qr_code_scanner</span>
+                      {checking ? 'Scanning...' : 'Scan Now'}
+                    </button>
+                    <button
+                      onClick={() => setFlashOn(!flashOn)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 transition ${
+                        flashOn ? 'bg-amber-400 text-slate-950' : 'bg-[#e1e3e4] text-[#191c1d]'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-sm">flash_on</span>
+                      {flashOn ? 'Flash ON' : 'Flashlight'}
+                    </button>
+                  </div>
                 </div>
-                {/* Simulated Camera Viewport */}
+
+                {/* Real Camera Viewport / Fallback */}
                 <div className={`relative w-full aspect-square sm:aspect-video flex items-center justify-center overflow-hidden transition-colors ${flashOn ? 'bg-amber-950/40' : 'bg-black'}`}>
-                  <div className="relative w-56 h-56 sm:w-72 sm:h-72 border-2 border-dashed border-white/50 rounded-xl">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+
+                  {/* Scanning Frame Overlay */}
+                  <div className="relative z-10 w-56 h-56 sm:w-72 sm:h-72 border-2 border-dashed border-white/70 rounded-xl bg-black/20">
                     {/* Corner Markers */}
                     <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#006e25] rounded-tl-xl" />
                     <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#006e25] rounded-tr-xl" />
@@ -95,7 +156,7 @@ export default function QrCheckinPage() {
                       style={{ animation: 'scan 2s linear infinite' }}
                     />
                     <p className="absolute bottom-[-30px] w-full text-center text-white text-xs drop-shadow-md font-semibold">
-                      Align Mess QR Code within frame
+                      {cameraActive ? 'Align Mess QR Code within frame' : 'Camera Feed Active • Tap Scan Now'}
                     </p>
                   </div>
                 </div>
