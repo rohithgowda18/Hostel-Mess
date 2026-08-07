@@ -1,0 +1,29 @@
+services:
+  # 1. Spring Boot Backend Web Service
+  - type: web
+    name: hostel-mess-backend
+    env: image
+    image:
+      url: maven:3.9-eclipse-temurin-17
+    buildCommand: cd backend && mvn clean package -DskipTests
+    startCommand: java -jar backend/target/mess-breakfast-1.0.0.jar
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_DATA_MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+
+  # 2. React Vite Frontend Static Site
+  - type: static
+    name: hostel-mess-frontend
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://hostel-mess-backend.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
