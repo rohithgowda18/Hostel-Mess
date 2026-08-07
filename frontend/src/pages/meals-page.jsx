@@ -8,11 +8,21 @@ const TABS = [
   { id: 'history', label: 'Meal History', icon: 'history' },
 ];
 
+const DEFAULT_WEEKLY_SCHEDULE = [
+  { day: 'Monday', breakfast: 'Idli, Sambar, Coconut Chutney, Tea/Coffee', lunch: 'Rice, Sambar, Rasam, Beans Palya, Curd', snacks: 'Onion Pakoda, Tea', dinner: 'Chapati, Dal Tadka, Rice, Rasam' },
+  { day: 'Tuesday', breakfast: 'Masala Dosa, Potato Palya, Chutney, Coffee', lunch: 'Rice, Majjige Huli, Cabbage Palya, Rasam, Curd', snacks: 'Mangalore Bonda, Tea', dinner: 'Chapati, Veg Kurma, Rice, Rasam' },
+  { day: 'Wednesday', breakfast: 'Khara Bath, Kesari Bath (Chow Chow Bath)', lunch: 'Veg Pulao, Raitha, Sambar, Rice, Rasam', snacks: 'Samosa, Coffee', dinner: 'Chapati, Paneer Butter Masala, Rice, Rasam' },
+  { day: 'Thursday', breakfast: 'Puri, Vegetable Sagu, Tea/Coffee', lunch: 'Bisibele Bath, Boondi Raitha, Rice, Rasam, Papad', snacks: 'Chilli Bajji, Tea', dinner: 'Chapati, Aloo Gobi Curry, Rice, Rasam' },
+  { day: 'Friday', breakfast: 'Rava Idli, Sagu, Coconut Chutney, Coffee', lunch: 'Lemon Rice, Sambar, Beetroot Palya, Rasam, Curd', snacks: 'Veg Puff, Tea', dinner: 'Chapati, Dal Fry, Rice, Rasam, Gulab Jamun' },
+  { day: 'Saturday', breakfast: 'Avalakki (Poha), Chutney, Tea', lunch: 'Tomato Bath, Majjige Huli, Potato Fry, Rasam', snacks: 'Cutlet, Coffee', dinner: 'Chapati, Mixed Veg Curry, Rice, Rasam' },
+  { day: 'Sunday', breakfast: 'Set Dosa, Vegetable Kurma, Coffee', lunch: 'Jeera Rice, Dal Tadka, Paneer Curry, Mysore Pak', snacks: 'Sweet Corn, Tea', dinner: 'Chapati, Paneer Curry, Rice, Rasam, Ice Cream' },
+];
+
 export default function MealsPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('today');
   const [todayMeals, setTodayMeals] = useState([]);
-  const [weeklyMenu, setWeeklyMenu] = useState([]);
+  const [weeklyMenu, setWeeklyMenu] = useState(DEFAULT_WEEKLY_SCHEDULE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [consensusData, setConsensusData] = useState({});
@@ -78,11 +88,11 @@ export default function MealsPage() {
         }));
         setWeeklyMenu(parsedWeekly);
       } else {
-        setWeeklyMenu([]);
+        setWeeklyMenu(DEFAULT_WEEKLY_SCHEDULE);
       }
     } catch (e) {
       console.error('Error loading meals data:', e);
-      setError('Failed to load menu data from server.');
+      setWeeklyMenu(DEFAULT_WEEKLY_SCHEDULE);
     } finally {
       setLoading(false);
     }
