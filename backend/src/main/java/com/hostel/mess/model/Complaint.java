@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 
-@Document(collection = "food_complaints")
+@Document(collection = "complaints")
 public class Complaint {
     @Id
     private String id;

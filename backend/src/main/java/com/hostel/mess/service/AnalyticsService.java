@@ -24,9 +24,6 @@ public class AnalyticsService {
     private ComplaintRepository complaintRepository;
 
     @Autowired
-    private MealRepository mealRepository;
-
-    @Autowired
     private MealAttendanceRepository attendanceRepository;
 
     @Autowired
