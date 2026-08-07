@@ -3,6 +3,7 @@ services:
   - type: web
     name: hostel-mess-backend
     env: docker
+    plan: free
     dockerfilePath: ./Dockerfile
     envVars:
       - key: PORT
