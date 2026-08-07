@@ -1,12 +1,9 @@
 services:
-  # Spring Boot Backend Web Service
+  # Spring Boot Backend Web Service using Docker
   - type: web
     name: hostel-mess-backend
-    env: image
-    image:
-      url: maven:3.9-eclipse-temurin-17
-    buildCommand: cd backend && mvn clean package -DskipTests
-    startCommand: java -jar backend/target/mess-breakfast-1.0.0.jar
+    env: docker
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: PORT
         value: 8080
