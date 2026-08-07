@@ -131,12 +131,18 @@ public class MealController {
 
     // Weekly Menu endpoints merged here
     @GetMapping("/api/weekly-menu")
-    public ResponseEntity<?> getWeeklyMenu(@RequestParam("weekStartDate") String weekStartDate) {
-        Optional<WeeklyMenu> menuOpt = weeklyMenuRepository.findByWeekStartDate(weekStartDate);
-        if (menuOpt.isPresent()) {
-            return ResponseEntity.ok(menuOpt.get());
+    public ResponseEntity<?> getWeeklyMenu(@RequestParam(value = "weekStartDate", required = false) String weekStartDate) {
+        if (weekStartDate != null) {
+            Optional<WeeklyMenu> menuOpt = weeklyMenuRepository.findByWeekStartDate(weekStartDate);
+            if (menuOpt.isPresent()) {
+                return ResponseEntity.ok(menuOpt.get());
+            }
         }
-        return ResponseEntity.notFound().build();
+        List<WeeklyMenu> allMenus = weeklyMenuRepository.findAll();
+        if (!allMenus.isEmpty()) {
+            return ResponseEntity.ok(allMenus.get(0));
+        }
+        return ResponseEntity.ok(Map.of());
     }
 
     @PostMapping("/api/weekly-menu")

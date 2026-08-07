@@ -26,7 +26,7 @@ public class AnalyticsController {
 
     @GetMapping("/occupancy")
     public ResponseEntity<?> getOccupancyStats() {
-        return ResponseEntity.ok(Map.of("occupancyPercentage", 68, "statusLabel", "Moderate"));
+        return ResponseEntity.ok(service.getOccupancyStats());
     }
 
     @GetMapping("/export")
