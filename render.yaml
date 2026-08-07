@@ -10,7 +10,11 @@ services:
     envVars:
       - key: PORT
         value: 8080
+      - key: FRONTEND_URL
+        value: https://hostel-hub.rohith.app
       - key: SPRING_DATA_MONGODB_URI
+        sync: false
+      - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
         generateValue: true
