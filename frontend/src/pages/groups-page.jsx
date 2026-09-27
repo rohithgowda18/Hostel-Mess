@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { messApi } from '@/services/mess-api';
-import { getUser } from '@/services/auth-service';
+import { getUser, isAuthenticated } from '@/services/auth-service';
+import { useAppEvents } from '@/hooks/useWebSocket';
 
 const formatDisplayName = (emailOrId) => {
   if (!emailOrId) return 'Student';
@@ -22,7 +23,9 @@ export default function GroupsPage() {
   const [joinCode, setJoinCode] = useState('');
   const [goingUsers, setGoingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [liveConnected, setLiveConnected] = useState(false);
   const currentUser = getUser() || {};
+  const activeGroupIdRef = useRef(null);
 
   const loadGroups = async () => {
     setLoading(true);
@@ -66,9 +69,29 @@ export default function GroupsPage() {
 
   useEffect(() => {
     if (activeGroup) {
+      activeGroupIdRef.current = activeGroup.id || activeGroup._id;
       loadGroupDetailsAndChat(activeGroup);
     }
   }, [activeGroup?.id || activeGroup?._id]);
+
+  // Live chat: refresh messages when a CHAT_MESSAGE event arrives for the open group
+  const { connected: wsConnected } = useAppEvents(async (event) => {
+    if (event?.type !== 'CHAT_MESSAGE') return;
+    const incomingChatId = event?.data?.chatId;
+    const openId = activeGroupIdRef.current;
+    if (incomingChatId && openId && incomingChatId === openId) {
+      try {
+        const msgList = await messApi.getMessages('GROUP', openId).catch(() => []);
+        if (Array.isArray(msgList)) setMessages(msgList);
+      } catch {
+        /* keep existing messages on refresh failure */
+      }
+    }
+  });
+
+  useEffect(() => {
+    setLiveConnected(wsConnected);
+  }, [wsConnected]);
 
   const handleCreateGroup = async (e) => {
     e.preventDefault();
@@ -233,6 +256,22 @@ export default function GroupsPage() {
                 <h4 className="text-sm font-bold text-[#191c1d] dark:text-[#F8FAFC]">
                   {activeGroup ? activeGroup.name : 'Group Chat'}
                 </h4>
+                {isAuthenticated() && (
+                  <span
+                    className={`flex items-center gap-1.5 text-[11px] font-bold ${
+                      liveConnected
+                        ? 'text-[#006e25] dark:text-[#22C55E]'
+                        : 'text-[#424752] dark:text-[#94A3B8]'
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        liveConnected ? 'bg-[#006e25] dark:bg-[#22C55E] animate-pulse' : 'bg-[#94A3B8]'
+                      }`}
+                    />
+                    {liveConnected ? 'Live' : 'Offline'}
+                  </span>
+                )}
               </div>
 
               <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-[#f8f9fa] dark:bg-[#0F172A]">
