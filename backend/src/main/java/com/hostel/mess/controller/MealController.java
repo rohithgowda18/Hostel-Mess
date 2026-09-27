@@ -12,7 +12,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import com.hostel.mess.dto.MealRequest;
 import com.hostel.mess.dto.MealResponse;
 import com.hostel.mess.model.WeeklyMenu;
 import com.hostel.mess.model.MealAttendance;
@@ -23,8 +22,6 @@ import com.hostel.mess.repository.MealAttendanceRepository;
 import com.hostel.mess.repository.FoodRatingRepository;
 import com.hostel.mess.repository.UserRepository;
 import com.hostel.mess.service.MealService;
-
-import jakarta.validation.Valid;
 
 @RestController
 public class MealController {
@@ -44,8 +41,26 @@ public class MealController {
     @Autowired
     private UserRepository userRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${jwt.secret:${app.jwtSecret:${JWT_SECRET:change-me-in-production-min-32-chars-please}}}")
+    private String jwtSecret;
+
+    private String buildCheckinCode(String mealType, String date) {
+        try {
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+            mac.init(new javax.crypto.spec.SecretKeySpec(jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] h = mac.doFinal((date + "|" + mealType.toUpperCase()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : h) hex.append(String.format("%02x", b));
+            return "CHECKIN-" + date + "-" + mealType.toUpperCase() + "-" + hex.substring(0, 6).toUpperCase();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate check-in code", e);
+        }
+    }
+
     private User getAuthenticatedUser(UserDetails userDetails) {
-        if (userDetails == null) return null;
+        if (userDetails == null) {
+            return null;
+        }
         return userRepository.findById(userDetails.getUsername()).orElse(null);
     }
 
@@ -62,24 +77,8 @@ public class MealController {
     }
 
     /**
-     * POST /api/meals/update
-     */
-    @PostMapping("/api/meals/update")
-    public ResponseEntity<?> updateMeal(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody MealRequest request) {
-        String userId = userDetails != null ? userDetails.getUsername() : null;
-        if (userId == null) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("error", "Unauthorized", "message", "Authentication required"));
-        }
-        MealResponse response = mealService.updateMeal(request);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * POST /api/meals/submit-consensus
-     * Student consensus vote & selection for live meal reporting
+     * POST /api/meals/submit-consensus Student consensus vote & selection for
+     * live meal reporting
      */
     @PostMapping("/api/meals/submit-consensus")
     public ResponseEntity<?> submitConsensus(
@@ -111,22 +110,6 @@ public class MealController {
             @PathVariable String date) {
         Map<String, Object> consensus = mealService.getMealConsensus(mealType, date);
         return ResponseEntity.ok(consensus);
-    }
-
-    /**
-     * DELETE /api/meals/admin/{mealType}/today
-     */
-    @DeleteMapping("/api/meals/admin/{mealType}/today")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteTodayMenuAdmin(@PathVariable String mealType) {
-        boolean deleted = mealService.deleteTodayMeal(mealType);
-        if (deleted) {
-            return ResponseEntity.ok(
-                Map.of("success", true, "message", "Today's " + mealType + " menu deleted successfully"));
-        } else {
-            return ResponseEntity.status(404).body(
-                Map.of("success", false, "message", "No menu found for " + mealType + " today"));
-        }
     }
 
     // Weekly Menu endpoints merged here
@@ -197,6 +180,14 @@ public class MealController {
         return ResponseEntity.ok(emptyResponse);
     }
 
+    @GetMapping("/api/attendance/qr-code")
+    public ResponseEntity<?> getQrCode(@RequestParam("mealType") String mealType, @RequestParam("date") String date) {
+        if (mealType == null || date == null) {
+            return ResponseEntity.badRequest().body("mealType and date are required");
+        }
+        return ResponseEntity.ok(Map.of("code", buildCheckinCode(mealType, date)));
+    }
+
     @PostMapping("/api/attendance/check-in")
     public ResponseEntity<?> checkIn(@RequestBody Map<String, String> body, Principal principal) {
         String userEmail = principal.getName();
@@ -208,8 +199,8 @@ public class MealController {
             return ResponseEntity.badRequest().body("mealType, date, and code are required");
         }
 
-        String expectedCode = "CHECKIN-" + date + "-" + mealType.toUpperCase();
-        if (!expectedCode.equalsIgnoreCase(code)) {
+        String expectedCode = buildCheckinCode(mealType, date);
+        if (!expectedCode.equalsIgnoreCase(code.trim())) {
             return ResponseEntity.badRequest().body("Invalid QR check-in code.");
         }
 
@@ -223,7 +214,7 @@ public class MealController {
 
         attendance.setPresent(true);
         attendance.setCheckedInAt(Instant.now());
-        
+
         MealAttendance saved = attendanceRepository.save(attendance);
         return ResponseEntity.ok(saved);
     }
@@ -231,10 +222,10 @@ public class MealController {
     @GetMapping("/api/attendance/stats")
     public ResponseEntity<?> getStats(@RequestParam("date") String date) {
         List<MealAttendance> list = attendanceRepository.findByDate(date);
-        
+
         Map<String, Map<String, Integer>> stats = new HashMap<>();
         String[] mealTypes = {"BREAKFAST", "LUNCH", "SNACKS", "DINNER"};
-        
+
         for (String m : mealTypes) {
             Map<String, Integer> mealStat = new HashMap<>();
             mealStat.put("expectedYes", 0);
@@ -273,10 +264,10 @@ public class MealController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
         }
-        
+
         rating.setUserId(user.getId());
         rating.setUserEmail(user.getEmail());
-        
+
         try {
             FoodRating saved = mealService.saveOrUpdateRating(rating);
             return ResponseEntity.ok(saved);
@@ -302,7 +293,7 @@ public class MealController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
         }
-        
+
         Optional<FoodRating> rating = ratingRepository.findByUserEmailAndMealTypeAndDate(user.getEmail(), mealType, date);
         if (rating.isPresent()) {
             return ResponseEntity.ok(rating.get());

@@ -60,10 +60,10 @@ All REST controllers return JSON structures using standard Spring annotations.
 ### 1. **Auth Controller** (`AuthController.java`)
 - **`POST /api/auth/register`**
   - Parameter: `@RequestBody RegisterRequest request` (`email`, `password`, `hostel`, `roomNumber`, `year`, `branch`)
-  - Logic: Validates email and password presence, checks uniqueness against `UserRepository`, hashes password using `PasswordEncoder`, sets `ROLE` (`ADMIN` for privileged email address, else `STUDENT`), and returns `LoginResponse` with generated JWT token and `UserInfo`.
+  - Logic: Validates email and password presence, checks uniqueness against `UserRepository`, hashes password using `PasswordEncoder`, always assigns role `STUDENT`, and returns `LoginResponse` with generated JWT token and `UserInfo`. Admin accounts are provisioned directly in the database — never via self-registration.
 - **`POST /api/auth/login`**
   - Parameter: `@RequestBody LoginRequest request` (`email`, `password`)
-  - Logic: Fetches user by email, verifies BCrypt hashed password, refreshes admin status if email matches configured admin, returns token and `UserInfo`.
+  - Logic: Fetches user by email, verifies BCrypt hashed password, returns token and `UserInfo`. The role shown is the one stored in the database for that user.
 
 ### 1. **Group Controller** (`GroupController.java`)
 - **`POST /api/groups/create`**
@@ -93,9 +93,9 @@ All REST controllers return JSON structures using standard Spring annotations.
 
 ## ⚙️ Background Services & Logic
 
-### 1. **Authentication Services** (`AuthService.java`)
-- Generates JWT tokens upon successful login using `JwtTokenProvider`.
-- Resolves roles (assigns `ADMIN` to pre-configured addresses, otherwise default to `STUDENT`).
+### 1. **Authentication** (`AuthController.java` + `JwtTokenProvider`)
+- Authentication is handled directly in `AuthController` (register/login) using `JwtTokenProvider` to generate JWT tokens.
+- New accounts are always assigned the `STUDENT` role. Admin roles are provisioned directly in the database — never via self-registration.
 
 ### 2. **Cleanup Scheduler** (`CleanupScheduler.java`)
 Runs background cleanups to keep the database tidy.

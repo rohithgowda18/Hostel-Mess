@@ -14,21 +14,25 @@ import org.springframework.web.filter.CorsFilter;
 @Configuration
 public class CorsConfig {
 
-    @Value("${FRONTEND_URL:http://localhost:3000}")
+    @Value("${FRONTEND_URL:http://localhost:5173}")
     private String frontendUrl;
 
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowCredentials(true);
-        
-        corsConfiguration.setAllowedOriginPatterns(Arrays.asList(
+
+        java.util.List<String> origins = new java.util.ArrayList<>(Arrays.asList(
                 "http://localhost:*",
                 "http://127.0.0.1:*",
                 "https://hostel-hub.rohith.app",
-                "https://*.vercel.app",
-                "https://*.onrender.com"
+                "https://*.vercel.app"
         ));
+        if (frontendUrl != null && !frontendUrl.isBlank()
+                && origins.stream().noneMatch(frontendUrl::equals)) {
+            origins.add(frontendUrl);
+        }
+        corsConfiguration.setAllowedOriginPatterns(origins);
         corsConfiguration.setAllowedHeaders(Arrays.asList(
                 "Origin", "Access-Control-Allow-Origin", "Content-Type",
                 "Accept", "Authorization", "Origin, Accept", "X-Requested-With",

@@ -12,17 +12,20 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${app.jwtSecret:MySuperSecretKeyForJWTs1234567890}")
+    @Value("${jwt.secret:${app.jwtSecret:${JWT_SECRET:change-me-in-production-min-32-chars-please}}}")
     private String jwtSecret;
 
-    @Value("${app.jwtExpirationMs:86400000}") // 24 hours
+    @Value("${jwt.expiration:${app.jwtExpirationMs:${JWT_EXPIRATION:86400000}}}") // 24 hours
     private int jwtExpirationMs;
 
     private byte[] key;
 
     @PostConstruct
     public void init() {
-        this.key = jwtSecret.getBytes();
+        if (jwtSecret == null || jwtSecret.length() < 32) {
+            throw new IllegalStateException("JWT secret must be at least 32 characters. Set JWT_SECRET env var.");
+        }
+        this.key = jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
     public String generateToken(String userId, String username, String role) {

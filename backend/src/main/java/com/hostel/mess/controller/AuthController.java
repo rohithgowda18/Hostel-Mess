@@ -25,8 +25,6 @@ import com.hostel.mess.security.JwtTokenProvider;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-        private static final String PRIVILEGED_ADMIN_EMAIL = "rohithgowdak18@gmail.com";
-
     @Autowired
     private UserRepository userRepository;
 
@@ -35,10 +33,6 @@ public class AuthController {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
-
-        private boolean isPrivilegedAdminEmail(String email) {
-                return email != null && PRIVILEGED_ADMIN_EMAIL.equalsIgnoreCase(email.trim());
-        }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
@@ -66,7 +60,8 @@ public class AuthController {
                 request.getYear(),
                 request.getBranch()
         );
-        user.setRole(isPrivilegedAdminEmail(user.getEmail()) ? "ADMIN" : "STUDENT");
+        // New accounts always start as STUDENT. Admin roles are provisioned directly in the database.
+        user.setRole("STUDENT");
         userRepository.save(user);
         // Prepare response
         UserInfo userInfo = new UserInfo(
@@ -79,26 +74,20 @@ public class AuthController {
                 .body(new LoginResponse(token, userInfo));
     }
 
-        @PostMapping("/login")
-        public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-                User user = userRepository.findByEmail(request.getEmail()).orElse(null);
-                if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                        .body(new ApiResponse(false, "Invalid email or password"));
-                }
-
-                // Keep admin access stable for the configured privileged email.
-                if (isPrivilegedAdminEmail(user.getEmail()) && !"ADMIN".equals(user.getRole())) {
-                        user.setRole("ADMIN");
-                        userRepository.save(user);
-                }
-
-                UserInfo userInfo = new UserInfo(
-                                user.getId(), user.getEmail(), user.getHostel(),
-                                user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
-                                user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
-                );
-                String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
-                return ResponseEntity.ok(new LoginResponse(token, userInfo));
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(false, "Invalid email or password"));
         }
+
+        UserInfo userInfo = new UserInfo(
+                user.getId(), user.getEmail(), user.getHostel(),
+                user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
+                user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
+        );
+        String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
+        return ResponseEntity.ok(new LoginResponse(token, userInfo));
+    }
 }

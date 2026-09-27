@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bell, LogOut, Menu, Moon, Search, Settings, Sun, UserRound, Check, Trash, Monitor } from 'lucide-react';
+import { Bell, LogOut, Menu, Moon, Search, Settings, Sun, UserRound, Check, Trash, Monitor, X } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { InstallButton } from '@/components/InstallButton';
@@ -36,6 +36,7 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   const fetchNotifications = async () => {
     try {
@@ -117,7 +118,17 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Search"
+            aria-expanded={mobileSearchOpen}
+            className="sm:hidden rounded-full hover:bg-[#f3f4f5] dark:hover:bg-[#334155] text-[#424752] dark:text-[#CBD5E1]"
+            onClick={() => setMobileSearchOpen((v) => !v)}
+          >
+            <Search className="h-5 w-5" />
+          </Button>
           <InstallButton />
 
           <DropdownMenu>
@@ -210,6 +221,33 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
             Logout
           </button>
 
+      {mobileSearchOpen && (
+        <div className="sm:hidden absolute inset-x-0 top-16 z-20 border-b border-[#c2c6d4] dark:border-[#334155] bg-white dark:bg-[#1E293B] px-4 py-2 shadow-md">
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#424752] dark:text-[#94A3B8] text-sm">
+              search
+            </span>
+            <input
+              autoFocus
+              aria-label="Global search"
+              value={searchQuery}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder="Search menu, hostels..."
+              className="w-full min-h-[48px] bg-[#f3f4f5] dark:bg-[#0F172A] border-b-2 border-[#c2c6d4] dark:border-[#334155] focus:border-[#003f87] dark:focus:border-[#3B82F6] rounded-t-md py-2 pl-9 pr-10 text-base text-[#191c1d] dark:text-[#F8FAFC] placeholder:text-[#94A3B8] outline-none"
+            />
+            <button
+              aria-label="Close search"
+              onClick={() => {
+                setMobileSearchOpen(false);
+                onSearchChange('');
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full text-[#424752] dark:text-[#CBD5E1] hover:bg-[#e1e3e4] dark:hover:bg-[#334155]"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-full border border-[#c2c6d4] dark:border-[#334155] p-0.5 transition-opacity hover:opacity-80 ml-1">

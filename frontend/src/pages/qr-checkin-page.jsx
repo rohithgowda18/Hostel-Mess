@@ -54,7 +54,9 @@ export default function QrCheckinPage() {
     setChecking(true);
     try {
       const today = new Date().toISOString().split('T')[0];
-      const code = "CHECKIN-" + today + "-LUNCH";
+      const qr = await messApi.getQrCode('LUNCH', today).catch(() => null);
+      const code = qr?.code;
+      if (!code) throw new Error('Could not fetch check-in code');
       await messApi.checkInQR('LUNCH', today, code);
       const now = new Date();
       setSuccessTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -176,7 +178,7 @@ export default function QrCheckinPage() {
                       type="text"
                       value={manualCode}
                       onChange={(e) => setManualCode(e.target.value)}
-                      placeholder="e.g. CHECKIN-2026-LUNCH"
+                      placeholder="e.g. CHECKIN-2026-01-01-LUNCH-XXXXXX"
                       className="w-full min-h-[48px] bg-[#f3f4f5] border border-[#c2c6d4] focus:border-[#003f87] rounded-xl px-4 py-2 text-xs outline-none font-mono text-[#191c1d]"
                     />
                   </div>

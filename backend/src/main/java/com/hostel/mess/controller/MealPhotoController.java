@@ -36,6 +36,9 @@ public class MealPhotoController {
     private com.hostel.mess.service.WebSocketEventService wsService;
 
     private static final String UPLOAD_DIR = "uploads/student-photos/";
+    private static final java.util.Set<String> ALLOWED_EXTENSIONS = java.util.Set.of("jpg", "jpeg", "png", "webp");
+    private static final java.util.Set<String> ALLOWED_CONTENT_TYPES = java.util.Set.of("image/jpeg", "image/png", "image/webp");
+    private static final int MAX_FILES = 5;
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadPhoto(@RequestParam("images") List<MultipartFile> images,
@@ -43,14 +46,26 @@ public class MealPhotoController {
         if (images == null || images.isEmpty() || images.stream().allMatch(MultipartFile::isEmpty)) {
             return ResponseEntity.badRequest().body("At least one image is required");
         }
+        if (images.size() > MAX_FILES) {
+            return ResponseEntity.badRequest().body("Maximum " + MAX_FILES + " images per upload");
+        }
         try {
             File dir = new File(UPLOAD_DIR);
             if (!dir.exists()) dir.mkdirs();
             List<String> imageUrls = new java.util.ArrayList<>();
             for (MultipartFile image : images) {
                 if (image.isEmpty()) continue;
-                String filename = UUID.randomUUID() + "_" + StringUtils.cleanPath(image.getOriginalFilename());
-                Path filePath = Paths.get(UPLOAD_DIR, filename);
+                String contentType = image.getContentType();
+                String ext = StringUtils.getFilenameExtension(StringUtils.cleanPath(image.getOriginalFilename() == null ? "" : image.getOriginalFilename()));
+                ext = ext == null ? "" : ext.toLowerCase();
+                if (!ALLOWED_EXTENSIONS.contains(ext) || (contentType != null && !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase()))) {
+                    return ResponseEntity.badRequest().body("Only JPG/PNG/WEBP images are allowed");
+                }
+                String filename = UUID.randomUUID() + "." + ext;
+                Path filePath = Paths.get(UPLOAD_DIR, filename).normalize();
+                if (!filePath.startsWith(Paths.get(UPLOAD_DIR).normalize())) {
+                    return ResponseEntity.badRequest().body("Invalid file name");
+                }
                 Files.write(filePath, image.getBytes());
                 String imageUrl = "/" + UPLOAD_DIR + filename;
                 imageUrls.add(imageUrl);
@@ -79,7 +94,9 @@ public class MealPhotoController {
 
     @GetMapping("/today")
     public List<MealPhoto> getTodayPhotos() {
-        return photoRepository.findAll();
+        String today = LocalDate.now(ZoneId.of("Asia/Kolkata")).toString();
+        List<MealPhoto> todays = photoRepository.findByDate(today);
+        return todays.size() > 100 ? todays.subList(todays.size() - 100, todays.size()) : todays;
     }
 
     private String detectMealType() {

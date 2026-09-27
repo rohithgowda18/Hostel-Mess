@@ -1,15 +1,49 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { messApi } from '@/services/mess-api';
 
+const MEAL_TYPE_FILTERS = [
+  { label: 'All Meals', value: 'ALL' },
+  { label: 'Breakfast', value: 'BREAKFAST' },
+  { label: 'Lunch', value: 'LUNCH' },
+  { label: 'Snacks', value: 'SNACKS' },
+  { label: 'Dinner', value: 'DINNER' },
+];
+
 export default function StudentFoodPhotosPage() {
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState('All Meals');
-  const [lightbox, setLightbox] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('ALL');
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [error, setError] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(null);
+
+  const loadPhotos = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await messApi.getStudentPhotosToday();
+      const list = Array.isArray(data) ? data : [];
+      setPhotos(list);
+    } catch (e) {
+      console.error('Failed to load food gallery photos:', e);
+      setError('Unable to load food photos right now. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPhotos();
+  }, []);
+
+  // Filter photos by meal type
+  const filtered = useMemo(() => {
+    if (activeFilter === 'ALL') return photos;
+    return photos.filter(
+      (p) => (p.mealType || '').toUpperCase() === activeFilter
+    );
+  }, [photos, activeFilter]);
 
   const handleOpenLightbox = (index) => {
     setLightboxIndex(index);
@@ -17,14 +51,14 @@ export default function StudentFoodPhotosPage() {
 
   const handlePrevImage = (e) => {
     e.stopPropagation();
-    if (lightboxIndex > 0) {
+    if (lightboxIndex !== null && lightboxIndex > 0) {
       setLightboxIndex(lightboxIndex - 1);
     }
   };
 
   const handleNextImage = (e) => {
     e.stopPropagation();
-    if (lightboxIndex < filtered.length - 1) {
+    if (lightboxIndex !== null && lightboxIndex < filtered.length - 1) {
       setLightboxIndex(lightboxIndex + 1);
     }
   };
@@ -32,7 +66,7 @@ export default function StudentFoodPhotosPage() {
   const currentPhoto = lightboxIndex !== null ? filtered[lightboxIndex] : null;
 
   return (
-    <div className="flex-1 flex flex-col md:ml-0 h-full overflow-hidden font-[Inter,sans-serif] bg-[#f8f9fa] dark:bg-[#0F172A] transition-colors duration-200">
+    <div className="flex-1 flex flex-col h-full overflow-hidden font-[Inter,sans-serif] bg-[#f8f9fa] dark:bg-[#0F172A] transition-colors duration-200">
       <main className="flex-1 overflow-y-auto bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] p-3 md:p-6 pb-24 md:pb-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mt-2">
@@ -63,25 +97,36 @@ export default function StudentFoodPhotosPage() {
         {/* Filters Bar */}
         <div className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-xl p-3 mb-6 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="flex items-center gap-2 overflow-x-auto w-full no-scrollbar">
-            {['All Meals', 'Breakfast', 'Lunch', 'Snacks', 'Dinner'].map((f) => (
+            {MEAL_TYPE_FILTERS.map((f) => (
               <button
-                key={f}
-                onClick={() => { setActiveFilter(f); setLightboxIndex(null); }}
+                key={f.value}
+                onClick={() => { setActiveFilter(f.value); setLightboxIndex(null); }}
                 className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
-                  activeFilter === f
+                  activeFilter === f.value
                     ? 'bg-[#003f87] dark:bg-[#3B82F6] text-white shadow-sm font-bold'
                     : 'bg-[#f3f4f5] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#CBD5E1] border border-[#c2c6d4] dark:border-[#334155] hover:bg-[#e1e3e4] dark:hover:bg-[#334155]'
                 }`}
               >
-                {f}
+                {f.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Mobile-First 2-Column Masonry Grid */}
+        {/* Mobile & Desktop Responsive Masonry Grid */}
         {loading ? (
           <div className="py-24 text-center text-xs text-[#424752]">Loading community photos...</div>
+        ) : error ? (
+          <div className="py-24 flex flex-col items-center gap-3 text-[#424752]">
+            <span className="material-symbols-outlined text-[48px] opacity-40">cloud_off</span>
+            <p className="text-xs font-semibold">{error}</p>
+            <button
+              onClick={loadPhotos}
+              className="px-4 py-2 mt-1 bg-[#003f87] dark:bg-[#3B82F6] text-white text-xs font-bold rounded-xl hover:opacity-90 transition"
+            >
+              Retry
+            </button>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="py-24 flex flex-col items-center gap-3 text-[#424752]">
             <span className="material-symbols-outlined text-[48px] opacity-40">photo_library</span>
@@ -104,7 +149,13 @@ export default function StudentFoodPhotosPage() {
                   style={{ display: 'inline-block', width: '100%' }}
                   onClick={() => handleOpenLightbox(idx)}
                 >
-                  <img src={url} alt={item.description || 'Mess Food'} className="w-full object-cover rounded-xl" />
+                  {url ? (
+                    <img src={url} alt={item.description || 'Mess Food'} loading="lazy" className="w-full object-cover rounded-xl" />
+                  ) : (
+                    <div className="w-full aspect-video flex items-center justify-center bg-[#f3f4f5] dark:bg-[#0F172A] text-[#424752]">
+                      <span className="material-symbols-outlined text-3xl opacity-40">broken_image</span>
+                    </div>
+                  )}
                   {item.mealType && (
                     <div className="p-2.5 text-[11px] font-bold text-[#003f87] bg-white border-t border-[#c2c6d4] flex justify-between items-center">
                       <span>{item.mealType}</span>
@@ -122,12 +173,21 @@ export default function StudentFoodPhotosPage() {
       {currentPhoto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-md" onClick={() => setLightboxIndex(null)}>
           <div className="relative max-w-2xl w-full bg-white border border-[#c2c6d4] rounded-2xl p-4 overflow-hidden shadow-2xl flex flex-col items-center">
-            
+            {/* Close button (mobile friendly) */}
+            <button
+              onClick={() => setLightboxIndex(null)}
+              className="absolute top-3 right-3 z-30 bg-white/90 text-[#003f87] p-2 rounded-full shadow-lg hover:bg-white active:scale-95 transition"
+              aria-label="Close"
+            >
+              <span className="material-symbols-outlined text-2xl">close</span>
+            </button>
+
             {/* Prev Button */}
             {lightboxIndex > 0 && (
               <button
                 onClick={handlePrevImage}
                 className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 text-[#003f87] p-3 rounded-full shadow-lg hover:bg-white active:scale-95 transition z-20"
+                aria-label="Previous"
               >
                 <span className="material-symbols-outlined text-2xl">chevron_left</span>
               </button>
@@ -138,6 +198,7 @@ export default function StudentFoodPhotosPage() {
               <button
                 onClick={handleNextImage}
                 className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 text-[#003f87] p-3 rounded-full shadow-lg hover:bg-white active:scale-95 transition z-20"
+                aria-label="Next"
               >
                 <span className="material-symbols-outlined text-2xl">chevron_right</span>
               </button>

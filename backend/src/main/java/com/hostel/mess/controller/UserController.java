@@ -16,6 +16,7 @@ import java.util.ArrayList;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+
     @Autowired
     private UserRepository userRepository;
 
@@ -24,11 +25,13 @@ public class UserController {
     public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         User user = userOpt.get();
         UserInfo info = new UserInfo(
-            user.getId(), user.getEmail(), user.getHostel(), user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
-            user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
+                user.getId(), user.getEmail(), user.getHostel(), user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
+                user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
         );
         return ResponseEntity.ok(info);
     }
@@ -38,7 +41,9 @@ public class UserController {
     public ResponseEntity<?> updateMyProfile(@AuthenticationPrincipal UserDetails userDetails, @RequestBody UserInfo update) {
         String userId = userDetails.getUsername();
         Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         User user = userOpt.get();
         user.setHostel(update.getHostel());
         user.setFloor(update.getFloor());
@@ -53,8 +58,8 @@ public class UserController {
         }
         userRepository.save(user);
         UserInfo info = new UserInfo(
-            user.getId(), user.getEmail(), user.getHostel(), user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
-            user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
+                user.getId(), user.getEmail(), user.getHostel(), user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
+                user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
         );
         return ResponseEntity.ok(info);
     }
@@ -63,19 +68,21 @@ public class UserController {
     @GetMapping("/{userId}")
     public ResponseEntity<?> getPublicProfile(@PathVariable String userId) {
         Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         User user = userOpt.get();
         // Hide private details if directoryVisible is false
         if (Boolean.FALSE.equals(user.getDirectoryVisible())) {
             UserInfo info = new UserInfo(
-                user.getId(), "private@hostel.com", user.getHostel(), null, user.getYear(), user.getBranch(), user.getRole(),
-                user.getFloor(), false, null, null, new ArrayList<>()
+                    user.getId(), "private@hostel.com", user.getHostel(), null, user.getYear(), user.getBranch(), user.getRole(),
+                    user.getFloor(), false, null, null, new ArrayList<>()
             );
             return ResponseEntity.ok(info);
         }
         UserInfo info = new UserInfo(
-            user.getId(), user.getEmail(), user.getHostel(), user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
-            user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
+                user.getId(), user.getEmail(), user.getHostel(), user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
+                user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
         );
         return ResponseEntity.ok(info);
     }
@@ -107,11 +114,26 @@ public class UserController {
     @Autowired
     private com.hostel.mess.repository.MealAttendanceRepository attendanceRepository;
 
+    // Get logged-in user's meal report history (submissions)
+    @GetMapping("/my-reports")
+    public ResponseEntity<?> getMyReports(@AuthenticationPrincipal UserDetails userDetails) {
+        String userId = userDetails.getUsername();
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        User user = userOpt.get();
+        List<com.hostel.mess.model.MealSubmission> submissions = submissionRepository.findByStudentEmail(user.getEmail());
+        return ResponseEntity.ok(submissions);
+    }
+
     @GetMapping("/profile-stats")
     public ResponseEntity<?> getProfileStats(@AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         User user = userOpt.get();
 
         List<com.hostel.mess.model.MealSubmission> submissions = submissionRepository.findByStudentEmail(user.getEmail());
@@ -152,7 +174,9 @@ public class UserController {
         List<java.util.Map<String, Object>> leaderboard = new ArrayList<>();
         int rank = 1;
         for (User u : users) {
-            if (leaderboard.size() >= 10) break;
+            if (leaderboard.size() >= 10) {
+                break;
+            }
             java.util.Map<String, Object> entry = new java.util.HashMap<>();
             entry.put("rank", rank++);
             entry.put("email", u.getEmail());

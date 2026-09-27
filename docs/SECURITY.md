@@ -22,13 +22,21 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults()) // Hooks CORS configuration bean
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/", "/index.html", "/static/**", "/public/**", "/uploads/**").permitAll()
+                .requestMatchers("/api/auth/**", "/", "/index.html", "/static/**", "/public/**", "/uploads/**", "/ws/**").permitAll()
                 .requestMatchers("/api/groups/**").authenticated()
-                .requestMatchers("/api/meals/update").authenticated()
                 .requestMatchers("/api/complaints/vote").authenticated()
                 .requestMatchers("/api/users/me").authenticated()
                 .requestMatchers("/api/chat/**").authenticated()
-                .anyRequest().permitAll()
+                .requestMatchers("/api/notifications/**").authenticated()
+                .requestMatchers("/api/ratings/**").authenticated()
+                .requestMatchers("/api/analytics/**").authenticated()
+                .requestMatchers("/api/attendance/**").authenticated()
+                .requestMatchers("/api/announcements/**").authenticated()
+                .requestMatchers("/api/weekly-menu/**").authenticated()
+                .requestMatchers("/api/favorites/**").authenticated()
+                .requestMatchers("/api/directory/**").authenticated()
+                .requestMatchers("/api/admin/**").authenticated()
+                .anyRequest().authenticated()
             )
             .addFilterBefore(
                 jwtAuthenticationFilter(jwtTokenProvider(), customUserDetailsService()), 

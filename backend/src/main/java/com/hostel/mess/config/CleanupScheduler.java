@@ -31,13 +31,13 @@ public class CleanupScheduler {
         }
     }
 
-    // Runs daily at 2:30 AM
+    // Runs daily at 2:30 AM. 90-day retention preserves the audit trail for admin stats.
     @Scheduled(cron = "0 30 2 * * *")
     public void cleanupOldComplaints() {
-        Instant cutoff = Instant.now().minus(7, ChronoUnit.DAYS);
+        Instant cutoff = Instant.now().minus(90, ChronoUnit.DAYS);
         long deleted = complaintRepository.deleteByCreatedAtBefore(cutoff);
         if (deleted > 0) {
-            System.out.println("[Cleanup] Deleted " + deleted + " complaints older than 7 days");
+            System.out.println("[Cleanup] Deleted " + deleted + " complaints older than 90 days");
         }
     }
 }

@@ -19,9 +19,11 @@ function DashboardLayout({ user, onLogout, children }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   // Sync activeItem with current route and query parameters
   useEffect(() => {
+    setMoreOpen(false);
     if (location.pathname.startsWith('/groups')) {
       setActiveItem('groups');
     } else if (location.pathname.startsWith('/student-photos')) {
@@ -123,7 +125,7 @@ function DashboardLayout({ user, onLogout, children }) {
         <div className="mx-auto w-full max-w-7xl relative">
           {/* Universal Search Results Overlay */}
           {searchQuery.trim() !== '' && (
-            <div className="absolute inset-x-0 top-0 z-50 bg-white/95 dark:bg-[#1E293B]/95 backdrop-blur border border-[#c2c6d4] dark:border-[#334155] rounded-2xl p-6 shadow-2xl space-y-6">
+            <div className="absolute inset-x-0 top-0 z-50 max-h-[75vh] overflow-y-auto bg-white/95 dark:bg-[#1E293B]/95 backdrop-blur border border-[#c2c6d4] dark:border-[#334155] rounded-2xl p-4 md:p-6 shadow-2xl space-y-6 overscroll-contain">
               <div className="flex justify-between items-center border-b border-[#c2c6d4] dark:border-[#334155] pb-3">
                 <div className="flex items-center gap-2">
                   <Search className="h-5 w-5 text-[#003f87] dark:text-[#3B82F6]" />
@@ -250,22 +252,61 @@ function DashboardLayout({ user, onLogout, children }) {
         </div>
       </main>
 
-      {/* Fixed Mobile Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1E293B] border-t border-[#c2c6d4] dark:border-[#334155] flex items-center justify-around min-h-[4rem] pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] px-1 transition-colors duration-200">
+      {/* Fixed Mobile Bottom Navigation Bar — all 8 sections reachable */}
+      {moreOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="md:hidden fixed inset-0 z-40 bg-black/50"
+          onClick={() => setMoreOpen(false)}
+        />
+      )}
+      {moreOpen && (
+        <div className="md:hidden fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-2xl shadow-2xl p-2 space-y-1">
+          {[
+            { label: 'Meals', path: '/meals', icon: 'restaurant' },
+            { label: 'Feedback', path: '/feedback', icon: 'rate_review' },
+            { label: 'Hostel Directory', path: '/directory', icon: 'home' },
+            { label: 'Profile', path: '/profile', icon: 'person' },
+          ].map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <button
+                key={item.path}
+                onClick={() => {
+                  setMoreOpen(false);
+                  navigate(item.path);
+                }}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-xl px-4 min-h-[48px] text-sm font-semibold transition-colors active:scale-[0.99]',
+                  isActive
+                    ? 'bg-[#003f87]/10 dark:bg-[#3B82F6]/15 text-[#003f87] dark:text-[#3B82F6]'
+                    : 'text-[#191c1d] dark:text-[#F8FAFC] hover:bg-[#f3f4f5] dark:hover:bg-[#334155]'
+                )}
+              >
+                <span className="material-symbols-outlined text-xl">{item.icon}</span>
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1E293B] border-t border-[#c2c6d4] dark:border-[#334155] flex items-stretch justify-around min-h-[4rem] pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] px-1 transition-colors duration-200">
         {[
-          { label: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
-          { label: 'Meals', path: '/meals', icon: 'restaurant' },
+          { label: 'Home', path: '/dashboard', icon: 'dashboard' },
+          { label: 'Groups', path: '/groups', icon: 'group' },
           { label: 'Check In', path: '/qr-checkin', icon: 'qr_code_scanner', isHero: true },
           { label: 'Gallery', path: '/student-photos', icon: 'photo_library' },
-          { label: 'Profile', path: '/profile', icon: 'person' },
+          { label: 'More', icon: 'more_horiz', isMore: true },
         ].map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = item.path ? location.pathname === item.path : moreOpen;
           if (item.isHero) {
             return (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className="flex flex-col items-center justify-center relative -top-3 active:scale-95 transition-transform"
+                aria-label="QR check-in"
+                className="flex flex-col items-center justify-center relative -top-3 active:scale-95 transition-transform min-w-[64px] min-h-[44px]"
               >
                 <div className="w-14 h-14 rounded-full bg-[#006e25] dark:bg-[#22C55E] text-white dark:text-slate-950 flex items-center justify-center shadow-lg shadow-[#006e25]/30 dark:shadow-[#22C55E]/30 border-2 border-white dark:border-[#1E293B]">
                   <span className="material-symbols-outlined text-2xl">{item.icon}</span>
@@ -274,12 +315,29 @@ function DashboardLayout({ user, onLogout, children }) {
               </button>
             );
           }
+          if (item.isMore) {
+            return (
+              <button
+                key="more"
+                onClick={() => setMoreOpen((v) => !v)}
+                aria-label="More sections"
+                aria-expanded={moreOpen}
+                className={cn(
+                  'flex flex-col items-center justify-center flex-1 min-h-[56px] py-1 transition-colors active:scale-95',
+                  isActive ? 'text-[#003f87] dark:text-[#3B82F6] font-bold' : 'text-[#424752] dark:text-[#CBD5E1]'
+                )}
+              >
+                <span className={cn('material-symbols-outlined text-2xl', isActive && 'font-black')}>{item.icon}</span>
+                <span className="text-[10px] mt-0.5">{item.label}</span>
+              </button>
+            );
+          }
           return (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                'flex flex-col items-center justify-center flex-1 py-1 transition-colors active:scale-95',
+                'flex flex-col items-center justify-center flex-1 min-h-[56px] py-1 transition-colors active:scale-95',
                 isActive ? 'text-[#003f87] dark:text-[#3B82F6] font-bold' : 'text-[#424752] dark:text-[#CBD5E1] hover:text-[#003f87] dark:hover:text-[#3B82F6]'
               )}
             >

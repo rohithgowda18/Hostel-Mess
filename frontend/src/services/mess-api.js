@@ -6,11 +6,6 @@ export const messApi = {
     return response.data;
   },
 
-  async updateMeal(mealType, date, items) {
-    const response = await apiClient.post('/meals/update', { mealType, date, items });
-    return response.data;
-  },
-
   async submitMealConsensus(mealType, date, items, photoUrl) {
     const response = await apiClient.post('/meals/submit-consensus', { mealType, date, items, photoUrl });
     return response.data;
@@ -147,7 +142,8 @@ export const messApi = {
   },
 
   async getMyReports() {
-    return [];
+    const response = await apiClient.get('/users/my-reports');
+    return response.data;
   },
 
   async getMyProfile() {
@@ -230,6 +226,10 @@ export const messApi = {
   },
   async getMyAttendanceStatus(mealType, date) {
     const response = await apiClient.get('/attendance/my-status', { params: { mealType, date } });
+    return response.data;
+  },
+  async getQrCode(mealType, date) {
+    const response = await apiClient.get('/attendance/qr-code', { params: { mealType, date } });
     return response.data;
   },
   async checkInQR(mealType, date, code) {

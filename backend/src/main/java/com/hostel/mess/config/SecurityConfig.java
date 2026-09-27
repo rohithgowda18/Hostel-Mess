@@ -2,6 +2,7 @@ package com.hostel.mess.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -41,15 +42,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(Customizer.withDefaults())
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/", "/index.html", "/static/**", "/public/**", "/uploads/**", "/ws/**").permitAll()
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**", "/", "/index.html", "/static/**", "/public/**", "/ws/**", "/health", "/actuator/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .requestMatchers("/api/groups/**").authenticated()
-                .requestMatchers("/api/meals/update").authenticated()
-                .requestMatchers("/api/complaints/vote").authenticated()
-                .requestMatchers("/api/users/me").authenticated()
+                .requestMatchers("/api/group-meal-status/**").authenticated()
+                .requestMatchers("/api/complaints/**").authenticated()
+                .requestMatchers("/api/users/**").authenticated()
                 .requestMatchers("/api/chat/**").authenticated()
                 .requestMatchers("/api/notifications/**").authenticated()
                 .requestMatchers("/api/ratings/**").authenticated()
@@ -57,12 +59,15 @@ public class SecurityConfig {
                 .requestMatchers("/api/attendance/**").authenticated()
                 .requestMatchers("/api/announcements/**").authenticated()
                 .requestMatchers("/api/weekly-menu/**").authenticated()
+                .requestMatchers("/api/meals/**").authenticated()
+                .requestMatchers("/api/student-photos/**").authenticated()
+                .requestMatchers("/api/search").authenticated()
                 .requestMatchers("/api/favorites/**").authenticated()
                 .requestMatchers("/api/directory/**").authenticated()
                 .requestMatchers("/api/admin/**").authenticated()
                 .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter(jwtTokenProvider(), customUserDetailsService()), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                )
+                .addFilterBefore(jwtAuthenticationFilter(jwtTokenProvider(), customUserDetailsService()), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

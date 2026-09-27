@@ -17,10 +17,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findById(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+        String role = user.getRole() == null ? "STUDENT" : user.getRole().replaceFirst("^ROLE_", "");
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getId())
                 .password(user.getPassword())
-                .authorities(user.getRole())
+                .authorities("ROLE_" + role)
                 .build();
     }
 }

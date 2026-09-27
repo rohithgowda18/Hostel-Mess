@@ -7,9 +7,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.hostel.mess.dto.MealRequest;
 import com.hostel.mess.dto.MealResponse;
 import com.hostel.mess.model.WeeklyMenu;
 import com.hostel.mess.model.MealAttendance;
@@ -46,20 +46,21 @@ public class MealService {
     @Autowired
     private com.hostel.mess.repository.MealPhotoRepository mealPhotoRepository;
 
+    @Value("${app.disable-time-restrictions:false}")
+    private boolean disableTimeRestrictions;
+
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     // Time windows for each meal type
     private static final Map<String, TimeWindow> MEAL_TIME_WINDOWS = Map.of(
-            "BREAKFAST", new TimeWindow(LocalTime.of(7, 0), LocalTime.of(9, 30)),
-            "LUNCH", new TimeWindow(LocalTime.of(12, 0), LocalTime.of(14, 30)),
-            "SNACKS", new TimeWindow(LocalTime.of(16, 30), LocalTime.of(18, 0)),
+            "BREAKFAST", new TimeWindow(LocalTime.of(7, 30), LocalTime.of(9, 30)),
+            "LUNCH", new TimeWindow(LocalTime.of(12, 30), LocalTime.of(14, 30)),
+            "SNACKS", new TimeWindow(LocalTime.of(16, 30), LocalTime.of(17, 30)),
             "DINNER", new TimeWindow(LocalTime.of(19, 30), LocalTime.of(21, 30))
     );
 
-    // Set to true to disable time restrictions (for testing)
-    private static final boolean DISABLE_TIME_RESTRICTIONS = true;
-
     private static class TimeWindow {
+
         final LocalTime start;
         final LocalTime end;
 
@@ -70,16 +71,22 @@ public class MealService {
     }
 
     public boolean isWithinTimeWindow(String mealType) {
-        if (DISABLE_TIME_RESTRICTIONS) return true;
+        if (disableTimeRestrictions) {
+            return true;
+        }
         TimeWindow window = MEAL_TIME_WINDOWS.get(mealType.toUpperCase());
-        if (window == null) return false;
+        if (window == null) {
+            return false;
+        }
         LocalTime now = LocalTime.now();
         return !now.isBefore(window.start) && !now.isAfter(window.end);
     }
 
     public String getTimeWindowMessage(String mealType) {
         TimeWindow window = MEAL_TIME_WINDOWS.get(mealType.toUpperCase());
-        if (window == null) return "Invalid meal type";
+        if (window == null) {
+            return "Invalid meal type";
+        }
         if (isWithinTimeWindow(mealType)) {
             return String.format("Update window open until %s", window.end.toString());
         } else {
@@ -88,7 +95,8 @@ public class MealService {
     }
 
     /**
-     * Get today's meal for a specific meal type from live student consensus and official weekly menu
+     * Get today's meal for a specific meal type from live student consensus and
+     * official weekly menu
      */
     public MealResponse getTodayMeal(String mealType) {
         String today = LocalDate.now().format(DATE_FORMATTER);
@@ -109,15 +117,7 @@ public class MealService {
         return response;
     }
 
-    public boolean deleteTodayMeal(String mealType) {
-        return true;
-    }
-
-    public MealResponse updateMeal(MealRequest request) {
-        return getTodayMeal(request.getMealType());
-    }
-
-    // Food Ratings logic
+// Food Ratings logic
     public FoodRating saveOrUpdateRating(FoodRating rating) {
         Optional<FoodRating> existing = ratingRepository.findByUserEmailAndMealTypeAndDate(
                 rating.getUserEmail(), rating.getMealType(), rating.getDate()
@@ -141,9 +141,9 @@ public class MealService {
         }
 
         wsService.broadcastAppEvent("RATINGS_UPDATED", Map.of(
-            "mealType", rating.getMealType(),
-            "date", rating.getDate(),
-            "rating", saved
+                "mealType", rating.getMealType(),
+                "date", rating.getDate(),
+                "rating", saved
         ));
 
         return saved;
@@ -203,7 +203,7 @@ public class MealService {
         String mType = mealType.toUpperCase();
         Optional<MealSubmission> existing = submissionRepository.findByStudentEmailAndMealTypeAndDate(user.getEmail(), mType, date);
         boolean isFirstReporterForMeal = submissionRepository.findByMealTypeAndDate(mType, date).isEmpty();
-        
+
         MealSubmission sub;
         int pointsEarned = 10;
 
@@ -215,7 +215,7 @@ public class MealService {
             }
         } else {
             sub = new MealSubmission(user.getId(), user.getEmail(), mType, date, items, photoUrl);
-            
+
             if (isFirstReporterForMeal) {
                 pointsEarned += 20;
                 if (!user.getBadges().contains("Meal Reporter")) {
@@ -252,10 +252,10 @@ public class MealService {
         String msg = isFirstReporterForMeal ? "You are the FIRST reporter! +" + pointsEarned + " Pts awarded!" : "Meal report submitted! +" + pointsEarned + " Pts awarded!";
 
         return Map.of(
-            "success", true,
-            "message", msg,
-            "pointsEarned", pointsEarned,
-            "consensus", consensus
+                "success", true,
+                "message", msg,
+                "pointsEarned", pointsEarned,
+                "consensus", consensus
         );
     }
 
@@ -311,9 +311,9 @@ public class MealService {
         boolean menuChanged = false;
         if (totalSubmissions > 0 && !itemConfidenceList.isEmpty()) {
             List<String> topCommunityItems = itemConfidenceList.stream()
-                .filter(i -> (Integer)i.get("confidence") >= 40)
-                .map(i -> (String)i.get("name"))
-                .toList();
+                    .filter(i -> (Integer) i.get("confidence") >= 40)
+                    .map(i -> (String) i.get("name"))
+                    .toList();
             if (!topCommunityItems.isEmpty()) {
                 Set<String> expSet = new HashSet<>(expectedItems);
                 Set<String> comSet = new HashSet<>(topCommunityItems);

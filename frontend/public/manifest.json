@@ -16,22 +16,9 @@
       "purpose": "any"
     }
   ],
-  "screenshots": [
-    {
-      "src": "screenshot-wide.png",
-      "sizes": "1024x768",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "screenshot-mobile.png",
-      "sizes": "375x667",
-      "type": "image/png"
-    }
-  ],
   "start_url": ".",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff"
+  "theme_color": "#0F172A",
+  "background_color": "#0F172A"
 }

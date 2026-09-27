@@ -8,10 +8,10 @@ A production-grade, democracy-driven web application built with **Spring Boot** 
 
 For exhaustive developer guides and specifications on each architecture layer, refer to the following documents in the `docs` folder:
 
-*   💻 **[Frontend Architecture Guide (docs/FRONTEND.md)](file:///c:/Users/rohit/Desktop/study/projects/Mess/docs/FRONTEND.md)**: Details on the React + Vite single page application, Radix UI component states, Tailwind CSS variables, theme switching contexts, routing config, and API services integration.
-*   ⚙️ **[Backend Service Guide (docs/BACKEND.md)](file:///c:/Users/rohit/Desktop/study/projects/Mess/docs/BACKEND.md)**: Explanations of Spring Boot REST controllers, controller parameters, business logic service beans, schedules for expired records cleanup, and file uploads.
-*   🔐 **[Security Design Guide (docs/SECURITY.md)](file:///c:/Users/rohit/Desktop/study/projects/Mess/docs/SECURITY.md)**: Explains the Spring Security filters, stateless session handling, BCrypt hashing mechanism, custom JWT token validation, and CORS configurations.
-*   🗄️ **[Database Specifications (docs/DATABASE.md)](file:///c:/Users/rohit/Desktop/study/projects/Mess/docs/DATABASE.md)**: Details on the MongoDB schemas, unique compound indexes, Repository interfaces, and document structure examples.
+*   💻 **[Frontend Architecture Guide](docs/FRONTEND.md)**: Details on the React + Vite single page application, Radix UI component states, Tailwind CSS variables, theme switching contexts, routing config, and API services integration.
+*   ⚙️ **[Backend Service Guide](docs/BACKEND.md)**: Explanations of Spring Boot REST controllers, controller parameters, business logic service beans, schedules for expired records cleanup, and file uploads.
+*   🔐 **[Security Design Guide](docs/SECURITY.md)**: Explains the Spring Security filters, stateless session handling, BCrypt hashing mechanism, custom JWT token validation, and CORS configurations.
+*   🗄️ **[Database Specifications](docs/DATABASE.md)**: Details on the MongoDB schemas, unique compound indexes, Repository interfaces, and document structure examples.
 
 ---
 
@@ -53,9 +53,11 @@ Before running the application, make sure you have:
 Ensure MongoDB is running locally on default port `27017`.
 
 ### 2. Configure Environment variables
-Create `.env` inside `frontend/` (using `frontend/.env.example` as a template):
+Backend: copy `backend/.env.example` to `backend/.env` (or export `MONGODB_URI`, `JWT_SECRET`).
+Frontend local dev needs no `.env` — Vite proxies `/api` to `http://localhost:8080` (see `frontend/vite.config.js`).
+For production, set (see `frontend/.env.example`):
 ```env
-VITE_API_BASE=http://localhost:8080/api
+VITE_API_BASE=https://<your-backend>/api
 ```
 
 ### 3. Run Backend (Spring Boot)
@@ -71,4 +73,6 @@ cd frontend
 npm install
 npm run dev
 ```
-The dev server will run on `http://localhost:3000`.
+The dev server will run on `http://localhost:5173` (Vite default, see `frontend/vite.config.js:16`).
+Health check: `GET http://localhost:8080/health` → `OK`.
+Universal search: `GET /api/search?q=<query>` (auth required) returns `{ meals, groups, complaints, users }`.

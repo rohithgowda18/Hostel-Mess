@@ -83,29 +83,39 @@ Tracks temporary meal-going coordination. Contains an auto-expiring index.
   }
   ```
 
-### 4. **Meals Collection** (`meals`)
-Stores daily menus posted for each meal category.
-- **Java Class**: `com.hostel.mess.model.MealUpdate`
+### 4. **Meal Submissions Collection** (`meal_submissions`)
+Stores student consensus reports for live meal reporting.
+- **Java Class**: `com.hostel.mess.model.MealSubmission`
 - **Fields**:
   - `_id` (`ObjectId`): Document identifier.
+  - `studentId` (`String`): MongoDB user identifier of the reporting student.
+  - `studentEmail` (`String`): Email of the reporting student.
   - `mealType` (`String`): Category of the meal.
   - `date` (`String`): Local date formatted as `YYYY-MM-DD`.
-  - `items` (`List<String>`): Food items in the menu.
-  - `status` (`String`): Menu status (`UNVERIFIED`, `VERIFIED`, `UNCERTAIN`).
-  - `updatedBy` (`String`): MongoDB user identifier of the poster.
-  - `updatedAt` (`Instant`): Timestamp of the update.
+  - `selectedItems` (`List<String>`): Food items the student reports were served.
+  - `photoUrl` (`String`): Optional photo evidence URL.
+  - `submittedAt` (`Instant`): Timestamp of the submission.
 - **Example Document**:
   ```json
   {
     "_id": {"$oid": "65b267ad108fe7123456789d"},
+    "studentId": "65b267ad108fe7123456789a",
+    "studentEmail": "student1@hostel.app",
     "mealType": "LUNCH",
     "date": "2026-07-14",
-    "items": ["Rice", "Sambar", "Chapati", "Vegetable Curry", "Curd"],
-    "status": "VERIFIED",
-    "updatedBy": "65b267ad108fe7123456789a",
-    "updatedAt": {"$date": "2026-07-14T12:30:00Z"}
+    "selectedItems": ["Rice", "Sambar", "Chapati", "Vegetable Curry", "Curd"],
+    "photoUrl": "/uploads/student-photos/abc.jpg",
+    "submittedAt": {"$date": "2026-07-14T12:30:00Z"}
   }
   ```
+
+### 5. **Weekly Menu Collection** (`weekly_menus`)
+Stores the official weekly meal schedule published by admins.
+- **Java Class**: `com.hostel.mess.model.WeeklyMenu`
+- **Fields**:
+  - `_id` (`ObjectId`): Document identifier.
+  - `weekStartDate` (`String`): Monday of the week in `YYYY-MM-DD` format (unique index).
+  - `monday` / `tuesday` / `wednesday` / `thursday` / `friday` / `saturday` / `sunday` (`Map<String, List<String>>`): Maps each meal type (`BREAKFAST`, `LUNCH`, `SNACKS`, `DINNER`) to its list of food items for that day.
 
 ---
 
@@ -116,7 +126,10 @@ Stores daily menus posted for each meal category.
 - **`groups.groupCode`**: Ensures group codes do not conflict.
 
 ### 2. Compound Indexes
-- **`meals` (`mealType`, `date`)**: Unique compound index. Optimizes queries fetching menus for a specific day.
+- **`chat_messages` (`chatType`, `chatId`)**: Optimizes message lookups for groups and the universal chat.
+- **`food_ratings` (`userEmail`, `mealType`, `date`)**: Unique compound index — ensures one rating per user per meal per day.
+- **`meal_attendance` (`userEmail`, `mealType`, `date`)**: Unique compound index — ensures one attendance record per user per meal per day.
+- **`rooms` (`block`, `roomNumber`)**: Unique compound index — prevents duplicate room numbers within a block.
 - **`group_meal_status` (`groupId`, `mealType`)**: Optimizes lookups for a group's meal status.
 
 ---

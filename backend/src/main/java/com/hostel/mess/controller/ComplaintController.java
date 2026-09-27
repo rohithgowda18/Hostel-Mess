@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -116,8 +116,9 @@ public class ComplaintController {
      * Get all complaints (admin only)
      * GET /api/complaints/admin/all
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/all")
-    public ResponseEntity<?> getAllComplaints(@RequestHeader(value = "Authorization", required = false) String token) {
+    public ResponseEntity<?> getAllComplaints() {
         try {
             List<ComplaintResponse> complaints = complaintService.getAllComplaints();
             return ResponseEntity.ok(complaints);
@@ -131,6 +132,7 @@ public class ComplaintController {
      * Get high-priority complaints (admin dashboard)
      * GET /api/complaints/admin/high-priority
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/high-priority")
     public ResponseEntity<?> getHighPriorityComplaints() {
         try {
@@ -146,6 +148,7 @@ public class ComplaintController {
      * Get complaints by status (admin filtering)
      * GET /api/complaints/admin/status/{status}
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/status/{status}")
     public ResponseEntity<?> getComplaintsByStatus(@PathVariable String status) {
         try {
@@ -161,6 +164,7 @@ public class ComplaintController {
      * Get complaint statistics (admin dashboard)
      * GET /api/complaints/admin/stats
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/stats")
     public ResponseEntity<?> getStats() {
         try {
@@ -176,6 +180,7 @@ public class ComplaintController {
      * Update complaint status (admin only)
      * PUT /api/complaints/admin/{complaintId}/status
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/{complaintId}/status")
     public ResponseEntity<?> updateComplaintStatus(
         @PathVariable String complaintId,
@@ -199,6 +204,7 @@ public class ComplaintController {
      * Delete a complaint (admin only)
      * DELETE /api/complaints/admin/{complaintId}
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/admin/{complaintId}")
     public ResponseEntity<?> deleteComplaint(@PathVariable String complaintId) {
         try {
