@@ -59,7 +59,7 @@ export default function MealsPage() {
           rawSlot: slot,
           type: slot.charAt(0) + slot.slice(1).toLowerCase(),
           icon: slot === 'BREAKFAST' ? 'wb_twilight' : slot === 'LUNCH' ? 'light_mode' : slot === 'SNACKS' ? 'coffee' : 'nightlight',
-          time: slot === 'BREAKFAST' ? '07:30 AM - 09:30 AM' : slot === 'LUNCH' ? '12:00 PM - 02:15 PM' : slot === 'SNACKS' ? '04:30 PM - 05:30 PM' : '07:30 PM - 09:30 PM',
+          time: slot === 'BREAKFAST' ? '07:30 AM - 09:30 AM' : slot === 'LUNCH' ? '12:30 PM - 02:30 PM' : slot === 'SNACKS' ? '04:30 PM - 05:30 PM' : '07:30 PM - 09:30 PM',
           verified: (cData?.totalReporters || 0) >= 3 || mealObj?.status === 'VERIFIED',
           items: (mealObj?.items || []).map((name) => ({ name })),
           consensus: cData
@@ -159,19 +159,19 @@ export default function MealsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-end gap-2 flex-wrap">
                       {meal.verified ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#006e25] dark:bg-[#22C55E] text-white dark:text-slate-950 text-[11px] font-medium">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#006e25] dark:bg-[#22C55E] text-white dark:text-slate-950 text-[11px] font-medium whitespace-nowrap">
                           <span className="material-symbols-outlined text-[14px]">check_circle</span> Verified ({agreement}%)
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#f3f4f5] dark:bg-[#0F172A] text-[#424752] dark:text-[#CBD5E1] text-[11px] font-medium border border-[#c2c6d4] dark:border-[#334155]">
-                          <span className="material-symbols-outlined text-[14px]">hour_glass_empty</span> Unverified
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#f3f4f5] dark:bg-[#0F172A] text-[#424752] dark:text-[#CBD5E1] text-[11px] font-medium border border-[#c2c6d4] dark:border-[#334155] whitespace-nowrap">
+                          <span className="material-symbols-outlined text-[14px]">hourglass_empty</span> Unverified
                         </span>
                       )}
                       <button
                         onClick={() => navigate('/report-meal?slot=' + meal.rawSlot)}
-                        className="px-3 py-1 bg-[#003f87] dark:bg-[#3B82F6] text-white text-[11px] font-semibold rounded-full hover:opacity-90 active:scale-95 transition-all flex items-center gap-1"
+                        className="px-3 py-1 bg-[#003f87] dark:bg-[#3B82F6] text-white text-[11px] font-semibold rounded-full hover:opacity-90 active:scale-95 transition-all flex items-center gap-1 whitespace-nowrap shrink-0"
                       >
                         <span className="material-symbols-outlined text-[14px]">edit_note</span>
                         Report Serving
