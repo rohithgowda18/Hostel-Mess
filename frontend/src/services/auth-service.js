@@ -1,4 +1,4 @@
-const DEFAULT_PROD_API_BASE = 'https://hostel-mess-tht8.onrender.com/api';
+const DEFAULT_PROD_API_BASE = 'https://hostel-mess-backend-losk.onrender.com/api';
 
 function normalizeApiBase(url) {
   return url.replace(/\/+$/, '');
