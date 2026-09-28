@@ -1,6 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '@/services/auth-service';
+import {
+  Building2,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  UserCheck,
+  GraduationCap,
+  DoorOpen,
+  ArrowRight,
+  Shield,
+  UtensilsCrossed,
+  CheckCircle2
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -10,10 +27,10 @@ export default function LoginPage({ onLogin }) {
     email: '',
     password: '',
     confirmPassword: '',
-    hostel: '',
+    hostel: 'Freshers Block',
     roomNumber: '',
-    year: '',
-    branch: '',
+    year: '1',
+    branch: 'Computer Science',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,7 +41,7 @@ export default function LoginPage({ onLogin }) {
     e.preventDefault();
     setError('');
     if (!loginData.email || !loginData.password) {
-      setError('Please fill in all fields.');
+      setError('Please enter your email and password.');
       return;
     }
     setLoading(true);
@@ -56,7 +73,6 @@ export default function LoginPage({ onLogin }) {
     }
     setLoading(true);
     try {
-      // Send fields matching the backend RegisterRequest DTO
       await register({
         email: regData.email,
         password: regData.password,
@@ -74,279 +90,293 @@ export default function LoginPage({ onLogin }) {
     }
   };
 
-  const switchToRegister = () => { setView('register'); setError(''); };
-  const switchToLogin = () => { setView('login'); setError(''); };
+  const fillDemoStudent = () => {
+    setLoginData({
+      email: 'student@hostel.app',
+      password: 'password123'
+    });
+    setError('');
+  };
+
+  const fillDemoAdmin = () => {
+    setLoginData({
+      email: 'admin@hostel.app',
+      password: 'adminpassword'
+    });
+    setError('');
+  };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] flex items-center justify-center p-4 font-[Inter,sans-serif] transition-colors duration-200">
-      {/* Background Blobs */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[#0056b3]/20 dark:bg-[#3B82F6]/10 blur-[100px]" />
-        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[40%] rounded-full bg-[#80f98b]/20 dark:bg-[#22C55E]/10 blur-[100px]" />
-      </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-200">
+      <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 rounded-3xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 shadow-elevated overflow-hidden">
+        
+        {/* Left / Top Hero Branding Panel */}
+        <div className="lg:col-span-5 bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-950 p-6 sm:p-8 lg:p-10 text-white flex flex-col justify-between relative overflow-hidden">
+          {/* Subtle decorative circles */}
+          <div className="absolute -top-16 -left-16 w-48 h-48 rounded-full bg-blue-500/20 blur-2xl" />
+          <div className="absolute -bottom-16 -right-16 w-56 h-56 rounded-full bg-indigo-500/20 blur-3xl" />
 
-      {/* Main Card */}
-      <div className="relative z-10 w-full max-w-[500px] bg-white dark:bg-[#1E293B] rounded-xl shadow-sm border border-[#c2c6d4] dark:border-[#334155] p-5 md:p-7 my-8">
-        {/* Brand Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-[#0056b3]/10 dark:bg-[#3B82F6]/20 mb-4 text-[#003f87] dark:text-[#3B82F6]">
-            <span className="material-symbols-outlined text-[48px]" style={{ fontVariationSettings: "'FILL' 1" }}>restaurant</span>
+          <div className="relative z-10 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-sm">
+                <Building2 className="h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="text-xl font-extrabold tracking-tight">HostelOS</h1>
+                <p className="text-xs text-blue-200">University Campus Living Portal</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <h2 className="text-2xl sm:text-3xl font-bold leading-tight">
+                Streamlined hostel & mess management.
+              </h2>
+              <p className="text-xs sm:text-sm text-blue-100/80 leading-relaxed">
+                Live daily mess menus, roommate directories, instant QR counter check-ins, and peer consensus reports in one unified portal.
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center gap-2.5 text-xs text-blue-100">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span>Live verified meal consensus & menus</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-xs text-blue-100">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span>Real-time room allocation & resident directory</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-xs text-blue-100">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span>Mess attendance forecasting & QR scanner</span>
+              </div>
+            </div>
           </div>
-          <h1 className="text-[32px] font-bold text-[#003f87] dark:text-[#3B82F6] leading-10">MessMaster</h1>
-          <p className="text-sm text-[#424752] dark:text-[#94A3B8] mt-1">University Hostel Dining Portal</p>
+
+          {/* Quick Demo Credentials */}
+          <div className="relative z-10 mt-8 pt-6 border-t border-white/15">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-blue-200 mb-2">
+              Quick Demo Access
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={fillDemoStudent}
+                className="text-xs px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 transition-all font-medium text-white"
+              >
+                Fill Student Demo
+              </button>
+              <button
+                type="button"
+                onClick={fillDemoAdmin}
+                className="text-xs px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 transition-all font-medium text-white"
+              >
+                Fill Warden / Admin Demo
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Error Banner */}
-        {error && (
-          <div className="mb-4 p-3 bg-[#ffdad6] dark:bg-[#EF4444]/20 border border-[#ba1a1a]/30 dark:border-[#EF4444]/30 text-[#93000a] dark:text-[#EF4444] rounded-lg text-sm font-medium flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">error</span>
-            {error}
+        {/* Right Form Panel */}
+        <div className="lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
+          {/* Tabs: Sign In / Create Account */}
+          <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1 mb-6 border border-slate-200/80 dark:border-slate-700/80">
+            <button
+              type="button"
+              onClick={() => { setView('login'); setError(''); }}
+              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                view === 'login'
+                  ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => { setView('register'); setError(''); }}
+              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                view === 'register'
+                  ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              Register as Student
+            </button>
           </div>
-        )}
 
-        {/* ─────────────── LOGIN VIEW ─────────────── */}
-        {view === 'login' && (
-          <div>
-            <h2 className="text-[22px] font-medium text-[#191c1d] dark:text-[#F8FAFC] mb-6 text-center">Welcome Back</h2>
-            <form className="space-y-4" onSubmit={handleLogin} noValidate>
-              {/* Email */}
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 text-rose-700 dark:text-rose-300 text-xs font-medium flex items-center gap-2">
+              <span className="material-symbols-outlined text-base shrink-0">error</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* ─────────────── LOGIN FORM ─────────────── */}
+          {view === 'login' ? (
+            <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#424752] mb-1" htmlFor="login-email">
-                  University Email
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" htmlFor="login-email">
+                  University Email Address
                 </label>
                 <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-3 text-[#424752] text-[20px]">mail</span>
-                  <input
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
                     id="login-email"
                     type="email"
-                    autoComplete="email"
                     required
+                    placeholder="student@hostel.app"
                     value={loginData.email}
-                    onChange={e => setLoginData(d => ({ ...d, email: e.target.value }))}
-                    placeholder="student@university.edu"
-                    className="w-full bg-[#f1f3f5] border-0 border-b-2 border-[#c2c6d4] focus:border-[#003f87] text-[#191c1d] transition-colors py-3 pl-10 pr-4 rounded-t-md outline-none text-sm"
+                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                    className="pl-10"
                   />
                 </div>
               </div>
 
-              {/* Password */}
               <div>
-                <label className="block text-sm font-medium text-[#424752] mb-1" htmlFor="login-password">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" htmlFor="login-password">
                   Password
                 </label>
                 <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-3 text-[#424752] text-[20px]">lock</span>
-                  <input
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
                     id="login-password"
                     type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
                     required
-                    value={loginData.password}
-                    onChange={e => setLoginData(d => ({ ...d, password: e.target.value }))}
                     placeholder="••••••••"
-                    className="w-full bg-[#f1f3f5] border-0 border-b-2 border-[#c2c6d4] focus:border-[#003f87] text-[#191c1d] transition-colors py-3 pl-10 pr-10 rounded-t-md outline-none text-sm"
+                    value={loginData.password}
+                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                    className="pl-10 pr-10"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(s => !s)}
-                    className="absolute right-3 top-3 text-[#424752] hover:text-[#191c1d] transition-colors"
-                    tabIndex={-1}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
-                    <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <div className="flex justify-end mt-2">
-                  <a href="#" className="text-[#003f87] text-[11px] font-medium hover:underline">Forgot Password?</a>
-                </div>
               </div>
 
-              <button
+              <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#003f87] text-white rounded-lg py-3 text-sm font-bold hover:opacity-90 transition-all shadow-sm active:scale-[0.98] disabled:opacity-60 mt-2"
+                className="w-full h-11 text-sm font-bold mt-2"
               >
-                {loading ? 'Logging in...' : 'Log In'}
-              </button>
+                {loading ? 'Authenticating...' : 'Sign In to Portal'}
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
             </form>
-            <div className="mt-8 text-center">
-              <p className="text-sm text-[#424752]">
-                New resident?{' '}
-                <button onClick={switchToRegister} className="text-[#003f87] font-bold hover:underline ml-1">
-                  Register Here
-                </button>
-              </p>
-            </div>
-          </div>
-        )}
+          ) : (
+            /* ─────────────── REGISTER FORM ─────────────── */
+            <form onSubmit={handleRegister} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  University Email
+                </label>
+                <Input
+                  type="email"
+                  required
+                  placeholder="your.name@university.edu"
+                  value={regData.email}
+                  onChange={(e) => setRegData({ ...regData, email: e.target.value })}
+                />
+              </div>
 
-        {/* ─────────────── REGISTER VIEW ─────────────── */}
-        {view === 'register' && (
-          <div>
-            <h2 className="text-[22px] font-medium text-[#191c1d] mb-5 text-center">Student Registration</h2>
-            <form className="space-y-5" onSubmit={handleRegister} noValidate>
-
-              {/* ── Account Credentials ── */}
-              <div className="space-y-4 bg-[#f3f4f5] p-4 rounded-lg border border-[#c2c6d4]">
-                <h3 className="text-sm font-semibold text-[#003f87] border-b border-[#c2c6d4] pb-2">Account Credentials</h3>
-
-                {/* Email */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-[#424752] mb-1" htmlFor="reg-email">University Email</label>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3 top-2.5 text-[#424752] text-[18px]">mail</span>
-                    <input
-                      id="reg-email"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      value={regData.email}
-                      onChange={e => setRegData(d => ({ ...d, email: e.target.value }))}
-                      placeholder="student@university.edu"
-                      className="w-full bg-white border-0 border-b-2 border-[#c2c6d4] focus:border-[#003f87] text-[#191c1d] transition-colors py-2 pl-9 pr-3 rounded-t-md outline-none text-sm"
-                    />
-                  </div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Password
+                  </label>
+                  <Input
+                    type={showRegPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Min 6 chars"
+                    value={regData.password}
+                    onChange={(e) => setRegData({ ...regData, password: e.target.value })}
+                  />
                 </div>
-
-                {/* Password */}
                 <div>
-                  <label className="block text-sm font-medium text-[#424752] mb-1" htmlFor="reg-password">Password</label>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3 top-2.5 text-[#424752] text-[18px]">lock</span>
-                    <input
-                      id="reg-password"
-                      type={showRegPassword ? 'text' : 'password'}
-                      autoComplete="new-password"
-                      required
-                      value={regData.password}
-                      onChange={e => setRegData(d => ({ ...d, password: e.target.value }))}
-                      placeholder="Min 6 characters"
-                      className="w-full bg-white border-0 border-b-2 border-[#c2c6d4] focus:border-[#003f87] text-[#191c1d] transition-colors py-2 pl-9 pr-10 rounded-t-md outline-none text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowRegPassword(s => !s)}
-                      className="absolute right-3 top-2 text-[#424752]"
-                      tabIndex={-1}
-                    >
-                      <span className="material-symbols-outlined text-[18px]">{showRegPassword ? 'visibility_off' : 'visibility'}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm Password */}
-                <div>
-                  <label className="block text-sm font-medium text-[#424752] mb-1" htmlFor="reg-confirm">Confirm Password</label>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3 top-2.5 text-[#424752] text-[18px]">lock_reset</span>
-                    <input
-                      id="reg-confirm"
-                      type={showRegPassword ? 'text' : 'password'}
-                      autoComplete="new-password"
-                      required
-                      value={regData.confirmPassword}
-                      onChange={e => setRegData(d => ({ ...d, confirmPassword: e.target.value }))}
-                      placeholder="Re-enter password"
-                      className={`w-full bg-white border-0 border-b-2 transition-colors py-2 pl-9 pr-3 rounded-t-md outline-none text-sm ${
-                        regData.confirmPassword && regData.password !== regData.confirmPassword
-                          ? 'border-[#ba1a1a] text-[#ba1a1a]'
-                          : 'border-[#c2c6d4] focus:border-[#003f87] text-[#191c1d]'
-                      }`}
-                    />
-                  </div>
-                  {regData.confirmPassword && regData.password !== regData.confirmPassword && (
-                    <p className="text-[11px] text-[#ba1a1a] mt-1">Passwords do not match</p>
-                  )}
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Confirm Password
+                  </label>
+                  <Input
+                    type={showRegPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Repeat"
+                    value={regData.confirmPassword}
+                    onChange={(e) => setRegData({ ...regData, confirmPassword: e.target.value })}
+                  />
                 </div>
               </div>
 
-              {/* ── Hostel Details ── */}
-              <div className="space-y-4 bg-[#f3f4f5] p-4 rounded-lg border border-[#c2c6d4]">
-                <h3 className="text-sm font-semibold text-[#003f87] border-b border-[#c2c6d4] pb-2">Hostel Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#424752] mb-1" htmlFor="reg-hostel">Hostel Block</label>
-                    <select
-                      id="reg-hostel"
-                      value={regData.hostel}
-                      onChange={e => setRegData(d => ({ ...d, hostel: e.target.value }))}
-                      className="w-full bg-white border-0 border-b-2 border-[#c2c6d4] focus:border-[#003f87] text-[#191c1d] transition-colors py-2 px-3 rounded-t-md outline-none text-sm appearance-none"
-                    >
-                      <option value="" disabled>Select Block</option>
-                      <option value="Freshers Block">Freshers Block (1st Year)</option>
-                      <option value="Aryabhatta G">Aryabhatta G Block</option>
-                      <option value="Aryabhatta F">Aryabhatta F Block</option>
-                      <option value="Aryabhatta S">Aryabhatta S Block</option>
-                      <option value="NNRI Hostel">NNRI Hostel</option>
-                      <option value="PG Hostel">PG Hostel</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#424752] mb-1" htmlFor="reg-room">Room Number</label>
-                    <input
-                      id="reg-room"
-                      type="text"
-                      value={regData.roomNumber}
-                      onChange={e => setRegData(d => ({ ...d, roomNumber: e.target.value }))}
-                      placeholder="e.g. 204"
-                      className="w-full bg-white border-0 border-b-2 border-[#c2c6d4] focus:border-[#003f87] text-[#191c1d] transition-colors py-2 px-3 rounded-t-md outline-none text-sm"
-                    />
-                  </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Hostel Block
+                  </label>
+                  <select
+                    value={regData.hostel}
+                    onChange={(e) => setRegData({ ...regData, hostel: e.target.value })}
+                    className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 outline-none"
+                  >
+                    <option value="Freshers Block">Freshers Block</option>
+                    <option value="Aryabhatta Hostel">Aryabhatta Hostel</option>
+                    <option value="NNRI Hostel">NNRI Hostel</option>
+                    <option value="PG Hostel">PG Hostel</option>
+                  </select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#424752] mb-1" htmlFor="reg-branch">Branch</label>
-                    <select
-                      id="reg-branch"
-                      value={regData.branch}
-                      onChange={e => setRegData(d => ({ ...d, branch: e.target.value }))}
-                      className="w-full bg-white border-0 border-b-2 border-[#c2c6d4] focus:border-[#003f87] text-[#191c1d] transition-colors py-2 px-3 rounded-t-md outline-none text-sm appearance-none"
-                    >
-                      <option value="" disabled>Select Branch</option>
-                      <option value="Computer Science">Computer Science</option>
-                      <option value="Electrical">Electrical</option>
-                      <option value="Mechanical">Mechanical</option>
-                      <option value="Electronics">Electronics</option>
-                      <option value="Civil">Civil</option>
-                      <option value="Chemical">Chemical</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#424752] mb-1" htmlFor="reg-year">Year</label>
-                    <select
-                      id="reg-year"
-                      value={regData.year}
-                      onChange={e => setRegData(d => ({ ...d, year: e.target.value }))}
-                      className="w-full bg-white border-0 border-b-2 border-[#c2c6d4] focus:border-[#003f87] text-[#191c1d] transition-colors py-2 px-3 rounded-t-md outline-none text-sm appearance-none"
-                    >
-                      <option value="" disabled>Select Year</option>
-                      <option value="1">First Year</option>
-                      <option value="2">Second Year</option>
-                      <option value="3">Third Year</option>
-                      <option value="4">Fourth Year</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Room Number
+                  </label>
+                  <Input
+                    placeholder="e.g. FR104 / 204"
+                    value={regData.roomNumber}
+                    onChange={(e) => setRegData({ ...regData, roomNumber: e.target.value })}
+                  />
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-1">
-                <button
-                  type="button"
-                  onClick={switchToLogin}
-                  className="w-1/3 border border-[#003f87] text-[#003f87] rounded-lg py-3 text-sm font-bold hover:bg-[#e1e3e4]/50 transition-colors"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-2/3 bg-[#003f87] text-white rounded-lg py-3 text-sm font-bold hover:opacity-90 transition-colors shadow-sm active:scale-[0.98] disabled:opacity-60"
-                >
-                  {loading ? 'Registering...' : 'Complete Registration'}
-                </button>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Year of Study
+                  </label>
+                  <select
+                    value={regData.year}
+                    onChange={(e) => setRegData({ ...regData, year: e.target.value })}
+                    className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 outline-none"
+                  >
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Branch
+                  </label>
+                  <Input
+                    placeholder="Computer Science"
+                    value={regData.branch}
+                    onChange={(e) => setRegData({ ...regData, branch: e.target.value })}
+                  />
+                </div>
               </div>
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 text-sm font-bold mt-2"
+              >
+                {loading ? 'Creating Account...' : 'Complete Registration'}
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
             </form>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

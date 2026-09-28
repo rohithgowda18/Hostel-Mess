@@ -1,12 +1,29 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { messApi } from '@/services/mess-api';
+import {
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Filter,
+  Sparkles,
+  Calendar,
+  UtensilsCrossed,
+  User,
+  Clock
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const MEAL_TYPE_FILTERS = [
   { label: 'All Meals', value: 'ALL' },
   { label: 'Breakfast', value: 'BREAKFAST' },
   { label: 'Lunch', value: 'LUNCH' },
-  { label: 'Snacks', value: 'SNACKS' },
+  { label: 'Evening Snacks', value: 'SNACKS' },
   { label: 'Dinner', value: 'DINNER' },
 ];
 
@@ -27,7 +44,7 @@ export default function StudentFoodPhotosPage() {
       setPhotos(list);
     } catch (e) {
       console.error('Failed to load food gallery photos:', e);
-      setError('Unable to load food photos right now. Please try again.');
+      setError('Unable to load food photos right now.');
     } finally {
       setLoading(false);
     }
@@ -37,186 +54,172 @@ export default function StudentFoodPhotosPage() {
     loadPhotos();
   }, []);
 
-  // Filter photos by meal type
   const filtered = useMemo(() => {
     if (activeFilter === 'ALL') return photos;
-    return photos.filter(
-      (p) => (p.mealType || '').toUpperCase() === activeFilter
-    );
+    return photos.filter((p) => (p.mealType || '').toUpperCase() === activeFilter);
   }, [photos, activeFilter]);
-
-  const handleOpenLightbox = (index) => {
-    setLightboxIndex(index);
-  };
-
-  const handlePrevImage = (e) => {
-    e.stopPropagation();
-    if (lightboxIndex !== null && lightboxIndex > 0) {
-      setLightboxIndex(lightboxIndex - 1);
-    }
-  };
-
-  const handleNextImage = (e) => {
-    e.stopPropagation();
-    if (lightboxIndex !== null && lightboxIndex < filtered.length - 1) {
-      setLightboxIndex(lightboxIndex + 1);
-    }
-  };
 
   const currentPhoto = lightboxIndex !== null ? filtered[lightboxIndex] : null;
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden font-[Inter,sans-serif] bg-[#f8f9fa] dark:bg-[#0F172A] transition-colors duration-200">
-      <main className="flex-1 overflow-y-auto bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] p-3 md:p-6 pb-24 md:pb-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mt-2">
-          <div>
-            <h2 className="text-[32px] md:text-[45px] font-semibold text-[#003f87] dark:text-[#3B82F6] leading-9 md:leading-[52px]">Community Food Gallery</h2>
-            <p className="text-xs text-[#424752] dark:text-[#94A3B8] mt-1">Live photos uploaded by students during meal reports today.</p>
-          </div>
-          <button
+    <div className="space-y-6 pb-6">
+      {/* Page Header */}
+      <PageHeader
+        badge={
+          <Badge variant="primary" className="text-[10px] font-bold">
+            Live Food Evidence
+          </Badge>
+        }
+        title="Community Food Gallery"
+        description="Real-time photos uploaded by fellow students at the mess counters today to verify food quality and preparation."
+        actions={
+          <Button
+            size="sm"
             onClick={() => navigate('/report-meal')}
-            className="w-full sm:w-auto min-h-[48px] px-5 bg-[#006e25] dark:bg-[#22C55E] text-white dark:text-slate-950 font-bold rounded-xl text-xs shadow-sm hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2"
+            className="font-bold text-xs bg-blue-600 hover:bg-blue-700 gap-1.5"
           >
-            <span className="material-symbols-outlined text-[20px]">rate_review</span>
-            Report Served Meal & Add Photo
+            <Camera className="h-4 w-4" />
+            Upload Photo with Report
+          </Button>
+        }
+      />
+
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+        {MEAL_TYPE_FILTERS.map((f) => (
+          <button
+            key={f.value}
+            onClick={() => {
+              setActiveFilter(f.value);
+              setLightboxIndex(null);
+            }}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              activeFilter === f.value
+                ? 'bg-blue-600 text-white shadow-xs font-bold'
+                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            {f.label}
           </button>
-        </div>
+        ))}
+      </div>
 
-        {/* Read-only Information Banner */}
-        <div className="mb-6 p-4 bg-[#e8f5ea] dark:bg-[#22C55E]/10 border border-[#006e25]/30 dark:border-[#22C55E]/30 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#006e25] dark:text-[#22C55E]">
-          <div className="flex items-center gap-2">
-            <span className="text-base">💡</span>
-            <span>Photos are automatically contributed when you report today's served meal (+5 Bonus Pts).</span>
-          </div>
-          <button onClick={() => navigate('/report-meal')} className="font-bold underline hover:opacity-80 text-left sm:text-right">
-            Report Meal Now
-          </button>
+      {/* Gallery Content */}
+      {loading ? (
+        <div className="py-24 text-center space-y-3">
+          <div className="h-8 w-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-semibold text-slate-500">Loading student photos...</p>
         </div>
-
-        {/* Filters Bar */}
-        <div className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-xl p-3 mb-6 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="flex items-center gap-2 overflow-x-auto w-full no-scrollbar">
-            {MEAL_TYPE_FILTERS.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => { setActiveFilter(f.value); setLightboxIndex(null); }}
-                className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
-                  activeFilter === f.value
-                    ? 'bg-[#003f87] dark:bg-[#3B82F6] text-white shadow-sm font-bold'
-                    : 'bg-[#f3f4f5] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#CBD5E1] border border-[#c2c6d4] dark:border-[#334155] hover:bg-[#e1e3e4] dark:hover:bg-[#334155]'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Mobile & Desktop Responsive Masonry Grid */}
-        {loading ? (
-          <div className="py-24 text-center text-xs text-[#424752]">Loading community photos...</div>
-        ) : error ? (
-          <div className="py-24 flex flex-col items-center gap-3 text-[#424752]">
-            <span className="material-symbols-outlined text-[48px] opacity-40">cloud_off</span>
-            <p className="text-xs font-semibold">{error}</p>
-            <button
-              onClick={loadPhotos}
-              className="px-4 py-2 mt-1 bg-[#003f87] dark:bg-[#3B82F6] text-white text-xs font-bold rounded-xl hover:opacity-90 transition"
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={Camera}
+          title="No food photos uploaded yet"
+          description="Be the first to photograph today's meal and earn contribution points!"
+          actionLabel="Upload Food Photo"
+          onAction={() => navigate('/report-meal')}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map((item, idx) => (
+            <Card
+              key={item.id || idx}
+              onClick={() => setLightboxIndex(idx)}
+              className="group overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 cursor-pointer hover:shadow-card-hover transition-all duration-200"
             >
-              Retry
-            </button>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="py-24 flex flex-col items-center gap-3 text-[#424752]">
-            <span className="material-symbols-outlined text-[48px] opacity-40">photo_library</span>
-            <p className="text-xs font-semibold">No food photos uploaded for this meal yet.</p>
-            <button
-              onClick={() => navigate('/report-meal')}
-              className="text-[#003f87] font-bold text-xs hover:underline mt-1"
-            >
-              Be the first to upload a photo (+5 Pts)!
-            </button>
-          </div>
-        ) : (
-          <div className="w-full" style={{ columns: '160px 2', columnGap: '12px' }}>
-            {filtered.map((item, idx) => {
-              const url = (item.imageUrls && item.imageUrls.length > 0) ? item.imageUrls[0] : (item.photoUrl || item.url);
-              return (
-                <div
-                  key={item.id || idx}
-                  className="relative group rounded-xl overflow-hidden cursor-pointer shadow-sm border border-[#c2c6d4] bg-white mb-3 break-inside-avoid active:scale-95 transition-transform"
-                  style={{ display: 'inline-block', width: '100%' }}
-                  onClick={() => handleOpenLightbox(idx)}
-                >
-                  {url ? (
-                    <img src={url} alt={item.description || 'Mess Food'} loading="lazy" className="w-full object-cover rounded-xl" />
-                  ) : (
-                    <div className="w-full aspect-video flex items-center justify-center bg-[#f3f4f5] dark:bg-[#0F172A] text-[#424752]">
-                      <span className="material-symbols-outlined text-3xl opacity-40">broken_image</span>
-                    </div>
-                  )}
-                  {item.mealType && (
-                    <div className="p-2.5 text-[11px] font-bold text-[#003f87] bg-white border-t border-[#c2c6d4] flex justify-between items-center">
-                      <span>{item.mealType}</span>
-                      <span className="text-[10px] text-[#424752] font-normal">{item.date || 'Today'}</span>
-                    </div>
-                  )}
+              <div className="relative aspect-4/3 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <img
+                  src={item.photoUrl || item.imageUrl}
+                  alt={item.mealType || 'Meal photo'}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="absolute top-2.5 left-2.5">
+                  <Badge variant="primary" className="text-[10px] font-bold bg-white/90 text-slate-900 backdrop-blur-xs">
+                    {item.mealType || 'Meal'}
+                  </Badge>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </main>
+              </div>
 
-      {/* Swipe/Nav Lightbox Overlay */}
+              <div className="p-3.5 space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-900 dark:text-slate-100 truncate">
+                    {item.userEmail ? item.userEmail.split('@')[0] : 'Student Resident'}
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    {item.uploadedAt ? new Date(item.uploadedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today'}
+                  </span>
+                </div>
+                {item.foodItems && item.foodItems.length > 0 && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {item.foodItems.join(', ')}
+                  </p>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Lightbox Modal */}
       {currentPhoto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-md" onClick={() => setLightboxIndex(null)}>
-          <div className="relative max-w-2xl w-full bg-white border border-[#c2c6d4] rounded-2xl p-4 overflow-hidden shadow-2xl flex flex-col items-center">
-            {/* Close button (mobile friendly) */}
-            <button
-              onClick={() => setLightboxIndex(null)}
-              className="absolute top-3 right-3 z-30 bg-white/90 text-[#003f87] p-2 rounded-full shadow-lg hover:bg-white active:scale-95 transition"
-              aria-label="Close"
-            >
-              <span className="material-symbols-outlined text-2xl">close</span>
-            </button>
-
-            {/* Prev Button */}
-            {lightboxIndex > 0 && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+          onClick={() => setLightboxIndex(null)}
+        >
+          <div
+            className="relative max-w-3xl w-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 shadow-2xl space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-slate-800 text-white">
+              <div>
+                <h4 className="font-bold text-sm">{currentPhoto.mealType || 'Meal Photo'}</h4>
+                <p className="text-xs text-slate-400">
+                  Uploaded by {currentPhoto.userEmail ? currentPhoto.userEmail.split('@')[0] : 'Resident'}
+                </p>
+              </div>
               <button
-                onClick={handlePrevImage}
-                className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 text-[#003f87] p-3 rounded-full shadow-lg hover:bg-white active:scale-95 transition z-20"
-                aria-label="Previous"
+                onClick={() => setLightboxIndex(null)}
+                className="p-1 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white"
               >
-                <span className="material-symbols-outlined text-2xl">chevron_left</span>
+                <X className="h-5 w-5" />
               </button>
-            )}
+            </div>
 
-            {/* Next Button */}
-            {lightboxIndex < filtered.length - 1 && (
-              <button
-                onClick={handleNextImage}
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 text-[#003f87] p-3 rounded-full shadow-lg hover:bg-white active:scale-95 transition z-20"
-                aria-label="Next"
+            <div className="relative aspect-video max-h-[60vh] w-full flex items-center justify-center bg-black">
+              <img
+                src={currentPhoto.photoUrl || currentPhoto.imageUrl}
+                alt="Full size meal"
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-4 border-t border-slate-800">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={lightboxIndex === 0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex(lightboxIndex - 1);
+                }}
+                className="text-xs font-semibold gap-1 text-white border-slate-700 hover:bg-slate-800"
               >
-                <span className="material-symbols-outlined text-2xl">chevron_right</span>
-              </button>
-            )}
-
-            <img
-              src={(currentPhoto.imageUrls && currentPhoto.imageUrls.length > 0) ? currentPhoto.imageUrls[0] : (currentPhoto.photoUrl || currentPhoto.url)}
-              alt="Expanded Food"
-              className="w-full h-auto max-h-[70vh] object-contain rounded-xl"
-            />
-
-            <div className="w-full mt-3 flex justify-between items-center text-xs text-[#191c1d] pt-2 border-t border-[#c2c6d4]">
-              <span className="font-bold text-[#003f87]">
-                {currentPhoto.mealType} Serving ({lightboxIndex + 1} of {filtered.length})
+                <ChevronLeft className="h-4 w-4" /> Previous
+              </Button>
+              <span className="text-xs text-slate-400 font-mono">
+                {lightboxIndex + 1} of {filtered.length}
               </span>
-              <button onClick={() => setLightboxIndex(null)} className="px-4 py-2 bg-[#003f87] text-white rounded-lg font-bold">
-                Close
-              </button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={lightboxIndex === filtered.length - 1}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex(lightboxIndex + 1);
+                }}
+                className="text-xs font-semibold gap-1 text-white border-slate-700 hover:bg-slate-800"
+              >
+                Next <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>

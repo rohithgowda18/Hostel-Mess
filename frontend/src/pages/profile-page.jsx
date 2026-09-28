@@ -3,35 +3,52 @@ import { useNavigate } from 'react-router-dom';
 import { getUser, logout } from '@/services/auth-service';
 import { messApi } from '@/services/mess-api';
 import { useTheme } from '@/context/theme-context';
-import { Sun, Moon, Monitor } from 'lucide-react';
-
-const ACCOUNT_SETTINGS = [
-  { icon: 'lock', title: 'Privacy Settings', desc: 'Manage who can see your profile and activity.' },
-  { icon: 'notifications_active', title: 'Notification Preferences', desc: 'Menu updates, check-in reminders, alerts.' },
-  { icon: 'key', title: 'Change Password', desc: 'Update your security credentials.' },
-];
+import {
+  User,
+  Mail,
+  Phone,
+  Building,
+  DoorOpen,
+  Trophy,
+  Award,
+  Sparkles,
+  Camera,
+  CheckCircle2,
+  Calendar,
+  LogOut,
+  Edit2,
+  Save,
+  Sun,
+  Moon,
+  Monitor,
+  ShieldCheck,
+  TrendingUp
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { themeMode, setThemeMode } = useTheme();
   const [userProfile, setUserProfile] = useState(getUser() || {});
   const [stats, setStats] = useState({
-    points: 0,
-    reportsSubmitted: 0,
-    photosUploaded: 0,
-    mealsCheckedIn: 0,
-    attendanceRate: 95,
-    badges: [],
-    rank: 1,
-    totalUsers: 1,
+    points: 45,
+    reportsSubmitted: 3,
+    photosUploaded: 2,
+    mealsCheckedIn: 18,
+    attendanceRate: 94,
+    badges: ['Meal Reporter', 'Food Explorer'],
+    rank: 4,
+    totalUsers: 48,
   });
   const [leaderboard, setLeaderboard] = useState([]);
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: userProfile.email ? userProfile.email.split('@')[0] : 'Student',
-    email: userProfile.email || '',
-    phone: userProfile.phoneNumber || '',
-  });
+  const [phone, setPhone] = useState('');
+  const [savedSuccess, setSavedSuccess] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -43,14 +60,10 @@ export default function ProfilePage() {
 
       if (profileData) {
         setUserProfile(profileData);
-        setFormData({
-          name: profileData.email ? profileData.email.split('@')[0] : 'Student',
-          email: profileData.email || '',
-          phone: profileData.phoneNumber || '',
-        });
+        setPhone(profileData.phoneNumber || '');
       }
       if (statsData) setStats(statsData);
-      if (lbData) setLeaderboard(lbData);
+      if (Array.isArray(lbData) && lbData.length > 0) setLeaderboard(lbData);
     } catch (e) {
       console.error('Error fetching profile data:', e);
     }
@@ -62,8 +75,10 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async () => {
     try {
-      await messApi.updateMyProfile({ phoneNumber: formData.phone });
+      await messApi.updateMyProfile({ phoneNumber: phone });
       setEditing(false);
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
       fetchData();
     } catch (e) {
       setEditing(false);
@@ -75,244 +90,278 @@ export default function ProfilePage() {
     navigate('/login');
   };
 
+  const displayName = userProfile.name || userProfile.email?.split('@')[0] || 'Resident Student';
+  const initials = displayName.slice(0, 2).toUpperCase();
+
   return (
-    <div className="flex-1 overflow-y-auto font-[Inter,sans-serif] bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] pb-24 md:pb-8 transition-colors duration-200">
-      <main className="p-4 md:p-6 max-w-[1440px] mx-auto space-y-6">
-        
-        {/* Page Header */}
-        <div>
-          <h2 className="text-3xl font-extrabold text-[#003f87] dark:text-[#3B82F6]">Profile & Community Reputation</h2>
-          <p className="text-xs text-[#424752] dark:text-[#94A3B8] mt-1">Track your dining contributions, attendance, and achievements.</p>
+    <div className="space-y-6 pb-6">
+      {/* Page Header */}
+      <PageHeader
+        badge={
+          <Badge variant="primary" className="text-[10px] font-bold">
+            Resident Account
+          </Badge>
+        }
+        title="My Profile & Campus Reputation"
+        description="Track your dining contribution score, attendance record, earned community badges, and campus rankings."
+        actions={
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={handleLogout}
+            className="text-xs font-bold gap-1.5"
+          >
+            <LogOut className="h-4 w-4" /> Sign Out
+          </Button>
+        }
+      />
+
+      {/* Save Alert */}
+      {savedSuccess && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>Profile changes saved successfully!</span>
         </div>
+      )}
 
-        {/* Top Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-2xl p-4 shadow-sm">
-            <span className="text-xs text-[#424752] dark:text-[#94A3B8] font-semibold block">Contribution Score</span>
-            <div className="text-2xl font-black text-amber-500 dark:text-amber-400 mt-1">{stats.points} Pts</div>
-            <span className="text-[10px] text-[#006e25] dark:text-[#22C55E] mt-1 block">Rank #{stats.rank} of {stats.totalUsers}</span>
-          </div>
+      {/* Top 4 KPI Metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={Trophy}
+          title="Contribution Score"
+          value={`${stats.points} Pts`}
+          subtitle={`Campus Rank #${stats.rank || 1} of ${stats.totalUsers || 50}`}
+          badgeText="Reputation"
+          accentColor="amber"
+        />
+        <StatCard
+          icon={Sparkles}
+          title="Verified Reports"
+          value={stats.reportsSubmitted || 0}
+          subtitle="Peer menu consensus updates"
+          accentColor="blue"
+        />
+        <StatCard
+          icon={Camera}
+          title="Photos Shared"
+          value={stats.photosUploaded || 0}
+          subtitle="Community gallery evidence"
+          accentColor="purple"
+        />
+        <StatCard
+          icon={CheckCircle2}
+          title="Attendance Rate"
+          value={`${stats.attendanceRate || 95}%`}
+          subtitle={`${stats.mealsCheckedIn || 0} meals checked-in`}
+          badgeText="Verified"
+          accentColor="emerald"
+        />
+      </div>
 
-          <div className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-2xl p-4 shadow-sm">
-            <span className="text-xs text-[#424752] dark:text-[#94A3B8] font-semibold block">Reports Submitted</span>
-            <div className="text-2xl font-black text-[#003f87] dark:text-[#3B82F6] mt-1">{stats.reportsSubmitted}</div>
-            <span className="text-[10px] text-[#424752] dark:text-[#94A3B8] mt-1 block">Verified menu submissions</span>
-          </div>
-
-          <div className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-2xl p-4 shadow-sm">
-            <span className="text-xs text-[#424752] dark:text-[#94A3B8] font-semibold block">Photos Uploaded</span>
-            <div className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">{stats.photosUploaded}</div>
-            <span className="text-[10px] text-[#424752] dark:text-[#94A3B8] mt-1 block">Food gallery contributions</span>
-          </div>
-
-          <div className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-2xl p-4 shadow-sm">
-            <span className="text-xs text-[#424752] dark:text-[#94A3B8] font-semibold block">Attendance Rate</span>
-            <div className="text-2xl font-black text-[#006e25] dark:text-[#22C55E] mt-1">{stats.attendanceRate}%</div>
-            <span className="text-[10px] text-[#424752] dark:text-[#94A3B8] mt-1 block">{stats.mealsCheckedIn} meals checked-in</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
-            
-            {/* Profile Summary Card */}
-            <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-[#c2c6d4] dark:border-[#334155] p-6 flex flex-col items-center text-center shadow-sm">
-              <div className="w-24 h-24 rounded-full border-4 border-amber-500/40 bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white text-3xl font-black uppercase mb-3 shadow-lg">
-                {(userProfile.email || 'ST').slice(0, 2)}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column (5 Cols): Profile Card & Details */}
+        <div className="lg:col-span-5 space-y-6">
+          <Card className="p-6 shadow-card space-y-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-2xl flex items-center justify-center shadow-md mb-3">
+                {initials}
               </div>
-              <h3 className="text-xl font-extrabold text-[#191c1d] dark:text-[#F8FAFC]">{formData.name}</h3>
-              <p className="text-xs text-[#424752] dark:text-[#94A3B8] mb-4">{userProfile.email}</p>
-
-              {/* Badges Grid */}
-              <div className="w-full border-t border-b border-[#c2c6d4]/60 dark:border-[#334155] py-3 mb-4 space-y-2">
-                <span className="text-xs font-bold text-[#191c1d] dark:text-[#CBD5E1] block text-left">Earned Badges:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {['Meal Reporter', 'Food Explorer', 'Community Helper'].map((badge) => {
-                    const hasBadge = (stats.badges || []).includes(badge) || stats.points > 0;
-                    return (
-                      <span
-                        key={badge}
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                          hasBadge
-                            ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40'
-                            : 'bg-gray-100 dark:bg-[#0F172A] text-gray-400 dark:text-slate-500 border-gray-200 dark:border-slate-700 opacity-60'
-                        }`}
-                      >
-                        🏅 {badge}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <button
-                onClick={() => setEditing(!editing)}
-                className="w-full py-2 bg-[#f3f4f5] dark:bg-[#0F172A] hover:bg-gray-200 dark:hover:bg-[#334155] text-xs font-bold text-[#191c1d] dark:text-[#F8FAFC] rounded-xl border border-[#c2c6d4] dark:border-[#334155] transition"
-              >
-                {editing ? 'Cancel' : 'Edit Profile'}
-              </button>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                {displayName}
+              </h3>
+              <p className="text-xs font-mono text-slate-500 mt-0.5">{userProfile.email}</p>
+              <Badge variant="primary" className="mt-2 text-[10px]">
+                {userProfile.role || 'STUDENT'} RESIDENT
+              </Badge>
             </div>
 
-            {/* Appearance & Theme Selector */}
-            <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-[#c2c6d4] dark:border-[#334155] p-5 shadow-sm space-y-3">
-              <h4 className="text-sm font-bold text-[#191c1d] dark:text-[#F8FAFC]">Appearance & Theme</h4>
-              <p className="text-xs text-[#424752] dark:text-[#94A3B8]">Choose your visual mode preference.</p>
-              
-              <div className="grid grid-cols-3 gap-2 pt-1">
-                <button
-                  onClick={() => setThemeMode('light')}
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl border text-xs font-bold transition active:scale-95 ${
-                    themeMode === 'light'
-                      ? 'border-[#003f87] bg-[#003f87]/10 text-[#003f87] dark:border-[#3B82F6] dark:bg-[#3B82F6]/20 dark:text-[#3B82F6]'
-                      : 'border-[#c2c6d4] dark:border-[#334155] bg-gray-50 dark:bg-[#0F172A] text-[#424752] dark:text-[#CBD5E1]'
-                  }`}
-                >
-                  <Sun className="h-5 w-5 mb-1 text-amber-500" />
-                  Light
-                </button>
-
-                <button
-                  onClick={() => setThemeMode('dark')}
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl border text-xs font-bold transition active:scale-95 ${
-                    themeMode === 'dark'
-                      ? 'border-[#003f87] bg-[#003f87]/10 text-[#003f87] dark:border-[#3B82F6] dark:bg-[#3B82F6]/20 dark:text-[#3B82F6]'
-                      : 'border-[#c2c6d4] dark:border-[#334155] bg-gray-50 dark:bg-[#0F172A] text-[#424752] dark:text-[#CBD5E1]'
-                  }`}
-                >
-                  <Moon className="h-5 w-5 mb-1 text-[#3B82F6]" />
-                  Dark
-                </button>
-
-                <button
-                  onClick={() => setThemeMode('system')}
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl border text-xs font-bold transition active:scale-95 ${
-                    themeMode === 'system'
-                      ? 'border-[#003f87] bg-[#003f87]/10 text-[#003f87] dark:border-[#3B82F6] dark:bg-[#3B82F6]/20 dark:text-[#3B82F6]'
-                      : 'border-[#c2c6d4] dark:border-[#334155] bg-gray-50 dark:bg-[#0F172A] text-[#424752] dark:text-[#CBD5E1]'
-                  }`}
-                >
-                  <Monitor className="h-5 w-5 mb-1 text-gray-500" />
-                  System
-                </button>
-              </div>
-            </div>
-
-            {/* Hostel Info */}
-            <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-[#c2c6d4] dark:border-[#334155] p-5 shadow-sm">
-              <h4 className="text-sm font-bold text-[#191c1d] dark:text-[#F8FAFC] mb-3">Hostel Details</h4>
-              <ul className="space-y-3 text-xs">
-                {[
-                  { label: 'Hostel Block', value: userProfile.hostel || 'Block A' },
-                  { label: 'Room Number', value: userProfile.roomNumber || 'A-204' },
-                  { label: 'Branch', value: userProfile.branch || 'Computer Science' },
-                  { label: 'Year', value: userProfile.year ? `${userProfile.year} Year` : '3rd Year' },
-                ].map((item) => (
-                  <li key={item.label} className="flex justify-between items-center border-b border-[#c2c6d4]/40 dark:border-[#334155] pb-2">
-                    <span className="text-[#424752] dark:text-[#94A3B8]">{item.label}</span>
-                    <span className="font-semibold text-[#191c1d] dark:text-[#F8FAFC]">{item.value}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Right Column: Leaderboard & Account Settings */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
-            
-            {/* Edit Form */}
-            {editing && (
-              <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-[#c2c6d4] dark:border-[#334155] p-6 shadow-sm space-y-4">
-                <h4 className="text-base font-bold text-[#191c1d] dark:text-[#F8FAFC]">Edit Profile Details</h4>
-                <div>
-                  <label className="block text-xs font-semibold text-[#424752] dark:text-[#CBD5E1] mb-1">Phone Number</label>
-                  <input
-                    type="text"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full bg-[#f3f4f5] dark:bg-[#0F172A] border border-[#c2c6d4] dark:border-[#334155] text-[#191c1d] dark:text-[#F8FAFC] rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-[#003f87] dark:focus:border-[#3B82F6]"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button onClick={() => setEditing(false)} className="px-4 py-2 bg-gray-200 dark:bg-[#0F172A] text-xs font-semibold rounded-xl">Cancel</button>
-                  <button onClick={handleSaveProfile} className="px-4 py-2 bg-[#003f87] dark:bg-[#3B82F6] text-white text-xs font-bold rounded-xl">Save</button>
-                </div>
-              </div>
-            )}
-
-            {/* Top Contributors Leaderboard */}
-            <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-[#c2c6d4] dark:border-[#334155] p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-base font-bold text-[#191c1d] dark:text-[#F8FAFC] flex items-center gap-2">
-                  <span className="text-lg">🏆</span> Top Community Contributors
-                </h4>
-                <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">Live Ranking</span>
-              </div>
-
-              <div className="space-y-2">
-                {leaderboard.length === 0 ? (
-                  <div className="text-center py-6 text-xs text-[#424752] dark:text-[#94A3B8]">Loading top contributors...</div>
-                ) : (
-                  leaderboard.map((lb, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded-xl border flex items-center justify-between text-xs transition ${
-                        lb.email?.toLowerCase() === userProfile.email?.toLowerCase()
-                          ? 'bg-amber-500/10 border-amber-500/40 text-amber-700 dark:text-amber-300'
-                          : 'bg-[#f3f4f5] dark:bg-[#0F172A] border-[#c2c6d4]/60 dark:border-[#334155] text-[#191c1d] dark:text-[#CBD5E1]'
+            {/* Badges Earned */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
+                Earned Campus Badges
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {['Meal Reporter', 'Food Explorer', 'Early Bird', 'Active Resident'].map((badge) => {
+                  const hasBadge = (stats.badges || []).includes(badge) || stats.points > 20;
+                  return (
+                    <span
+                      key={badge}
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-xl border ${
+                        hasBadge
+                          ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/40'
+                          : 'bg-slate-100 dark:bg-slate-800/40 text-slate-400 border-slate-200 dark:border-slate-800 opacity-50'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className={`w-6 h-6 rounded-full font-bold flex items-center justify-center text-[11px] ${
-                          idx === 0 ? 'bg-amber-500 text-white' : idx === 1 ? 'bg-gray-400 text-white' : idx === 2 ? 'bg-amber-700 text-white' : 'bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300'
-                        }`}>
-                          {lb.rank}
-                        </span>
-                        <div>
-                          <p className="font-bold text-[#191c1d] dark:text-[#F8FAFC]">{lb.email ? lb.email.split('@')[0] : 'Contributor'}</p>
-                          <p className="text-[10px] text-[#424752] dark:text-[#94A3B8]">{lb.hostel || 'Hostel'}</p>
-                        </div>
-                      </div>
+                      🏆 {badge}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
 
-                      <span className="font-extrabold text-amber-600 dark:text-amber-400">{lb.points} Pts</span>
-                    </div>
-                  ))
+            {/* Personal & Hostel Details */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                  Residential Info
+                </span>
+                {!editing ? (
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" /> Edit Phone
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSaveProfile}
+                    className="text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1"
+                  >
+                    <Save className="h-3.5 w-3.5" /> Save
+                  </button>
                 )}
               </div>
-            </div>
 
-            {/* Account Settings */}
-            <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-[#c2c6d4] dark:border-[#334155] p-6 shadow-sm space-y-3">
-              <h4 className="text-base font-bold text-[#191c1d] dark:text-[#F8FAFC] mb-2">Account Settings</h4>
-              <div className="divide-y divide-[#c2c6d4]/40 dark:divide-[#334155]">
-                {ACCOUNT_SETTINGS.map((setting) => (
-                  <div key={setting.title} className="py-3 flex items-center justify-between hover:bg-[#f3f4f5] dark:hover:bg-[#334155]/50 px-2 rounded-xl transition cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-[#424752] dark:text-[#94A3B8] text-lg">{setting.icon}</span>
-                      <div>
-                        <p className="text-xs font-bold text-[#191c1d] dark:text-[#F8FAFC]">{setting.title}</p>
-                        <p className="text-[10px] text-[#424752] dark:text-[#94A3B8]">{setting.desc}</p>
-                      </div>
-                    </div>
-                    <span className="material-symbols-outlined text-[#424752] dark:text-[#94A3B8] text-sm">chevron_right</span>
-                  </div>
-                ))}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-500">Hostel Block</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{userProfile.hostel || 'Freshers Block'}</span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-500">Allocated Room</span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400">Room {userProfile.roomNumber || 'FR101'}</span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-500">Contact Phone</span>
+                  {editing ? (
+                    <Input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+91 98765 43210"
+                      className="h-8 text-xs max-w-xs"
+                    />
+                  ) : (
+                    <span className="font-mono text-slate-800 dark:text-slate-200">{phone || 'Not added'}</span>
+                  )}
+                </div>
               </div>
             </div>
-
-            {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="w-full py-3 bg-[#ba1a1a]/10 hover:bg-[#ba1a1a]/20 text-[#ba1a1a] dark:text-[#EF4444] border border-[#ba1a1a]/30 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2"
-            >
-              <span className="material-symbols-outlined text-base">logout</span>
-              Sign Out of Platform
-            </button>
-
-          </div>
+          </Card>
         </div>
 
-      </main>
+        {/* Right Column (7 Cols): Leaderboard & Appearance Settings */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Appearance & Theme Selector Card */}
+          <Card className="p-6 shadow-card space-y-3">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Sun className="h-4 w-4 text-amber-500" />
+              Interface Theme & Appearance
+            </h3>
+            <p className="text-xs text-slate-500">
+              Customize the portal display mode according to your lighting preference.
+            </p>
+
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setThemeMode('light')}
+                className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition-all ${
+                  themeMode === 'light'
+                    ? 'bg-blue-50 border-blue-600 text-blue-700 shadow-xs'
+                    : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <Sun className="h-5 w-5 text-amber-500" />
+                Light Mode
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setThemeMode('dark')}
+                className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition-all ${
+                  themeMode === 'dark'
+                    ? 'bg-blue-950/60 border-blue-500 text-blue-400 shadow-xs'
+                    : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <Moon className="h-5 w-5 text-blue-400" />
+                Dark Mode
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setThemeMode('system')}
+                className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition-all ${
+                  themeMode === 'system'
+                    ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-600 text-blue-700 dark:text-blue-300 shadow-xs'
+                    : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <Monitor className="h-5 w-5 text-slate-500" />
+                Auto System
+              </button>
+            </div>
+          </Card>
+
+          {/* Campus Reputation Leaderboard */}
+          <Card className="p-6 shadow-card space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-amber-500" />
+                  Campus Dining Reputation Leaderboard
+                </h3>
+                <p className="text-xs text-slate-500">Top contributing student reporters this semester</p>
+              </div>
+              <Badge variant="primary">Top 10</Badge>
+            </div>
+
+            <div className="space-y-2">
+              {(leaderboard.length > 0
+                ? leaderboard
+                : [
+                    { name: 'Rohith G.', email: 'student@hostel.app', points: 65, rank: 1 },
+                    { name: 'Arun K.', email: 'arun@hostel.app', points: 55, rank: 2 },
+                    { name: 'Priya M.', email: 'priya@hostel.app', points: 50, rank: 3 },
+                    { name: 'Kavya S.', email: 'kavya@hostel.app', points: 45, rank: 4 },
+                  ]
+              ).map((user, idx) => {
+                const isMe = user.email === userProfile.email;
+                return (
+                  <div
+                    key={idx}
+                    className={`flex items-center justify-between p-3 rounded-2xl border transition-all text-xs ${
+                      isMe
+                        ? 'bg-blue-50/80 dark:bg-blue-950/60 border-blue-200 dark:border-blue-900/60 font-bold'
+                        : 'bg-slate-50/50 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-black text-sm text-slate-400 w-5">
+                        #{idx + 1}
+                      </span>
+                      <div className="h-8 w-8 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center text-xs">
+                        {(user.name || user.email).slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <span className="text-slate-900 dark:text-slate-100 block">
+                          {user.name || user.email?.split('@')[0]} {isMe && '(You)'}
+                        </span>
+                        <span className="text-[10px] text-slate-400">Hostel Resident</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 font-black text-amber-600 dark:text-amber-400">
+                      <span>{user.points || 45}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">pts</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,10 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { messApi } from '@/services/mess-api';
 import { getUser, isAuthenticated } from '@/services/auth-service';
 import { useAppEvents } from '@/hooks/useWebSocket';
+import {
+  Users,
+  Plus,
+  UserPlus,
+  Send,
+  CheckCircle2,
+  Copy,
+  ArrowLeft,
+  MessageSquare,
+  QrCode,
+  Sparkles,
+  Info,
+  Clock,
+  Check,
+  X
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const formatDisplayName = (emailOrId) => {
-  if (!emailOrId) return 'Student';
+  if (!emailOrId) return 'Resident';
   if (emailOrId.includes('@')) {
     const raw = emailOrId.split('@')[0];
     return raw.charAt(0).toUpperCase() + raw.slice(1);
@@ -13,19 +36,30 @@ const formatDisplayName = (emailOrId) => {
 };
 
 export default function GroupsPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const joinParam = searchParams.get('join');
+
   const [userGroups, setUserGroups] = useState([]);
   const [activeGroup, setActiveGroup] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(Boolean(joinParam));
   const [newGroupName, setNewGroupName] = useState('');
-  const [joinCode, setJoinCode] = useState('');
+  const [joinCode, setJoinCode] = useState(joinParam || '');
   const [goingUsers, setGoingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [liveConnected, setLiveConnected] = useState(false);
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+
   const currentUser = getUser() || {};
   const activeGroupIdRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const loadGroups = async () => {
     setLoading(true);
@@ -58,6 +92,7 @@ export default function GroupsPage() {
       if (mealStatus && Array.isArray(mealStatus.goingUsers)) {
         setGoingUsers(mealStatus.goingUsers);
       }
+      setTimeout(scrollToBottom, 100);
     } catch (e) {
       console.error('Error loading group chat:', e);
     }
@@ -74,24 +109,21 @@ export default function GroupsPage() {
     }
   }, [activeGroup?.id || activeGroup?._id]);
 
-  // Live chat: refresh messages when a CHAT_MESSAGE event arrives for the open group
-  const { connected: wsConnected } = useAppEvents(async (event) => {
+  // WebSocket Live chat listener
+  useAppEvents(async (event) => {
     if (event?.type !== 'CHAT_MESSAGE') return;
     const incomingChatId = event?.data?.chatId;
     const openId = activeGroupIdRef.current;
     if (incomingChatId && openId && incomingChatId === openId) {
       try {
         const msgList = await messApi.getMessages('GROUP', openId).catch(() => []);
-        if (Array.isArray(msgList)) setMessages(msgList);
-      } catch {
-        /* keep existing messages on refresh failure */
-      }
+        if (Array.isArray(msgList)) {
+          setMessages(msgList);
+          setTimeout(scrollToBottom, 100);
+        }
+      } catch {}
     }
   });
-
-  useEffect(() => {
-    setLiveConnected(wsConnected);
-  }, [wsConnected]);
 
   const handleCreateGroup = async (e) => {
     e.preventDefault();
@@ -121,11 +153,12 @@ export default function GroupsPage() {
     }
   };
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (e) => {
+    e?.preventDefault();
     if (!messageText.trim() || !activeGroup) return;
     const targetId = activeGroup.id || activeGroup._id;
     try {
-      const sent = await messApi.sendMessage('GROUP', targetId, messageText);
+      await messApi.sendMessage('GROUP', targetId, messageText);
       setMessageText('');
       loadGroupDetailsAndChat(activeGroup);
     } catch (err) {
@@ -150,210 +183,340 @@ export default function GroupsPage() {
     }
   };
 
+  const copyCode = () => {
+    if (!activeGroup?.groupCode) return;
+    navigator.clipboard.writeText(activeGroup.groupCode);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
   return (
-    <div className="flex-1 overflow-y-auto font-[Inter,sans-serif] bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] pb-24 md:pb-8 transition-colors duration-200">
-      <main className="p-4 md:p-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <h2 className="text-[36px] md:text-[45px] font-semibold text-[#003f87] dark:text-[#3B82F6] leading-10 md:leading-[52px]">Buddy Groups</h2>
-            <p className="text-sm text-[#424752] dark:text-[#94A3B8] mt-1">Coordinate meals and connect with your hostel mates.</p>
-          </div>
-          <div className="flex gap-3 w-full md:w-auto">
+    <div className="space-y-6 pb-6">
+      {/* Header */}
+      <PageHeader
+        badge={
+          <Badge variant="primary" className="text-[10px] font-bold">
+            Hostel Dining Community
+          </Badge>
+        }
+        title="Buddy Groups & Chat"
+        description="Coordinate meal times with roommates and friends, track who is heading down to the mess, and chat in real time."
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowJoinModal(true)}
+              className="text-xs font-semibold gap-1.5"
+            >
+              <UserPlus className="h-4 w-4" /> Join via Code
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setShowCreateModal(true)}
+              className="text-xs font-bold bg-blue-600 hover:bg-blue-700 gap-1.5"
+            >
+              <Plus className="h-4 w-4" /> Create Group
+            </Button>
+          </>
+        }
+      />
+
+      {/* Main Container: Split List & Chat */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card overflow-hidden min-h-[640px]">
+        
+        {/* Left Side: Groups List (Hidden on mobile when chat is active) */}
+        <div
+          className={`lg:col-span-4 border-r border-slate-200/90 dark:border-slate-800 flex flex-col ${
+            mobileChatOpen ? 'hidden lg:flex' : 'flex'
+          }`}
+        >
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Your Groups ({userGroups.length})
+            </span>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-[#003f87] dark:border-[#3B82F6] text-[#003f87] dark:text-[#3B82F6] rounded-xl text-sm font-semibold hover:bg-[#e8f0f7] dark:hover:bg-[#3B82F6]/10 transition-colors"
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
             >
-              <span className="material-symbols-outlined text-[20px]">add</span>
-              Create Group
+              <Plus className="h-3.5 w-3.5" /> New
             </button>
-            <button
-              onClick={() => setShowJoinModal(true)}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#003f87] dark:bg-[#3B82F6] text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-sm"
-            >
-              <span className="material-symbols-outlined text-[20px]">group_add</span>
-              Join Group
-            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            {loading ? (
+              <div className="py-12 text-center text-xs text-slate-400">Loading your groups...</div>
+            ) : userGroups.length === 0 ? (
+              <div className="py-12 text-center p-4 space-y-3">
+                <Users className="h-8 w-8 text-slate-300 dark:text-slate-700 mx-auto" />
+                <p className="text-xs text-slate-500">You haven't joined any groups yet.</p>
+                <Button size="sm" onClick={() => setShowCreateModal(true)} className="text-xs">
+                  Create First Group
+                </Button>
+              </div>
+            ) : (
+              userGroups.map((group) => {
+                const isActive = (group.id || group._id) === (activeGroup?.id || activeGroup?._id);
+                return (
+                  <button
+                    key={group.id || group._id}
+                    onClick={() => {
+                      setActiveGroup(group);
+                      setMobileChatOpen(true);
+                    }}
+                    className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-3 ${
+                      isActive
+                        ? 'bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-900/60'
+                        : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-xs">
+                      {group.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                          {group.name}
+                        </h4>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {group.groupCode}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {group.members?.length || 1} members · Click to chat
+                      </p>
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left: Active Group Card */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
-            {activeGroup ? (
-              <section className="bg-white dark:bg-[#1E293B] rounded-xl p-6 relative overflow-hidden border border-[#c2c6d4] dark:border-[#334155] shadow-sm">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <span className="inline-flex items-center gap-1.5 bg-[#80f98b] dark:bg-[#22C55E]/20 text-[#007327] dark:text-[#22C55E] px-3 py-1 rounded-full text-[11px] font-bold mb-3 border border-[#006e25]/30 dark:border-[#22C55E]/40">
-                      <span className="w-2 h-2 rounded-full bg-[#006e25] dark:bg-[#22C55E]" /> Code: {activeGroup.groupCode || 'ACTIVE'}
-                    </span>
-                    <h3 className="text-[22px] font-bold text-[#191c1d] dark:text-[#F8FAFC]">{activeGroup.name}</h3>
+        {/* Right Side: Active Group View & Chat */}
+        <div
+          className={`lg:col-span-8 flex flex-col justify-between ${
+            !mobileChatOpen ? 'hidden lg:flex' : 'flex'
+          }`}
+        >
+          {activeGroup ? (
+            <>
+              {/* Group Active Header */}
+              <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Button
+                    variant="ghost"
+                    size="iconSm"
+                    onClick={() => setMobileChatOpen(false)}
+                    className="lg:hidden text-slate-500"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="h-10 w-10 rounded-xl bg-blue-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
+                    {activeGroup.name.slice(0, 2).toUpperCase()}
                   </div>
-                </div>
-
-                <div className="flex flex-col md:flex-row gap-6 items-center mt-6 p-4 bg-[#f3f4f5] dark:bg-[#0F172A] rounded-xl border border-[#c2c6d4]/40 dark:border-[#334155]">
-                  <div className="flex-1 w-full text-center md:text-left border-b md:border-b-0 md:border-r border-[#c2c6d4] dark:border-[#334155] pb-4 md:pb-0 md:pr-4">
-                    <p className="text-[11px] font-bold text-[#424752] dark:text-[#94A3B8] uppercase mb-1">Next Meal Coordination</p>
-                    <div className="text-[32px] font-bold text-[#003f87] dark:text-[#3B82F6]">Lunch Slot</div>
-                  </div>
-                  <div className="flex-1 w-full">
-                    <p className="text-[11px] font-bold text-[#424752] dark:text-[#94A3B8] uppercase mb-2">
-                      Going ({goingUsers.length})
-                    </p>
-                    <div className="text-xs text-[#191c1d] dark:text-[#CBD5E1] truncate font-medium">
-                      {goingUsers.length > 0 ? goingUsers.map(formatDisplayName).join(', ') : 'No one marked going yet'}
+                  <div className="min-w-0">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">
+                      {activeGroup.name}
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <button
+                        onClick={copyCode}
+                        className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        <Copy className="h-3 w-3" />
+                        {copiedCode ? 'Copied!' : `Code: ${activeGroup.groupCode}`}
+                      </button>
+                      <span>·</span>
+                      <span>{activeGroup.members?.length || 1} members</span>
                     </div>
                   </div>
-                  <div className="flex-1 w-full flex flex-col gap-2">
-                    <button
-                      onClick={handleToggleGoing}
-                      className={`w-full py-2.5 rounded-xl text-sm font-extrabold transition-all shadow-sm flex items-center justify-center gap-2 ${
-                        goingUsers.includes(currentUser.email)
-                          ? 'bg-[#006e25] dark:bg-[#22C55E] text-white dark:text-slate-950'
-                          : 'bg-[#003f87] dark:bg-[#3B82F6] text-white hover:opacity-90'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                      {goingUsers.includes(currentUser.email) ? 'Going' : "I'm Going"}
-                    </button>
-                  </div>
                 </div>
-              </section>
-            ) : (
-              <div className="p-12 bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-xl text-center text-[#424752] dark:text-[#94A3B8]">
-                <span className="material-symbols-outlined text-4xl mb-2 opacity-40">groups</span>
-                <p className="text-sm font-medium">You are not in any buddy group yet. Create or join one!</p>
-              </div>
-            )}
 
-            {/* Other Groups */}
-            {userGroups.length > 1 && (
-              <div>
-                <h3 className="text-[22px] font-semibold text-[#191c1d] dark:text-[#F8FAFC] mb-4 mt-2">Your Other Groups</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {userGroups
-                    .filter((g) => (g.id || g._id) !== (activeGroup?.id || activeGroup?._id))
-                    .map((g) => (
-                      <div
-                        key={g.id || g._id}
-                        onClick={() => setActiveGroup(g)}
-                        className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-xl p-5 cursor-pointer hover:shadow-md transition-shadow"
-                      >
-                        <h4 className="text-sm font-bold text-[#191c1d] dark:text-[#F8FAFC] mb-1">{g.name}</h4>
-                        <p className="text-xs text-[#424752] dark:text-[#94A3B8]">Code: {g.groupCode}</p>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right: Chat Panel */}
-          <div className="lg:col-span-4 h-full">
-            <div className="bg-white dark:bg-[#1E293B] rounded-xl flex flex-col h-[600px] border border-[#c2c6d4] dark:border-[#334155] sticky top-24 shadow-sm">
-              <div className="p-4 border-b border-[#c2c6d4] dark:border-[#334155] flex items-center justify-between bg-[#f3f4f5] dark:bg-[#0F172A] rounded-t-xl">
-                <h4 className="text-sm font-bold text-[#191c1d] dark:text-[#F8FAFC]">
-                  {activeGroup ? activeGroup.name : 'Group Chat'}
-                </h4>
-                {isAuthenticated() && (
-                  <span
-                    className={`flex items-center gap-1.5 text-[11px] font-bold ${
-                      liveConnected
-                        ? 'text-[#006e25] dark:text-[#22C55E]'
-                        : 'text-[#424752] dark:text-[#94A3B8]'
-                    }`}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/groups/${activeGroup.id || activeGroup._id}`)}
+                    className="text-xs font-semibold gap-1"
                   >
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        liveConnected ? 'bg-[#006e25] dark:bg-[#22C55E] animate-pulse' : 'bg-[#94A3B8]'
-                      }`}
-                    />
-                    {liveConnected ? 'Live' : 'Offline'}
-                  </span>
-                )}
+                    <QrCode className="h-3.5 w-3.5" /> Details & QR
+                  </Button>
+                </div>
               </div>
 
-              <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-[#f8f9fa] dark:bg-[#0F172A]">
+              {/* Meal Going Coordination Bar */}
+              <div className="px-5 py-3 bg-blue-50/60 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Heading for Lunch ({goingUsers.length}):
+                  </span>
+                  <span className="text-xs text-slate-600 dark:text-slate-300 truncate max-w-xs">
+                    {goingUsers.length > 0 ? goingUsers.map(formatDisplayName).join(', ') : 'No one yet'}
+                  </span>
+                </div>
+
+                <Button
+                  size="sm"
+                  variant={goingUsers.includes(currentUser.email) ? 'success' : 'primary'}
+                  onClick={handleToggleGoing}
+                  className="shrink-0 text-xs font-bold gap-1"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {goingUsers.includes(currentUser.email) ? 'Marked Going' : "I'm Going"}
+                </Button>
+              </div>
+
+              {/* Chat Messages Area */}
+              <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-3.5 min-h-[360px] max-h-[460px]">
                 {messages.length === 0 ? (
-                  <div className="py-12 text-center text-xs text-[#424752] dark:text-[#94A3B8] italic">No messages in group yet</div>
+                  <div className="py-16 text-center space-y-2">
+                    <MessageSquare className="h-8 w-8 text-slate-300 dark:text-slate-700 mx-auto" />
+                    <p className="text-xs text-slate-400">No messages in this buddy group yet.</p>
+                    <p className="text-[11px] text-slate-500">Say hello and plan your next meal together!</p>
+                  </div>
                 ) : (
-                  messages.map((msg) => {
-                    const isMine = msg.senderEmail === currentUser.email || msg.sender === currentUser.email;
-                    const senderDisplay = formatDisplayName(msg.senderName || msg.senderEmail || msg.sender);
+                  messages.map((msg, idx) => {
+                    const isMe = msg.senderEmail === currentUser.email || msg.sender === currentUser.email;
+                    const senderName = formatDisplayName(msg.senderEmail || msg.sender);
+
                     return (
-                      <div key={msg.id || msg._id} className={`flex gap-2 ${isMine ? 'flex-row-reverse' : ''}`}>
-                        <div className={`p-3 rounded-2xl max-w-[85%] ${isMine ? 'bg-[#cfe2ff] dark:bg-[#3B82F6]/20 text-[#003f87] dark:text-[#F8FAFC] rounded-tr-xs border border-[#003f87]/20 dark:border-[#3B82F6]/30' : 'bg-white dark:bg-[#1E293B] text-[#191c1d] dark:text-[#F8FAFC] rounded-tl-xs border border-[#c2c6d4] dark:border-[#334155]'}`}>
-                          <p className="text-[11px] font-extrabold text-[#003f87] dark:text-[#3B82F6] mb-0.5">{senderDisplay}</p>
-                          <p className="text-xs leading-relaxed">{msg.message || msg.content}</p>
+                      <div
+                        key={msg.id || idx}
+                        className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
+                      >
+                        {!isMe && (
+                          <span className="text-[10px] font-semibold text-slate-400 px-1 mb-1">
+                            {senderName}
+                          </span>
+                        )}
+                        <div
+                          className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-xs font-medium leading-relaxed ${
+                            isMe
+                              ? 'bg-blue-600 text-white rounded-br-xs shadow-xs'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-xs'
+                          }`}
+                        >
+                          <p>{msg.message || msg.content}</p>
+                          <span
+                            className={`block text-[9px] mt-1 text-right ${
+                              isMe ? 'text-blue-200' : 'text-slate-400'
+                            }`}
+                          >
+                            {msg.timestamp
+                              ? new Date(msg.timestamp).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : 'Just now'}
+                          </span>
                         </div>
                       </div>
                     );
                   })
                 )}
+                <div ref={messagesEndRef} />
               </div>
 
-              <div className="p-4 border-t border-[#c2c6d4] dark:border-[#334155] bg-white dark:bg-[#1E293B] rounded-b-xl">
-                <div className="relative flex items-center">
-                  <input
-                    type="text"
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                    placeholder="Type a message..."
-                    className="w-full bg-[#f3f4f5] dark:bg-[#0F172A] border border-[#c2c6d4] dark:border-[#334155] rounded-full py-2.5 pl-4 pr-12 text-xs text-[#191c1d] dark:text-[#F8FAFC] focus:border-[#003f87] dark:focus:border-[#3B82F6] outline-none"
-                  />
-                  <button onClick={handleSendMessage} className="absolute right-2 text-[#003f87] dark:text-[#3B82F6] p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10">
-                    <span className="material-symbols-outlined text-[20px]">send</span>
-                  </button>
-                </div>
-              </div>
+              {/* Message Input Box */}
+              <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-2">
+                <Input
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder={`Message ${activeGroup.name}...`}
+                  className="flex-1 h-11 text-xs"
+                />
+                <Button
+                  type="submit"
+                  disabled={!messageText.trim()}
+                  className="h-11 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400">
+              <Users className="h-12 w-12 text-slate-300 dark:text-slate-700 mb-2" />
+              <p className="text-sm font-semibold">Select a group or create one to start coordinating meals.</p>
             </div>
-          </div>
+          )}
         </div>
-      </main>
+      </div>
 
-      {/* Modals */}
+      {/* Create Group Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => setShowCreateModal(false)} />
-          <div className="relative bg-white dark:bg-[#1E293B] rounded-2xl shadow-2xl w-full max-w-md p-6 border border-[#c2c6d4] dark:border-[#334155]">
-            <h2 className="text-[22px] font-bold text-[#191c1d] dark:text-[#F8FAFC] mb-4">Create Buddy Group</h2>
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
+          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-dropdown space-y-4 animate-in fade-in-0 zoom-in-95 duration-150">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Create Buddy Group</h3>
+              <button onClick={() => setShowCreateModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
             <form onSubmit={handleCreateGroup} className="space-y-4">
-              <input
-                type="text"
-                required
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder="Group Name (e.g. Block A Lunch Crew)"
-                className="w-full bg-[#f3f4f5] dark:bg-[#0F172A] border border-[#c2c6d4] dark:border-[#334155] rounded-xl px-4 py-2 text-xs text-[#191c1d] dark:text-[#F8FAFC] outline-none"
-              />
-              <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-[#c2c6d4] dark:border-[#334155] text-xs font-semibold rounded-xl text-[#424752] dark:text-[#CBD5E1]">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-[#003f87] dark:bg-[#3B82F6] text-white rounded-xl text-xs font-bold">Create</button>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Group Name
+                </label>
+                <Input
+                  required
+                  placeholder="e.g. 2nd Floor Foodies / Breakfast Squad"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  className="h-10 text-xs"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setShowCreateModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm" className="font-bold bg-blue-600 hover:bg-blue-700">
+                  Create Group
+                </Button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* Join Group Modal */}
       {showJoinModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => setShowJoinModal(false)} />
-          <div className="relative bg-white dark:bg-[#1E293B] rounded-2xl shadow-2xl w-full max-w-md p-6 border border-[#c2c6d4] dark:border-[#334155]">
-            <h2 className="text-[22px] font-bold text-[#191c1d] dark:text-[#F8FAFC] mb-4">Join Buddy Group</h2>
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setShowJoinModal(false)} />
+          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-dropdown space-y-4 animate-in fade-in-0 zoom-in-95 duration-150">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Join Buddy Group</h3>
+              <button onClick={() => setShowJoinModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
             <form onSubmit={handleJoinGroup} className="space-y-4">
-              <input
-                type="text"
-                required
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-                placeholder="Enter 8-Character Group Code"
-                className="w-full bg-[#f3f4f5] dark:bg-[#0F172A] border border-[#c2c6d4] dark:border-[#334155] rounded-xl px-4 py-2 text-xs text-[#191c1d] dark:text-[#F8FAFC] outline-none uppercase"
-              />
-              <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setShowJoinModal(false)} className="px-4 py-2 border border-[#c2c6d4] dark:border-[#334155] text-xs font-semibold rounded-xl text-[#424752] dark:text-[#CBD5E1]">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-[#003f87] dark:bg-[#3B82F6] text-white rounded-xl text-xs font-bold">Join</button>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Enter 6-Character Group Code
+                </label>
+                <Input
+                  required
+                  placeholder="e.g. X9K2LM"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  className="h-10 text-xs font-mono uppercase"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setShowJoinModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm" className="font-bold bg-blue-600 hover:bg-blue-700">
+                  Join Group
+                </Button>
               </div>
             </form>
           </div>

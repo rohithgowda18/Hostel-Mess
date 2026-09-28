@@ -3,23 +3,34 @@ import { cva } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 export const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none active:scale-[0.98]',
   {
     variants: {
       variant: {
-        default: 'border-transparent bg-primary text-white hover:bg-indigo-500 shadow-card',
-        secondary: 'border-border bg-card text-foreground hover:border-primary/60 hover:text-white hover:bg-primary/80',
-        outline: 'border-border bg-transparent text-foreground hover:border-primary hover:text-primary',
-        ghost: 'border-transparent bg-transparent text-muted hover:bg-slate-700/50 hover:text-foreground',
-        success: 'border-transparent bg-success text-white hover:bg-emerald-500',
-        warning: 'border-transparent bg-warning text-slate-900 hover:bg-amber-400',
-        danger: 'border-transparent bg-danger text-white hover:bg-red-500'
+        default:
+          'bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500',
+        primary:
+          'bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500',
+        secondary:
+          'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200/80 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700',
+        outline:
+          'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800',
+        ghost:
+          'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100',
+        success:
+          'bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 active:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500',
+        warning:
+          'bg-amber-500 text-slate-950 font-bold shadow-sm hover:bg-amber-400 active:bg-amber-600',
+        danger:
+          'bg-rose-600 text-white shadow-sm hover:bg-rose-700 active:bg-rose-800 dark:bg-rose-600 dark:hover:bg-rose-500'
       },
       size: {
-        sm: 'h-9 px-3',
-        md: 'h-10 px-4',
-        lg: 'h-11 px-6',
-        icon: 'h-10 w-10'
+        xs: 'h-8 px-2.5 text-xs rounded-lg',
+        sm: 'h-9 px-3 text-xs',
+        md: 'h-10 px-4 text-sm',
+        lg: 'h-12 px-6 text-base',
+        icon: 'h-10 w-10 p-0',
+        iconSm: 'h-8 w-8 p-0 rounded-lg'
       }
     },
     defaultVariants: {

@@ -1,7 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { messApi } from '@/services/mess-api';
-import { FOOD_CATALOG_BY_CATEGORY, searchFoodCatalog, getMealDisplayName } from '@/data/food-options';
+import { FOOD_CATALOG_BY_CATEGORY, searchFoodCatalog } from '@/data/food-options';
+import {
+  UtensilsCrossed,
+  Camera,
+  CheckCircle2,
+  Sparkles,
+  ArrowLeft,
+  Search,
+  Plus,
+  X,
+  Upload,
+  Clock,
+  ShieldCheck
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
 
 const CATEGORIES = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Desserts', 'Drinks'];
 const MEAL_SLOTS = ['BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'];
@@ -18,7 +36,6 @@ export default function ReportMealPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItems, setSelectedItems] = useState([]);
   const [photoUrl, setPhotoUrl] = useState('');
-  const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [successData, setSuccessData] = useState(null);
   const [consensusPreview, setConsensusPreview] = useState(null);
@@ -83,7 +100,7 @@ export default function ReportMealPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (selectedItems.length === 0 && !photoUrl) {
-      alert('Please select at least 1 food item OR upload a photo of the meal being served!');
+      alert('Please select at least 1 food item OR upload a photo of the meal!');
       return;
     }
 
@@ -95,7 +112,7 @@ export default function ReportMealPage() {
       const res = await messApi.submitMealConsensus(mealType, today, selectedItems, photoUrl);
       setSuccessData(res);
       setTimeout(() => {
-        navigate('/');
+        navigate('/meals');
       }, 2000);
     } catch (err) {
       console.error('Failed to submit meal report:', err);
@@ -106,115 +123,134 @@ export default function ReportMealPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] p-4 md:p-6 pb-24 md:pb-8 font-[Inter,sans-serif] transition-colors duration-200">
-      <main className="max-w-4xl mx-auto space-y-6">
-        
-        {/* Navigation Breadcrumb */}
-        <div className="flex items-center justify-between pt-2">
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-1.5 text-xs text-[#003f87] dark:text-[#3B82F6] font-semibold hover:underline transition"
-          >
-            <span className="material-symbols-outlined text-base">arrow_back</span>
-            Back to Dashboard
-          </button>
-          <span className="text-xs font-bold text-[#006e25] dark:text-[#22C55E] bg-[#e8f5ea] dark:bg-[#22C55E]/20 border border-[#006e25]/30 dark:border-[#22C55E]/40 px-3 py-1 rounded-full">
-            🏆 Earn up to +35 Contribution Pts
-          </span>
-        </div>
+    <div className="max-w-4xl mx-auto space-y-6 pb-6">
+      {/* Breadcrumb Back Button */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/meals')}
+          className="gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to Menus
+        </Button>
+        <Badge variant="warning" className="text-[11px] font-bold">
+          ⭐ Earn up to +20 Contribution Points
+        </Badge>
+      </div>
 
-        {/* Page Title Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-[#003f87] dark:text-[#3B82F6] flex items-center gap-2">
-            <span>🍲</span> Report Today's Meal
-          </h1>
-          <p className="text-xs text-[#424752] dark:text-[#94A3B8] mt-1">
-            Help your hostel peers by reporting what is actually being served right now. Select items from the catalog below.
+      <PageHeader
+        title="Report Served Meal"
+        description="Help fellow residents by verifying what is actually being served at the mess counters right now."
+      />
+
+      {/* Success Banner */}
+      {successData && (
+        <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/40 text-emerald-800 dark:text-emerald-200 text-center space-y-2 animate-in fade-in-0 zoom-in-95 duration-200">
+          <CheckCircle2 className="h-10 w-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
+          <h3 className="text-lg font-bold">Report Submitted Successfully!</h3>
+          <p className="text-xs text-emerald-600 dark:text-emerald-300">
+            {successData.message || 'Points added to your resident reputation score. Redirecting...'}
           </p>
         </div>
+      )}
 
-        {/* Success Banner */}
-        {successData && (
-          <div className="bg-[#e8f5ea] border border-[#006e25]/30 text-[#006e25] p-6 rounded-xl text-center space-y-2 animate-in fade-in duration-300 shadow-sm">
-            <span className="text-4xl block">🎉</span>
-            <h3 className="font-bold text-lg">{successData.message || 'Report Submitted Successfully!'}</h3>
-            <p className="text-xs font-medium">
-              Photos uploaded to gallery • Live consensus updated • Earned +{successData.pointsEarned || 20} Points!
-            </p>
-            <p className="text-[11px] text-[#424752] italic">Redirecting to Dashboard...</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          
-          {/* Active Meal Slot Selector */}
-          <div className="bg-white border border-[#c2c6d4] rounded-xl p-4 shadow-sm space-y-3">
-            <label className="text-xs font-bold text-[#424752] uppercase tracking-wider block">
-              1. Select Active Meal Slot
+      {/* Main Reporting Form Card */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card className="p-6 shadow-card space-y-6">
+          {/* Step 1: Select Meal Slot */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+              1. Select Service Slot
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {MEAL_SLOTS.map((slot) => (
                 <button
-                  type="button"
                   key={slot}
+                  type="button"
                   onClick={() => setMealType(slot)}
-                  className={`py-2.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all ${
                     mealType === slot
-                      ? 'bg-[#003f87] text-white shadow-sm font-bold'
-                      : 'bg-[#f3f4f5] text-[#191c1d] border border-[#c2c6d4] hover:bg-[#e1e3e4]'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-base">
-                    {slot === 'BREAKFAST' ? 'wb_twilight' : slot === 'LUNCH' ? 'light_mode' : slot === 'SNACKS' ? 'coffee' : 'nightlight'}
-                  </span>
-                  {getMealDisplayName(slot)}
+                  {slot.charAt(0) + slot.slice(1).toLowerCase()}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Search & Category Filter */}
-          <div className="bg-white border border-[#c2c6d4] rounded-xl p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#424752] uppercase tracking-wider block">
-                2. Select Foods Served ({selectedItems.length} Selected)
+          {/* Step 2: Selected Items Chips */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                2. Selected Dishes ({selectedItems.length})
               </label>
               {selectedItems.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setSelectedItems([])}
-                  className="text-xs text-[#ba1a1a] font-semibold hover:underline"
+                  className="text-[11px] font-semibold text-rose-500 hover:underline"
                 >
-                  Clear All
+                  Clear all
                 </button>
               )}
             </div>
 
-            {/* Sticky Search Input */}
-            <div className="sticky top-0 z-20 bg-white pt-1 pb-1">
-              <div className="relative">
-                <span className="absolute left-3 top-3 text-[#424752] text-sm">🔍</span>
-                <input
-                  type="text"
-                  placeholder="Search food items (e.g. Idli, Sambar, Paneer, Dosa)..."
+            {selectedItems.length === 0 ? (
+              <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
+                No items selected yet. Tap items from the catalog below to add them.
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {selectedItems.map((item) => (
+                  <span
+                    key={item}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/40 px-3 py-1.5 text-xs font-bold text-blue-700 dark:text-blue-300"
+                  >
+                    {item}
+                    <button
+                      type="button"
+                      onClick={() => toggleItem(item)}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Step 3: Food Catalog & Search */}
+          <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                3. Add Items from Dish Catalog
+              </label>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full min-h-[48px] bg-[#f3f4f5] border border-[#c2c6d4] rounded-xl pl-9 pr-4 py-2.5 text-xs font-semibold text-[#191c1d] focus:outline-none focus:border-[#003f87] shadow-sm"
+                  placeholder="Filter dishes..."
+                  className="pl-9 h-9 text-xs"
                 />
               </div>
             </div>
 
-            {/* Horizontal Category Chips */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {/* Category Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
               {CATEGORIES.map((cat) => (
                 <button
-                  type="button"
                   key={cat}
+                  type="button"
                   onClick={() => setActiveCategory(cat)}
-                  className={`min-h-[38px] px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition active:scale-95 ${
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                     activeCategory === cat
-                      ? 'bg-[#003f87] text-white shadow-sm'
-                      : 'bg-[#f3f4f5] text-[#191c1d] border border-[#c2c6d4] hover:bg-[#e1e3e4]'
+                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                   }`}
                 >
                   {cat}
@@ -222,67 +258,38 @@ export default function ReportMealPage() {
               ))}
             </div>
 
-            {/* Selected Summary Badge */}
-            {selectedItems.length > 0 && (
-              <div className="bg-[#e8f5ea] border border-[#006e25]/30 p-3 rounded-xl text-xs text-[#006e25] font-semibold">
-                <strong>Selected Served Items:</strong> {selectedItems.join(', ')}
-              </div>
-            )}
-
-            {/* Responsive 2-Column Mobile Food Grid */}
-            <div className="max-h-80 overflow-y-auto pr-1">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                {filteredFoods.map((food) => {
-                  const isChecked = selectedItems.includes(food);
-                  return (
-                    <div
-                      key={food}
-                      onClick={() => toggleItem(food)}
-                      className={`cursor-pointer min-h-[52px] p-3 rounded-xl border transition flex items-center justify-between gap-2 active:scale-95 ${
-                        isChecked
-                          ? 'bg-[#e8f5ea] border-[#006e25] text-[#006e25] font-bold shadow-sm'
-                          : 'bg-[#f3f4f5] border-[#c2c6d4] text-[#191c1d] hover:bg-[#e1e3e4]'
-                      }`}
-                    >
-                      <span className="text-xs font-semibold leading-snug">{food}</span>
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => {}}
-                        className="w-5 h-5 accent-[#006e25] rounded cursor-pointer shrink-0"
-                      />
-                    </div>
-                  );
-                })}
-              </div>
+            {/* Dish Selection Badges */}
+            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+              {filteredFoods.map((food) => {
+                const isSelected = selectedItems.includes(food);
+                return (
+                  <button
+                    key={food}
+                    type="button"
+                    onClick={() => toggleItem(food)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                      isSelected
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-400'
+                    }`}
+                  >
+                    {isSelected ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                    {food}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Integrated Live Photo Upload (Take Photo / Choose File) */}
-          <div className="bg-white border border-[#c2c6d4] rounded-xl p-5 shadow-sm space-y-3">
-            <label className="text-xs font-bold text-[#424752] uppercase tracking-wider block">
-              3. Upload Live Serving Photo (Optional +5 Pts)
+          {/* Step 4: Photo Evidence (Optional) */}
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+              4. Food Photo Evidence (Optional, +5 Bonus Pts)
             </label>
-            <p className="text-[11px] text-[#424752]">
-              Photos uploaded here automatically feed into the student Food Gallery.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="min-h-[48px] px-4 bg-[#f3f4f5] border border-[#c2c6d4] text-[#003f87] text-xs font-bold rounded-xl flex items-center gap-2 cursor-pointer hover:bg-[#e1e3e4] active:scale-95 transition">
-                <span className="material-symbols-outlined text-lg">photo_camera</span>
-                Take Photo / Camera
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                />
-              </label>
-
-              <label className="min-h-[48px] px-4 bg-[#f3f4f5] border border-[#c2c6d4] text-[#191c1d] text-xs font-bold rounded-xl flex items-center gap-2 cursor-pointer hover:bg-[#e1e3e4] active:scale-95 transition">
-                <span className="material-symbols-outlined text-lg">image</span>
-                Choose Gallery
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <label className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 cursor-pointer shadow-xs">
+                <Camera className="h-4 w-4 text-blue-600" />
+                Upload Photo from Device
                 <input
                   type="file"
                   accept="image/*"
@@ -290,49 +297,35 @@ export default function ReportMealPage() {
                   className="hidden"
                 />
               </label>
-
               {photoUrl && (
-                <div className="relative">
-                  <img src={photoUrl} alt="Preview" className="w-14 h-14 object-cover rounded-xl border-2 border-[#006e25]" />
+                <div className="flex items-center gap-3">
+                  <img
+                    src={photoUrl}
+                    alt="Preview"
+                    className="h-14 w-14 rounded-xl object-cover border border-slate-200"
+                  />
                   <button
                     type="button"
                     onClick={() => setPhotoUrl('')}
-                    className="absolute -top-2 -right-2 bg-[#ba1a1a] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center font-bold"
+                    className="text-xs text-rose-500 hover:underline font-semibold"
                   >
-                    ✕
+                    Remove Photo
                   </button>
                 </div>
               )}
             </div>
           </div>
+        </Card>
 
-          {/* Submit Bar (Mobile-First 52px Full Width Thumb Target) */}
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="w-full sm:w-auto min-h-[48px] px-5 rounded-xl text-xs font-bold text-[#424752] border border-[#c2c6d4] hover:bg-[#f3f4f5] transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting || (selectedItems.length === 0 && !photoUrl)}
-              className="w-full sm:w-auto min-h-[52px] px-8 rounded-xl text-sm font-extrabold text-white bg-[#006e25] hover:opacity-90 disabled:opacity-50 shadow-md transition active:scale-95 flex items-center justify-center gap-2"
-            >
-              <span className="material-symbols-outlined text-xl">send</span>
-              {submitting
-                ? 'Submitting Report...'
-                : photoUrl && selectedItems.length > 0
-                ? `Submit Report (${selectedItems.length} Items + Photo)`
-                : photoUrl
-                ? 'Submit Serving Photo (+5 Pts)'
-                : `Submit Menu Report (${selectedItems.length} Items)`}
-            </button>
-          </div>
-
-        </form>
-      </main>
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          disabled={submitting}
+          className="w-full h-12 text-sm font-bold bg-blue-600 hover:bg-blue-700 shadow-sm"
+        >
+          {submitting ? 'Submitting to Central Mess...' : 'Publish Live Meal Report'}
+        </Button>
+      </form>
     </div>
   );
 }

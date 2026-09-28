@@ -1,72 +1,118 @@
 import { useEffect, useState } from 'react';
 import { messApi } from '@/services/mess-api';
 import { getUser } from '@/services/auth-service';
+import {
+  MessageSquareWarning,
+  Star,
+  AlertTriangle,
+  History,
+  ShieldCheck,
+  CheckCircle2,
+  Send,
+  Coffee,
+  Sun,
+  Sunset,
+  Moon,
+  Filter,
+  Clock,
+  Sparkles,
+  Inbox
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const TABS = [
-  { id: 'ratings', label: 'Ratings', icon: 'star' },
-  { id: 'complaints', label: 'Complaints', icon: 'report_problem' },
-  { id: 'my-feedback', label: 'My Feedback', icon: 'history' },
-  { id: 'admin', label: 'Admin', icon: 'admin_panel_settings', right: true },
+  { id: 'ratings', label: 'Rate Today Meals', icon: Star },
+  { id: 'complaints', label: 'File Complaint / Issue', icon: AlertTriangle },
+  { id: 'my-feedback', label: 'My Past Reports', icon: History },
+  { id: 'admin', label: 'Warden Resolution Desk', icon: ShieldCheck, adminOnly: true },
 ];
 
-const MEAL_SLOTS = ['BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'];
+const MEAL_SLOTS = [
+  { key: 'BREAKFAST', name: 'Breakfast', icon: Coffee, time: '07:30 – 09:30 AM' },
+  { key: 'LUNCH', name: 'Lunch', icon: Sun, time: '12:30 – 02:30 PM' },
+  { key: 'SNACKS', name: 'Evening Snacks', icon: Sunset, time: '04:30 – 05:30 PM' },
+  { key: 'DINNER', name: 'Dinner', icon: Moon, time: '07:30 – 09:30 PM' },
+];
 
-function StarRating({ value, onChange }) {
+const COMPLAINT_CATEGORIES = [
+  'Food Taste & Quality',
+  'Hygiene & Cleanliness',
+  'Cold Food / Temperature',
+  'Inadequate Portion',
+  'Shortage / Item Unavailable',
+  'Staff Conduct'
+];
+
+function InteractiveStarRating({ value = 0, onChange }) {
   const [hover, setHover] = useState(0);
+
   return (
-    <div className="flex gap-1 cursor-pointer">
-      {[1, 2, 3, 4, 5].map((s) => (
-        <span
-          key={s}
-          className={`material-symbols-outlined text-[28px] transition-colors ${(hover || value) >= s ? 'text-[#006e25]' : 'text-[#c2c6d4]'}`}
-          style={{ fontVariationSettings: (hover || value) >= s ? "'FILL' 1" : "'FILL' 0" }}
-          onMouseEnter={() => setHover(s)}
-          onMouseLeave={() => setHover(0)}
-          onClick={() => onChange(s)}
-        >
-          star
-        </span>
-      ))}
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => {
+        const isFilled = (hover || value) >= star;
+        return (
+          <button
+            key={star}
+            type="button"
+            onMouseEnter={() => setHover(star)}
+            onMouseLeave={() => setHover(0)}
+            onClick={() => onChange(star)}
+            className="p-1 transition-transform active:scale-90"
+          >
+            <Star
+              className={`h-6 w-6 transition-colors ${
+                isFilled
+                  ? 'fill-amber-400 text-amber-400'
+                  : 'text-slate-300 dark:text-slate-700'
+              }`}
+            />
+          </button>
+        );
+      })}
     </div>
   );
 }
 
 export default function FeedbackPage() {
+  const currentUser = getUser() || {};
+  const isAdmin = currentUser.role === 'ADMIN';
+
   const [activeTab, setActiveTab] = useState('ratings');
   const [ratings, setRatings] = useState({});
   const [comments, setComments] = useState({});
   const [todayMeals, setTodayMeals] = useState([]);
-  const [complaintForm, setComplaintForm] = useState({ category: '', meal: 'LUNCH', description: '' });
+  const [complaintForm, setComplaintForm] = useState({ category: 'Food Taste & Quality', meal: 'LUNCH', description: '' });
   const [myFeedback, setMyFeedback] = useState([]);
   const [adminComplaints, setAdminComplaints] = useState([]);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
-  const [adminReply, setAdminReply] = useState('');
   const [feedbackStatusMsg, setFeedbackStatusMsg] = useState('');
   const [loading, setLoading] = useState(false);
-  const currentUser = getUser() || {};
-  const isAdmin = currentUser.role === 'ADMIN';
 
   const loadFeedbackData = async () => {
     setLoading(true);
     try {
       const today = new Date().toISOString().split('T')[0];
-      const mealMap = await messApi.getAllTodayMeals(MEAL_SLOTS).catch(() => ({}));
-      const loadedMeals = MEAL_SLOTS.map((slot) => {
-        const mealObj = mealMap[slot];
-        return {
-          slot,
-          name: slot.charAt(0) + slot.slice(1).toLowerCase() + ' Service',
-          items: mealObj?.items || [],
-        };
-      });
+      const mealMap = await messApi.getAllTodayMeals(MEAL_SLOTS.map((s) => s.key)).catch(() => ({}));
+      const loadedMeals = MEAL_SLOTS.map((slot) => ({
+        ...slot,
+        items: mealMap[slot.key]?.items || [],
+      }));
       setTodayMeals(loadedMeals);
 
-      const todayComplaints = await messApi.getComplaintsToday('LUNCH').catch(() => []);
+      const [todayComplaints, reports] = await Promise.all([
+        messApi.getComplaintsToday('LUNCH').catch(() => []),
+        messApi.getMyReports().catch(() => [])
+      ]);
+
       if (Array.isArray(todayComplaints)) {
         setAdminComplaints(todayComplaints);
         if (todayComplaints.length > 0) setSelectedAdmin(todayComplaints[0]);
       }
-      const reports = await messApi.getMyReports().catch(() => []);
       setMyFeedback(Array.isArray(reports) ? reports : []);
     } catch (e) {
       console.error('Error loading complaints/feedback:', e);
@@ -85,7 +131,7 @@ export default function FeedbackPage() {
     try {
       const date = new Date().toISOString().split('T')[0];
       await messApi.submitMealRating({ mealType: mealSlot, date, rating: star, comment: comments[mealSlot] || '' });
-      setFeedbackStatusMsg(`Rating for ${mealSlot} submitted!`);
+      setFeedbackStatusMsg(`Rating for ${mealSlot} submitted successfully!`);
       setTimeout(() => setFeedbackStatusMsg(''), 3000);
     } catch (e) {
       setFeedbackStatusMsg('Failed to submit rating to server.');
@@ -94,17 +140,17 @@ export default function FeedbackPage() {
 
   const handleComplaintSubmit = async (e) => {
     e.preventDefault();
-    if (!complaintForm.description) return;
+    if (!complaintForm.description.trim()) return;
     try {
       await messApi.raiseComplaint({
-        foodItem: complaintForm.category || 'General Quality',
+        foodItem: complaintForm.category,
         mealType: complaintForm.meal,
         date: new Date().toISOString().split('T')[0],
-        issueType: complaintForm.category || 'Quality',
+        issueType: complaintForm.category,
         comment: complaintForm.description
       });
-      setFeedbackStatusMsg('Complaint submitted successfully to mess management.');
-      setComplaintForm({ category: '', meal: 'LUNCH', description: '' });
+      setFeedbackStatusMsg('Complaint submitted directly to hostel warden desk.');
+      setComplaintForm({ category: 'Food Taste & Quality', meal: 'LUNCH', description: '' });
       loadFeedbackData();
       setTimeout(() => setFeedbackStatusMsg(''), 4000);
     } catch (e) {
@@ -113,228 +159,268 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto font-[Inter,sans-serif] bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] pb-24 md:pb-8 transition-colors duration-200">
-      <main className="p-4 md:p-6 mt-4 md:mt-6">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-[36px] md:text-[45px] font-semibold text-[#003f87] dark:text-[#3B82F6] leading-10 md:leading-[52px]">Feedback & Complaints</h1>
-          <p className="text-base text-[#424752] dark:text-[#94A3B8]">Share your dining experience or report issues to improve mess services.</p>
+    <div className="space-y-6 pb-6">
+      <PageHeader
+        badge={
+          <Badge variant="primary" className="text-[10px] font-bold">
+            Quality Assurance
+          </Badge>
+        }
+        title="Mess Feedback & Complaints"
+        description="Submit meal ratings to dining services, report hygiene or preparation issues, and track official resolution."
+      />
+
+      {/* Success Notification Alert */}
+      {feedbackStatusMsg && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>{feedbackStatusMsg}</span>
         </div>
+      )}
 
-        {/* Feedback Alert Status Banner */}
-        {feedbackStatusMsg && (
-          <div className="mb-6 p-3 bg-[#e8f5ea] dark:bg-[#22C55E]/10 border border-[#006e25]/30 dark:border-[#22C55E]/30 text-[#006e25] dark:text-[#22C55E] rounded-lg text-sm font-medium">
-            {feedbackStatusMsg}
-          </div>
-        )}
-
-        {/* Tabs Navigation */}
-        <div className="flex border-b border-[#c2c6d4] dark:border-[#334155] mb-6 overflow-x-auto no-scrollbar gap-6">
-          {TABS.filter(t => t.id !== 'admin' || isAdmin).map((tab) => (
+      {/* Navigation Tabs */}
+      <div className="flex rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1 border border-slate-200/80 dark:border-slate-700/80 w-fit overflow-x-auto no-scrollbar">
+        {TABS.filter((t) => !t.adminOnly || isAdmin).map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 text-sm font-medium whitespace-nowrap flex items-center gap-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'text-[#003f87] dark:text-[#3B82F6] border-b-2 border-[#003f87] dark:border-[#3B82F6] font-bold'
-                  : 'text-[#424752] dark:text-[#CBD5E1] hover:text-[#003f87] dark:hover:text-[#3B82F6]'
-              } ${tab.right ? 'md:ml-auto' : ''}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                isActive
+                  ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
             >
-              <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+              <Icon className="h-4 w-4" />
               {tab.label}
             </button>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
-        {/* Tab 1: Ratings */}
-        {activeTab === 'ratings' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {todayMeals.map((card) => (
-              <div key={card.slot} className="bg-white border border-[#c2c6d4] rounded-xl p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-[22px] font-medium text-[#191c1d]">{card.name}</h3>
-                    <p className="text-[11px] text-[#424752] mt-1">
-                      {card.items.length > 0 ? card.items.join(', ') : 'Daily Menu Slot'}
-                    </p>
-                  </div>
-                </div>
-                <StarRating value={ratings[card.slot] || 0} onChange={(v) => setRatings((r) => ({ ...r, [card.slot]: v }))} />
-                <textarea
-                  value={comments[card.slot] || ''}
-                  onChange={(e) => setComments((c) => ({ ...c, [card.slot]: e.target.value }))}
-                  placeholder="Add feedback comment..."
-                  rows={2}
-                  className="mt-4 w-full bg-[#f3f4f5] border-b-2 border-[#c2c6d4] focus:border-[#003f87] rounded-t-md p-3 text-sm text-[#191c1d] resize-none outline-none transition-colors"
-                />
-                <button
-                  onClick={() => handleSubmitRating(card.slot)}
-                  className={`mt-4 w-full py-2 rounded-lg text-sm font-medium transition-colors ${ratings[card.slot] ? 'bg-[#003f87] text-white hover:opacity-90 shadow-sm' : 'bg-[#e1e3e4] text-[#191c1d] hover:bg-[#d3d4d5]'}`}
-                >
-                  Submit Rating
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+      {/* Tab 1: Rate Today's Meals */}
+      {activeTab === 'ratings' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {todayMeals.map((slot) => {
+            const Icon = slot.icon;
+            const currentRating = ratings[slot.key] || 0;
 
-        {/* Tab 2: Complaints */}
-        {activeTab === 'complaints' && (
-          <div className="max-w-2xl mx-auto bg-white border border-[#c2c6d4] rounded-xl p-6 md:p-8">
-            <h2 className="text-[22px] font-medium text-[#191c1d] mb-6 border-b border-[#c2c6d4] pb-4">Submit New Complaint</h2>
-            <form className="space-y-6" onSubmit={handleComplaintSubmit}>
-              <div>
-                <label className="block text-sm font-medium text-[#191c1d] mb-2">Category</label>
-                <select
-                  value={complaintForm.category}
-                  onChange={(e) => setComplaintForm((f) => ({ ...f, category: e.target.value }))}
-                  className="w-full bg-[#f3f4f5] border-b-2 border-[#c2c6d4] focus:border-[#003f87] rounded-t-md p-3 text-sm text-[#191c1d] outline-none transition-colors"
-                >
-                  <option value="">Select category...</option>
-                  <option value="Food Quality">Food Quality (Taste, Spoilage)</option>
-                  <option value="Hygiene">Hygiene (Utensils, Dining Area)</option>
-                  <option value="Staff Behavior">Service / Staff Behavior</option>
-                  <option value="Menu Deviation">Menu Deviation</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#191c1d] mb-2">Meal Session</label>
-                <div className="flex gap-6">
-                  {['BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'].map((m) => (
-                    <label key={m} className="flex items-center gap-2 text-sm text-[#191c1d] cursor-pointer">
-                      <input
-                        type="radio"
-                        name="meal"
-                        value={m}
-                        checked={complaintForm.meal === m}
-                        onChange={() => setComplaintForm((f) => ({ ...f, meal: m }))}
-                        className="accent-[#003f87]"
-                      />
-                      {m.charAt(0) + m.slice(1).toLowerCase()}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#191c1d] mb-2">Description</label>
-                <textarea
-                  value={complaintForm.description}
-                  onChange={(e) => setComplaintForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="Please provide specific details..."
-                  rows={4}
-                  className="w-full bg-[#f3f4f5] border-b-2 border-[#c2c6d4] focus:border-[#003f87] rounded-t-md p-3 text-sm text-[#191c1d] resize-none outline-none transition-colors"
-                />
-              </div>
-              <div className="flex justify-end gap-4 pt-4">
-                <button type="submit" className="px-6 py-2 bg-[#003f87] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-colors shadow-sm">
-                  Submit Complaint
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Tab 3: My Feedback */}
-        {activeTab === 'my-feedback' && (
-          <div className="bg-white rounded-xl border border-[#c2c6d4] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-[#f3f4f5] border-b border-[#c2c6d4]">
-                    {['Date', 'Type', 'Details', 'Status'].map((h) => (
-                      <th key={h} className="p-4 text-sm font-semibold text-[#424752]">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="text-sm divide-y divide-[#c2c6d4]">
-                  {myFeedback.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="p-8 text-center text-[#424752]">No submitted feedback history found.</td>
-                    </tr>
-                  ) : (
-                    myFeedback.map((row, i) => (
-                      <tr key={i} className="hover:bg-[#f9fafb] transition-colors">
-                        <td className="p-4 text-[#191c1d] whitespace-nowrap">{row.date || 'Recent'}</td>
-                        <td className="p-4">
-                          <span className="inline-flex items-center gap-1 bg-[#e1e3e4] text-[#191c1d] px-2 py-1 rounded text-[11px] font-medium">
-                            {row.issueType || 'Complaint'}
-                          </span>
-                        </td>
-                        <td className="p-4 text-[#424752] max-w-xs truncate">{row.comment || row.foodItem}</td>
-                        <td className="p-4">
-                          <span className="inline-block px-3 py-1 rounded-full text-[11px] font-medium bg-[#006e25]/10 text-[#006e25]">
-                            {row.status || 'Active'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 4: Admin Moderation */}
-        {activeTab === 'admin' && isAdmin && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 bg-white rounded-xl border border-[#c2c6d4] overflow-hidden h-[600px] flex flex-col">
-              <div className="p-4 border-b border-[#c2c6d4] bg-[#f3f4f5] flex justify-between items-center">
-                <h3 className="text-[22px] font-medium text-[#191c1d]">Inbox</h3>
-                <span className="bg-[#ba1a1a] text-white px-2 py-0.5 rounded-full text-[11px] font-bold">{adminComplaints.length}</span>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                {adminComplaints.map((item) => (
-                  <div
-                    key={item.id || item._id}
-                    onClick={() => setSelectedAdmin(item)}
-                    className={`p-4 border-b border-[#c2c6d4] cursor-pointer transition-colors ${selectedAdmin?.id === item.id ? 'bg-[#e8f0f7]' : 'hover:bg-[#f9fafb]'}`}
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="text-sm font-bold text-[#191c1d] truncate">{item.foodItem || 'Issue'}</span>
-                      <span className="text-[11px] text-[#424752]">{item.mealType}</span>
+            return (
+              <Card key={slot.key} className="p-6 shadow-card space-y-4">
+                <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <p className="text-sm text-[#424752] truncate">{item.comment || item.issueType}</p>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                        {slot.name} Service
+                      </h3>
+                      <p className="text-xs text-slate-400 font-mono">{slot.time}</p>
+                    </div>
                   </div>
+                  {slot.items.length > 0 && (
+                    <Badge variant="neutral" className="text-[10px]">
+                      {slot.items.length} Dishes
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="text-xs text-slate-600 dark:text-slate-300">
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">Served Today: </span>
+                  {slot.items.length > 0 ? slot.items.join(', ') : 'Standard kitchen menu'}
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                    How was the food quality?
+                  </label>
+                  <InteractiveStarRating
+                    value={currentRating}
+                    onChange={(star) => setRatings({ ...ratings, [slot.key]: star })}
+                  />
+
+                  <Input
+                    placeholder="Add brief comments (e.g. sambar was great, chapati was dry)..."
+                    value={comments[slot.key] || ''}
+                    onChange={(e) => setComments({ ...comments, [slot.key]: e.target.value })}
+                    className="text-xs h-10"
+                  />
+
+                  <Button
+                    size="sm"
+                    disabled={!currentRating}
+                    onClick={() => handleSubmitRating(slot.key)}
+                    className="w-full text-xs font-bold bg-blue-600 hover:bg-blue-700"
+                  >
+                    Submit {slot.name} Rating
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Tab 2: File a Complaint */}
+      {activeTab === 'complaints' && (
+        <Card className="max-w-2xl p-6 sm:p-8 shadow-card">
+          <form onSubmit={handleComplaintSubmit} className="space-y-5">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                Lodge an Official Mess Complaint
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Your report will be forwarded to the chief hostel warden and kitchen catering supervisor.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                1. Issue Category
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {COMPLAINT_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setComplaintForm({ ...complaintForm, category: cat })}
+                    className={`p-3 rounded-xl border text-xs font-semibold text-left transition-all ${
+                      complaintForm.category === cat
+                        ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-600 text-blue-700 dark:text-blue-300 shadow-xs'
+                        : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    {cat}
+                  </button>
                 ))}
               </div>
             </div>
 
-            <div className="lg:col-span-2 bg-white border border-[#c2c6d4] rounded-xl p-6 h-[600px] flex flex-col">
-              {selectedAdmin ? (
-                <>
-                  <div className="flex justify-between items-start border-b border-[#c2c6d4] pb-4 mb-4">
-                    <div>
-                      <h2 className="text-[22px] font-bold text-[#191c1d]">{selectedAdmin.foodItem || 'Complaint Details'}</h2>
-                      <p className="text-[11px] text-[#424752] mt-1">Meal: {selectedAdmin.mealType} • Date: {selectedAdmin.date}</p>
-                    </div>
-                  </div>
-                  <div className="flex-1 overflow-y-auto mb-4 text-sm text-[#191c1d]">
-                    <p className="mb-4">"{selectedAdmin.comment || 'No specific description recorded.'}"</p>
-                  </div>
-                  <div className="mt-auto border-t border-[#c2c6d4] pt-4">
-                    <textarea
-                      value={adminReply}
-                      onChange={(e) => setAdminReply(e.target.value)}
-                      placeholder="Type response..."
-                      rows={2}
-                      className="w-full bg-[#f3f4f5] border-b-2 border-[#c2c6d4] focus:border-[#003f87] rounded-t-md p-3 text-sm text-[#191c1d] resize-none outline-none mb-4"
-                    />
-                    <button onClick={() => { setFeedbackStatusMsg('Reply sent.'); setAdminReply(''); }} className="px-6 py-2 bg-[#003f87] text-white rounded-lg text-sm font-medium hover:opacity-90">
-                      Send Reply
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-[#424752]">
-                  <span className="material-symbols-outlined text-[48px] opacity-40 mb-2">inbox</span>
-                  <p className="text-sm">Select a complaint to review</p>
-                </div>
-              )}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                2. Affected Meal Service
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {MEAL_SLOTS.map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setComplaintForm({ ...complaintForm, meal: s.key })}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                      complaintForm.meal === s.key
+                        ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs'
+                        : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                3. Detailed Description
+              </label>
+              <textarea
+                required
+                rows={4}
+                value={complaintForm.description}
+                onChange={(e) => setComplaintForm({ ...complaintForm, description: e.target.value })}
+                placeholder="Explain the issue clearly (e.g. food was served cold, missing side items, contaminated counter)..."
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 p-3 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-11 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white gap-1.5"
+            >
+              <Send className="h-4 w-4" /> Submit Official Complaint
+            </Button>
+          </form>
+        </Card>
+      )}
+
+      {/* Tab 3: My Past Reports History */}
+      {activeTab === 'my-feedback' && (
+        myFeedback.length === 0 ? (
+          <EmptyState
+            icon={History}
+            title="No past reports found"
+            description="You haven't submitted any complaints or quality reviews yet."
+            actionLabel="File an Issue"
+            onAction={() => setActiveTab('complaints')}
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {myFeedback.map((report, idx) => (
+              <Card key={report.id || idx} className="p-5 shadow-card space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                    {report.foodItem || report.issueType || 'Mess Report'}
+                  </span>
+                  <Badge variant={report.status === 'RESOLVED' ? 'success' : 'warning'}>
+                    {report.status || 'PENDING'}
+                  </Badge>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  {report.comment || report.description}
+                </p>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Meal: {report.mealType || 'Lunch'}</span>
+                  <span>Date: {report.date || 'Today'}</span>
+                </div>
+              </Card>
+            ))}
           </div>
-        )}
-      </main>
+        )
+      )}
+
+      {/* Tab 4: Warden Resolution Desk (Admin Only) */}
+      {activeTab === 'admin' && isAdmin && (
+        <Card className="p-6 shadow-card space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Warden Complaint Desk
+              </h3>
+              <p className="text-xs text-slate-500">Live student reports for today's meals</p>
+            </div>
+            <Badge variant="primary">{adminComplaints.length} Total Issues</Badge>
+          </div>
+
+          {adminComplaints.length === 0 ? (
+            <div className="py-12 text-center text-xs text-slate-400">
+              No unresolved complaints filed for today's service window.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {adminComplaints.map((comp) => (
+                <div
+                  key={comp.id}
+                  className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2 text-xs"
+                >
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-900 dark:text-slate-100">{comp.foodItem}</span>
+                    <Badge variant={comp.status === 'RESOLVED' ? 'success' : 'warning'}>
+                      {comp.status || 'PENDING'}
+                    </Badge>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300">{comp.comment}</p>
+                  <div className="flex items-center justify-between pt-1 text-[11px] text-slate-400">
+                    <span>Filed by: {comp.userEmail || 'Resident'}</span>
+                    <span>Meal: {comp.mealType}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
     </div>
   );
 }

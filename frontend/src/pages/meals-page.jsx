@@ -1,11 +1,46 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { messApi } from '@/services/mess-api';
+import { getUser } from '@/services/auth-service';
+import {
+  UtensilsCrossed,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  History,
+  Sparkles,
+  Edit3,
+  Save,
+  Plus,
+  Trash2,
+  ArrowRight,
+  TrendingUp,
+  Star,
+  ChevronRight,
+  Coffee,
+  Sun,
+  Sunset,
+  Moon
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Input } from '@/components/ui/input';
 
 const TABS = [
-  { id: 'today', label: "Today's Meals", icon: 'today' },
-  { id: 'weekly', label: 'Weekly Menu', icon: 'calendar_view_week' },
-  { id: 'history', label: 'Meal History', icon: 'history' },
+  { id: 'today', label: "Today's Live Menu", icon: UtensilsCrossed },
+  { id: 'weekly', label: 'Weekly Schedule', icon: Calendar },
+  { id: 'history', label: 'Menu History & Compare', icon: History },
+];
+
+const MEAL_SLOTS = [
+  { key: 'BREAKFAST', name: 'Breakfast', icon: Coffee, time: '07:30 AM – 09:30 AM', color: 'amber' },
+  { key: 'LUNCH', name: 'Lunch', icon: Sun, time: '12:30 PM – 02:30 PM', color: 'blue' },
+  { key: 'SNACKS', name: 'Evening Snacks', icon: Sunset, time: '04:30 PM – 05:30 PM', color: 'indigo' },
+  { key: 'DINNER', name: 'Dinner', icon: Moon, time: '07:30 PM – 09:30 PM', color: 'purple' },
 ];
 
 const DEFAULT_WEEKLY_SCHEDULE = [
@@ -20,12 +55,23 @@ const DEFAULT_WEEKLY_SCHEDULE = [
 
 export default function MealsPage() {
   const navigate = useNavigate();
+  const currentUser = getUser() || {};
+  const isAdmin = currentUser.role === 'ADMIN';
+
   const [activeTab, setActiveTab] = useState('today');
   const [todayMeals, setTodayMeals] = useState([]);
   const [weeklyMenu, setWeeklyMenu] = useState(DEFAULT_WEEKLY_SCHEDULE);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [consensusData, setConsensusData] = useState({});
+  const [showAdminWeeklyEditor, setShowAdminWeeklyEditor] = useState(false);
+  const [editedWeekly, setEditedWeekly] = useState(DEFAULT_WEEKLY_SCHEDULE);
+  const [saveStatus, setSaveStatus] = useState('');
+
+  // History compare states
+  const [historyDate, setHistoryDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [compareDate, setCompareDate] = useState('');
+  const [historyMenuData, setHistoryMenuData] = useState(null);
+  const [compareMenuData, setCompareMenuData] = useState(null);
 
   const getMondayDateStr = () => {
     const d = new Date();
@@ -37,15 +83,14 @@ export default function MealsPage() {
 
   const fetchMealsData = async () => {
     setLoading(true);
-    setError('');
     try {
       const todayStr = new Date().toISOString().split('T')[0];
       const slots = ['BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'];
       const [mealMap, ...consensusResults] = await Promise.all([
         messApi.getAllTodayMeals(slots).catch(() => ({})),
-        ...slots.map((s) => messApi.getMealConsensus(s, todayStr).catch(() => null))
+        ...slots.map((s) => messApi.getMealConsensus(s, todayStr).catch(() => null)),
       ]);
-      
+
       const consensusMap = {};
       slots.forEach((s, idx) => {
         consensusMap[s] = consensusResults[idx];
@@ -55,14 +100,17 @@ export default function MealsPage() {
       const parsedToday = slots.map((slot) => {
         const mealObj = mealMap[slot];
         const cData = consensusMap[slot];
+        const config = MEAL_SLOTS.find((m) => m.key === slot) || MEAL_SLOTS[0];
+
         return {
           rawSlot: slot,
-          type: slot.charAt(0) + slot.slice(1).toLowerCase(),
-          icon: slot === 'BREAKFAST' ? 'wb_twilight' : slot === 'LUNCH' ? 'light_mode' : slot === 'SNACKS' ? 'coffee' : 'nightlight',
-          time: slot === 'BREAKFAST' ? '07:30 AM - 09:30 AM' : slot === 'LUNCH' ? '12:30 PM - 02:30 PM' : slot === 'SNACKS' ? '04:30 PM - 05:30 PM' : '07:30 PM - 09:30 PM',
+          name: config.name,
+          icon: config.icon,
+          time: config.time,
+          color: config.color,
           verified: (cData?.totalReporters || 0) >= 3 || mealObj?.status === 'VERIFIED',
-          items: (mealObj?.items || []).map((name) => ({ name })),
-          consensus: cData
+          items: mealObj?.items || [],
+          consensus: cData,
         };
       });
       setTodayMeals(parsedToday);
@@ -87,8 +135,10 @@ export default function MealsPage() {
           dinner: data?.DINNER ? data.DINNER.join(', ') : '-',
         }));
         setWeeklyMenu(parsedWeekly);
+        setEditedWeekly(parsedWeekly);
       } else {
         setWeeklyMenu(DEFAULT_WEEKLY_SCHEDULE);
+        setEditedWeekly(DEFAULT_WEEKLY_SCHEDULE);
       }
     } catch (e) {
       console.error('Error loading meals data:', e);
@@ -102,205 +152,389 @@ export default function MealsPage() {
     fetchMealsData();
   }, []);
 
-  return (
-    <div className="flex-1 overflow-y-auto font-[Inter,sans-serif] bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] pb-24 md:pb-8 transition-colors duration-200">
-      <main className="p-4 md:p-6">
-        {/* Header */}
-        <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-[36px] md:text-[45px] font-semibold text-[#003f87] dark:text-[#3B82F6] leading-10 md:leading-[52px]">Meals & Live Consensus</h1>
-            <p className="text-sm text-[#424752] dark:text-[#94A3B8] mt-1">Expected mess menu vs. real-time student consensus reports & confidence ratings.</p>
-          </div>
-        </div>
+  const handleSaveWeeklySchedule = async () => {
+    try {
+      const mondayStr = getMondayDateStr();
+      const payload = {
+        weekStartDate: mondayStr,
+      };
+      editedWeekly.forEach((row) => {
+        payload[row.day.toLowerCase()] = {
+          BREAKFAST: row.breakfast.split(',').map((s) => s.trim()).filter(Boolean),
+          LUNCH: row.lunch.split(',').map((s) => s.trim()).filter(Boolean),
+          SNACKS: row.snacks.split(',').map((s) => s.trim()).filter(Boolean),
+          DINNER: row.dinner.split(',').map((s) => s.trim()).filter(Boolean),
+        };
+      });
+      await messApi.saveWeeklyMenu(payload);
+      setWeeklyMenu(editedWeekly);
+      setShowAdminWeeklyEditor(false);
+      setSaveStatus('Weekly mess schedule published successfully!');
+      setTimeout(() => setSaveStatus(''), 4000);
+    } catch (err) {
+      alert('Failed to save weekly schedule');
+    }
+  };
 
-        {/* Tabs Navigation */}
-        <div className="bg-[#f3f4f5] dark:bg-[#1E293B] border border-[#c2c6d4]/40 dark:border-[#334155] rounded-xl p-1 flex gap-1 mb-6 overflow-x-auto no-scrollbar">
-          {TABS.map((tab) => (
+  return (
+    <div className="space-y-6 pb-6">
+      {/* Page Header */}
+      <PageHeader
+        badge={
+          <Badge variant="primary" className="text-[10px] font-bold">
+            Central Mess Dining
+          </Badge>
+        }
+        title="Mess Menus & Live Consensus"
+        description="Official university mess schedules compared against real-time peer reports, verification confidence, and student ratings."
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/student-photos')}
+              className="font-semibold text-xs gap-1.5"
+            >
+              Food Gallery
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => navigate('/report-meal')}
+              className="font-bold text-xs gap-1.5 bg-blue-600 hover:bg-blue-700"
+            >
+              <Sparkles className="h-4 w-4" />
+              Report Live Meal (+20 Pts)
+            </Button>
+          </>
+        }
+      />
+
+      {/* Success Notification Alert */}
+      {saveStatus && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>{saveStatus}</span>
+        </div>
+      )}
+
+      {/* Tab Switcher */}
+      <div className="flex rounded-xl bg-slate-100 dark:bg-slate-800/80 p-1 border border-slate-200/80 dark:border-slate-700/80 w-fit">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-max flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === tab.id
-                  ? 'bg-white dark:bg-[#0F172A] shadow-sm text-[#003f87] dark:text-[#3B82F6] font-bold'
-                  : 'text-[#424752] dark:text-[#CBD5E1] hover:text-[#191c1d] dark:hover:text-[#F8FAFC]'
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                isActive
+                  ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
-              <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+              <Icon className="h-4 w-4" />
               {tab.label}
             </button>
-          ))}
+          );
+        })}
+      </div>
+
+      {/* Loading Indicator */}
+      {loading ? (
+        <div className="py-24 text-center space-y-3">
+          <div className="h-8 w-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-semibold text-slate-500">Loading daily menus and peer verification data...</p>
         </div>
+      ) : activeTab === 'today' ? (
+        /* ─────────────── TAB 1: TODAY'S MEALS ─────────────── */
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {todayMeals.map((meal) => {
+            const Icon = meal.icon;
+            const cData = meal.consensus;
+            const isMenuChanged = cData?.menuChanged;
 
-        {/* Loading / Error States */}
-        {loading && <div className="py-16 text-center text-sm text-[#424752] dark:text-[#94A3B8]">Loading menu schedule & live consensus...</div>}
-        {error && <div className="py-8 text-center text-sm text-[#ba1a1a] dark:text-[#EF4444]">{error}</div>}
-
-        {/* Tab 1: Today's Meals with 3-State Consensus */}
-        {!loading && !error && activeTab === 'today' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {todayMeals.map((meal) => {
-              const cData = meal.consensus || {};
-              const consensusItems = cData.items || [];
-              const totalReporters = cData.totalReporters || 0;
-              const agreement = cData.agreementPercentage || 0;
-              const photos = cData.photos || [];
-
-              return (
-                <div key={meal.type} className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-xl p-6 hover:shadow-[0px_4px_12px_rgba(0,0,0,0.1)] transition-shadow duration-300 relative overflow-hidden group">
-                  {/* Card Header */}
-                  <div className="flex justify-between items-start mb-4 relative z-10">
+            return (
+              <Card key={meal.rawSlot} className="p-6 flex flex-col justify-between shadow-card hover:border-slate-300">
+                <div>
+                  {/* Slot Header */}
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#cfe2ff] dark:bg-[#3B82F6]/20 text-[#003f87] dark:text-[#3B82F6] flex items-center justify-center">
-                        <span className="material-symbols-outlined">{meal.icon}</span>
+                      <div className="h-11 w-11 rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
+                        <Icon className="h-5 w-5" />
                       </div>
                       <div>
-                        <h3 className="text-[22px] font-medium text-[#191c1d] dark:text-[#F8FAFC]">{meal.type}</h3>
-                        <p className="text-[11px] font-medium text-[#424752] dark:text-[#94A3B8]">{meal.time}</p>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                            {meal.name}
+                          </h3>
+                          {meal.verified ? (
+                            <Badge variant="success" className="text-[10px] gap-1">
+                              <CheckCircle2 className="h-3 w-3" /> Consensus Verified
+                            </Badge>
+                          ) : (
+                            <Badge variant="warning" className="text-[10px] gap-1">
+                              <AlertTriangle className="h-3 w-3" /> Unverified
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400 font-mono mt-0.5">{meal.time}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 flex-wrap">
-                      {meal.verified ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#006e25] dark:bg-[#22C55E] text-white dark:text-slate-950 text-[11px] font-medium whitespace-nowrap">
-                          <span className="material-symbols-outlined text-[14px]">check_circle</span> Verified ({agreement}%)
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#f3f4f5] dark:bg-[#0F172A] text-[#424752] dark:text-[#CBD5E1] text-[11px] font-medium border border-[#c2c6d4] dark:border-[#334155] whitespace-nowrap">
-                          <span className="material-symbols-outlined text-[14px]">hourglass_empty</span> Unverified
-                        </span>
-                      )}
-                      <button
-                        onClick={() => navigate('/report-meal?slot=' + meal.rawSlot)}
-                        className="px-3 py-1 bg-[#003f87] dark:bg-[#3B82F6] text-white text-[11px] font-semibold rounded-full hover:opacity-90 active:scale-95 transition-all flex items-center gap-1 whitespace-nowrap shrink-0"
-                      >
-                        <span className="material-symbols-outlined text-[14px]">edit_note</span>
-                        Report Serving
-                      </button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/report-meal?slot=${meal.rawSlot}`)}
+                      className="text-blue-600 dark:text-blue-400 text-xs font-bold"
+                    >
+                      Report
+                    </Button>
                   </div>
 
-                  {/* Live Student Consensus Reports */}
-                  <div className="mb-4 p-3 bg-[#e8f5ea] dark:bg-[#22C55E]/10 border border-[#006e25]/20 dark:border-[#22C55E]/30 rounded-lg">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-bold text-[#006e25] dark:text-[#22C55E] uppercase tracking-wider flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[16px]">groups</span>
-                        Live Consensus ({totalReporters} Reports)
-                      </span>
-                      {agreement > 0 && (
-                        <span className="text-[11px] font-semibold text-[#006e25] dark:text-[#22C55E]">
-                          {agreement}% Agreement
-                        </span>
-                      )}
+                  {/* Menu Changed Warning Banner */}
+                  {isMenuChanged && (
+                    <div className="mt-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 shrink-0" />
+                      <span>Notice: Students reported changes compared to the published menu!</span>
                     </div>
-                    {consensusItems.length === 0 ? (
-                      <p className="text-xs text-[#424752] dark:text-[#94A3B8] italic">No student reports yet. Be the first to report!</p>
-                    ) : (
-                      <div className="space-y-1.5">
-                        {consensusItems.map((cItem, i) => (
-                          <div key={i} className="flex justify-between items-center text-xs">
-                            <span className="font-medium text-[#191c1d] dark:text-[#F8FAFC] flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#006e25] dark:bg-[#22C55E]" />
-                              {cItem.name}
-                            </span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-20 bg-[#c2c6d4]/40 dark:bg-[#334155] h-1.5 rounded-full overflow-hidden">
-                                <div className="bg-[#006e25] dark:bg-[#22C55E] h-full rounded-full" style={{ width: `${cItem.confidence}%` }} />
-                              </div>
-                              <span className="font-semibold text-[#006e25] dark:text-[#22C55E] w-9 text-right">{cItem.confidence}%</span>
+                  )}
+
+                  {/* Verified Items Breakdown */}
+                  <div className="py-4 space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-700 dark:text-slate-300">
+                        Live Peer Breakdown ({cData?.totalReporters || 0} Reports)
+                      </span>
+                      <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        Confidence: {cData?.confidenceRating || 'NORMAL'}
+                      </span>
+                    </div>
+
+                    {cData?.items && cData.items.length > 0 ? (
+                      <div className="space-y-2">
+                        {cData.items.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-2.5 space-y-1.5 border border-slate-100 dark:border-slate-800"
+                          >
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-bold text-slate-900 dark:text-slate-100">{item.name}</span>
+                              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                {item.confidence}% match
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-emerald-500 rounded-full transition-all"
+                                style={{ width: `${item.confidence}%` }}
+                              />
                             </div>
                           </div>
                         ))}
                       </div>
-                    )}
-                  </div>
-
-                  {/* Published Menu */}
-                  <div className="mb-4 space-y-2">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#424752] dark:text-[#94A3B8]">Published Menu</p>
-                    {meal.items.length === 0 ? (
-                      <p className="text-sm text-[#424752] dark:text-[#94A3B8] italic">No published menu items.</p>
                     ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        {meal.items.map((item, idx) => (
-                          <span key={idx} className="px-2.5 py-1 bg-[#f3f4f5] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] rounded-md text-xs font-medium border border-[#c2c6d4] dark:border-[#334155]">
-                            {item.name}
-                          </span>
-                        ))}
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 text-center text-xs text-slate-400">
+                        {meal.items.length > 0
+                          ? `Expected Items: ${meal.items.join(', ')}`
+                          : 'Standard menu items scheduled for this slot.'}
                       </div>
                     )}
                   </div>
+                </div>
 
-                  {/* Photo Evidence */}
-                  {photos.length > 0 && (
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#424752] dark:text-[#94A3B8] mb-2 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">photo_camera</span>
-                        Photo Evidence ({photos.length})
-                      </p>
-                      <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                        {photos.slice(0, 4).map((pUrl, pIdx) => (
-                          <img key={pIdx} src={pUrl} alt="Serving Photo" className="w-14 h-14 object-cover rounded-lg border border-[#c2c6d4] dark:border-[#334155]" />
-                        ))}
+                {/* Footer action */}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium">Have you eaten this meal?</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/feedback')}
+                    className="text-xs font-semibold gap-1"
+                  >
+                    <Star className="h-3.5 w-3.5 text-amber-500" />
+                    Rate Quality
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      ) : activeTab === 'weekly' ? (
+        /* ─────────────── TAB 2: WEEKLY SCHEDULE ─────────────── */
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Weekly Hostels Catering Plan
+              </h3>
+              <p className="text-xs text-slate-500">
+                Standard schedule for the current academic week.
+              </p>
+            </div>
+            {isAdmin && (
+              <Button
+                variant={showAdminWeeklyEditor ? 'outline' : 'default'}
+                size="sm"
+                onClick={() => setShowAdminWeeklyEditor(!showAdminWeeklyEditor)}
+                className="text-xs font-bold gap-1.5"
+              >
+                <Edit3 className="h-4 w-4" />
+                {showAdminWeeklyEditor ? 'Cancel Editing' : 'Edit Weekly Menu'}
+              </Button>
+            )}
+          </div>
+
+          {showAdminWeeklyEditor ? (
+            /* Admin Weekly Menu Editor Form */
+            <Card className="p-6 shadow-card space-y-5 border-blue-200 dark:border-blue-900/60">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                    Warden Menu Editor
+                  </h4>
+                  <p className="text-xs text-slate-400">Comma-separated food item lists for each day</p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleSaveWeeklySchedule}
+                  className="font-bold text-xs bg-blue-600 hover:bg-blue-700 gap-1.5"
+                >
+                  <Save className="h-4 w-4" /> Save & Publish
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {editedWeekly.map((row, idx) => (
+                  <div key={row.day} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 space-y-3">
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-slate-100 block">
+                      {row.day}
+                    </span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                      <div>
+                        <label className="block text-slate-500 font-semibold mb-1">Breakfast</label>
+                        <Input
+                          value={row.breakfast}
+                          onChange={(e) => {
+                            const updated = [...editedWeekly];
+                            updated[idx].breakfast = e.target.value;
+                            setEditedWeekly(updated);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-500 font-semibold mb-1">Lunch</label>
+                        <Input
+                          value={row.lunch}
+                          onChange={(e) => {
+                            const updated = [...editedWeekly];
+                            updated[idx].lunch = e.target.value;
+                            setEditedWeekly(updated);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-500 font-semibold mb-1">Snacks</label>
+                        <Input
+                          value={row.snacks}
+                          onChange={(e) => {
+                            const updated = [...editedWeekly];
+                            updated[idx].snacks = e.target.value;
+                            setEditedWeekly(updated);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-500 font-semibold mb-1">Dinner</label>
+                        <Input
+                          value={row.dinner}
+                          onChange={(e) => {
+                            const updated = [...editedWeekly];
+                            updated[idx].dinner = e.target.value;
+                            setEditedWeekly(updated);
+                          }}
+                        />
                       </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Tab 2: Weekly Schedule */}
-        {!loading && !error && activeTab === 'weekly' && (
-          <div className="bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-xl overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ) : (
+            /* Weekly Table Grid */
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+              <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-[#f3f4f5] dark:bg-[#0F172A] border-b border-[#c2c6d4] dark:border-[#334155]">
-                    {['Day', 'Breakfast', 'Lunch', 'Evening Snacks', 'Dinner'].map((h) => (
-                      <th key={h} className="p-4 text-sm font-semibold text-[#424752] dark:text-[#CBD5E1]">{h}</th>
-                    ))}
+                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-bold uppercase tracking-wider">
+                    <th className="py-3 px-4 w-28">Day</th>
+                    <th className="py-3 px-4">Breakfast</th>
+                    <th className="py-3 px-4">Lunch</th>
+                    <th className="py-3 px-4">Evening Snacks</th>
+                    <th className="py-3 px-4">Dinner</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#c2c6d4] dark:divide-[#334155]">
-                  {weeklyMenu.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-sm text-[#424752] dark:text-[#94A3B8] italic">
-                        No weekly menu schedule published yet.
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {weeklyMenu.map((row) => (
+                    <tr key={row.day} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
+                        {row.day}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {row.breakfast}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {row.lunch}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {row.snacks}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {row.dinner}
                       </td>
                     </tr>
-                  ) : (
-                    weeklyMenu.map((row, i) => {
-                      const isToday = row.day === new Date().toLocaleDateString('en-US', { weekday: 'long' });
-                      return (
-                        <tr key={row.day || i} className={`transition-colors ${isToday ? 'bg-[#e8f5ea] dark:bg-[#22C55E]/10' : i % 2 === 0 ? 'hover:bg-[#f9fafb] dark:hover:bg-[#334155]/50' : 'bg-[#fafafb] dark:bg-[#0F172A]/50 hover:bg-[#f3f4f5] dark:hover:bg-[#334155]/50'}`}>
-                          <td className={`p-4 text-sm font-semibold ${isToday ? 'text-[#006e25] dark:text-[#22C55E]' : 'text-[#191c1d] dark:text-[#F8FAFC]'}`}>
-                            {row.day} {isToday && <span className="ml-1 text-[10px] bg-[#006e25] dark:bg-[#22C55E] text-white dark:text-slate-950 px-1.5 py-0.5 rounded-full font-bold">Today</span>}
-                          </td>
-                          <td className="p-4 text-sm text-[#424752] dark:text-[#CBD5E1]">{row.breakfast}</td>
-                          <td className="p-4 text-sm text-[#424752] dark:text-[#CBD5E1]">{row.lunch}</td>
-                          <td className="p-4 text-sm text-[#424752] dark:text-[#CBD5E1]">{row.snacks}</td>
-                          <td className="p-4 text-sm text-[#424752] dark:text-[#CBD5E1]">{row.dinner}</td>
-                        </tr>
-                      );
-                    })
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
-
-        {/* Tab 3: History */}
-        {!loading && !error && activeTab === 'history' && (
-          <div className="space-y-4">
-            <div className="p-8 bg-white dark:bg-[#1E293B] border border-[#c2c6d4] dark:border-[#334155] rounded-xl text-center text-[#424752] dark:text-[#94A3B8]">
-              <span className="material-symbols-outlined text-4xl mb-2 opacity-50">history</span>
-              <p className="text-sm font-medium">Meal attendance history synced with check-in records.</p>
+          )}
+        </div>
+      ) : (
+        /* ─────────────── TAB 3: MENU HISTORY & COMPARE ─────────────── */
+        <div className="space-y-6">
+          <Card className="p-6 shadow-card space-y-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Lookup Historical Meal Menus
+            </h3>
+            <div className="flex flex-col sm:flex-row gap-4 max-w-xl">
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-slate-500 mb-1">
+                  Select Historical Date
+                </label>
+                <Input
+                  type="date"
+                  value={historyDate}
+                  onChange={(e) => setHistoryDate(e.target.value)}
+                  className="h-10 text-xs"
+                />
+              </div>
             </div>
-          </div>
-        )}
-      </main>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              {MEAL_SLOTS.map((s) => (
+                <div key={s.key} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 space-y-1">
+                  <span className="font-bold text-xs text-slate-900 dark:text-slate-100 block">
+                    {s.name}
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-mono block">{s.time}</span>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 pt-2">
+                    Standard scheduled regional hostel items served on {historyDate}.
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

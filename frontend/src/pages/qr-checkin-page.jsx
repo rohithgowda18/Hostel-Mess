@@ -1,6 +1,24 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { messApi } from '@/services/mess-api';
+import {
+  QrCode,
+  Camera,
+  Flashlight,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  RefreshCw,
+  Hash,
+  Clock
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function QrCheckinPage() {
   const navigate = useNavigate();
@@ -38,7 +56,7 @@ export default function QrCheckinPage() {
           }
         })
         .catch((err) => {
-          console.warn('Camera access not granted or unavailable:', err);
+          console.warn('Camera access unavailable or restricted:', err);
           setCameraActive(false);
         });
     }
@@ -56,7 +74,7 @@ export default function QrCheckinPage() {
       const today = new Date().toISOString().split('T')[0];
       const qr = await messApi.getQrCode('LUNCH', today).catch(() => null);
       const code = qr?.code;
-      if (!code) throw new Error('Could not fetch check-in code');
+      if (!code) throw new Error('Could not fetch counter code');
       await messApi.checkInQR('LUNCH', today, code);
       const now = new Date();
       setSuccessTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -69,7 +87,8 @@ export default function QrCheckinPage() {
     }
   };
 
-  const handleManualSubmit = async () => {
+  const handleManualSubmit = async (e) => {
+    e?.preventDefault();
     if (!manualCode || manualCode.length < 4) return;
     setChecking(true);
     try {
@@ -87,195 +106,220 @@ export default function QrCheckinPage() {
     }
   };
 
-  const handleSuccessCloseAndReport = () => {
-    setOverlay(null);
-    navigate('/report-meal?slot=LUNCH');
-  };
-
   return (
-    <div className="flex-1 overflow-y-auto font-[Inter,sans-serif] bg-[#f8f9fa] dark:bg-[#0F172A] text-[#191c1d] dark:text-[#F8FAFC] pb-24 md:pb-8 transition-colors duration-200">
-      <main className="p-3 md:p-6">
-        <div className="max-w-[1440px] mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end pt-2 md:pt-0">
-            <div>
-              <h2 className="text-[32px] md:text-[45px] font-semibold text-[#003f87] dark:text-[#3B82F6] leading-9 md:leading-[52px]">Meal Check-in</h2>
-              <p className="text-xs text-[#424752] dark:text-[#94A3B8] mt-1">Scan your QR code at the mess counter or enter code manually.</p>
-            </div>
-          </div>
-
-          {/* Main Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Col: Scanner + Manual Entry */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Scanner Card */}
-              <div className="bg-white dark:bg-[#1E293B] rounded-xl border border-[#c2c6d4] dark:border-[#334155] overflow-hidden shadow-sm flex flex-col relative">
-                <div className="p-3.5 border-b border-[#c2c6d4] dark:border-[#334155] flex justify-between items-center bg-[#f3f4f5] dark:bg-[#0F172A]">
-                  <h3 className="text-base font-semibold text-[#003f87] dark:text-[#3B82F6] flex items-center gap-2">
-                    <span className="material-symbols-outlined">camera_alt</span> Counter Scanner View
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleSimulateScan}
-                      disabled={checking}
-                      className="px-3 py-1.5 bg-[#006e25] text-white rounded-full text-xs font-bold hover:opacity-90 active:scale-95 transition flex items-center gap-1 shadow-sm"
-                    >
-                      <span className="material-symbols-outlined text-sm">qr_code_scanner</span>
-                      {checking ? 'Scanning...' : 'Scan Now'}
-                    </button>
-                    <button
-                      onClick={() => setFlashOn(!flashOn)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 transition ${
-                        flashOn ? 'bg-amber-400 text-slate-950' : 'bg-[#e1e3e4] text-[#191c1d]'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-sm">flash_on</span>
-                      {flashOn ? 'Flash ON' : 'Flashlight'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Real Camera Viewport / Fallback */}
-                <div className={`relative w-full aspect-square sm:aspect-video flex items-center justify-center overflow-hidden transition-colors ${flashOn ? 'bg-amber-950/40' : 'bg-black'}`}>
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-
-                  {/* Scanning Frame Overlay */}
-                  <div className="relative z-10 w-56 h-56 sm:w-72 sm:h-72 border-2 border-dashed border-white/70 rounded-xl bg-black/20">
-                    {/* Corner Markers */}
-                    <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#006e25] rounded-tl-xl" />
-                    <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#006e25] rounded-tr-xl" />
-                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#006e25] rounded-bl-xl" />
-                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#006e25] rounded-br-xl" />
-                    {/* Scanning Line Animation */}
-                    <div
-                      className="absolute left-0 right-0 h-0.5 bg-[#006e25] shadow-[0_0_8px_rgba(0,110,37,0.8)]"
-                      style={{ animation: 'scan 2s linear infinite' }}
-                    />
-                    <p className="absolute bottom-[-30px] w-full text-center text-white text-xs drop-shadow-md font-semibold">
-                      {cameraActive ? 'Align Mess QR Code within frame' : 'Camera Feed Active • Tap Scan Now'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Manual Entry Card */}
-              <div className="bg-white rounded-xl border border-[#c2c6d4] p-5 shadow-sm">
-                <h3 className="text-base font-semibold text-[#003f87] mb-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined">keyboard</span> Manual Code Entry
-                </h3>
-                <p className="text-xs text-[#424752] mb-4">If scanner is unavailable, enter the code provided at the counter.</p>
-                <div className="flex flex-col sm:flex-row gap-3 items-end">
-                  <div className="flex-1 w-full">
-                    <label className="block text-[11px] font-bold text-[#424752] mb-1" htmlFor="manual-code">Check-in Code</label>
-                    <input
-                      id="manual-code"
-                      type="text"
-                      value={manualCode}
-                      onChange={(e) => setManualCode(e.target.value)}
-                      placeholder="e.g. CHECKIN-2026-01-01-LUNCH-XXXXXX"
-                      className="w-full min-h-[48px] bg-[#f3f4f5] border border-[#c2c6d4] focus:border-[#003f87] rounded-xl px-4 py-2 text-xs outline-none font-mono text-[#191c1d]"
-                    />
-                  </div>
-                  <button
-                    onClick={handleManualSubmit}
-                    disabled={checking || !manualCode}
-                    className="w-full sm:w-auto min-h-[48px] px-6 bg-[#003f87] text-white rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-50 transition active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined text-base">check_circle</span>
-                    {checking ? 'Verifying...' : 'Submit Code'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Col: Status Card */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-[#c2c6d4] p-5 shadow-sm space-y-4">
-                <h3 className="text-base font-semibold text-[#191c1d] flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#006e25]">fact_check</span> Today's Status
-                </h3>
-                {attendanceStatus?.present ? (
-                  <div className="p-4 bg-[#e8f5ea] border border-[#006e25]/30 rounded-xl text-[#006e25] font-semibold text-xs flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-lg">check_circle</span>
-                      Checked in for {attendanceStatus.mealType || 'LUNCH'}!
-                    </div>
-                    <button
-                      onClick={() => navigate('/report-meal?slot=' + (attendanceStatus.mealType || 'LUNCH'))}
-                      className="w-full min-h-[44px] bg-[#006e25] text-white text-xs font-bold rounded-lg hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-1.5 shadow-sm mt-1"
-                    >
-                      <span className="material-symbols-outlined text-base">rate_review</span>
-                      Report Served Meal (+20 Pts)
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-4 bg-[#f3f4f5] border border-[#c2c6d4] rounded-xl text-[#424752] text-xs">
-                    No check-in recorded for this meal yet. Scan QR or enter code above.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Success Overlay with Connected Redirect */}
-      {overlay === 'success' && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOverlay(null)} />
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-sm flex flex-col items-center text-center shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 bg-[#006e25] rounded-full flex items-center justify-center mb-4 shadow-lg shadow-[#006e25]/30">
-              <span className="material-symbols-outlined text-white text-[36px]">check</span>
-            </div>
-            <h2 className="text-xl font-bold text-[#191c1d] mb-1">Check-in Confirmed</h2>
-            <p className="text-xs text-[#424752] mb-5">Confirmed at {successTime}</p>
-            
-            {/* Seamless One-Tap Action */}
-            <button
-              onClick={handleSuccessCloseAndReport}
-              className="w-full min-h-[52px] bg-[#006e25] text-white text-sm font-extrabold rounded-xl hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2 shadow-md mb-2"
-            >
-              <span className="material-symbols-outlined text-xl">rate_review</span>
-              Report Served Meal (+20 Pts)
-            </button>
-
-            <button onClick={() => setOverlay(null)} className="w-full min-h-[44px] bg-[#f3f4f5] text-[#424752] text-xs font-semibold rounded-xl hover:bg-[#e1e3e4]">
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Failure Overlay */}
-      {overlay === 'failure' && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setOverlay(null)} />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm flex flex-col items-center text-center shadow-2xl">
-            <div className="w-20 h-20 bg-[#ba1a1a] rounded-full flex items-center justify-center mb-6 shadow-lg shadow-[#ba1a1a]/30">
-              <span className="material-symbols-outlined text-white text-[40px]">error</span>
-            </div>
-            <h2 className="text-[32px] font-semibold text-[#191c1d] mb-2">Scan Failed</h2>
-            <p className="text-base text-[#424752] mb-6">Invalid code or booking not found.</p>
-            <button onClick={() => setOverlay(null)} className="w-full bg-[#ba1a1a] text-white text-sm font-medium py-3 rounded-lg">
-              Try Again
-            </button>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes scan {
-          0% { top: 0%; }
-          50% { top: calc(100% - 2px); }
-          100% { top: 0%; }
+    <div className="max-w-4xl mx-auto space-y-6 pb-6">
+      {/* Page Header */}
+      <PageHeader
+        badge={
+          <Badge variant="primary" className="text-[10px] font-bold">
+            Counter Verification
+          </Badge>
         }
-      `}</style>
+        title="Meal Counter Check-in"
+        description="Position the mess desk QR code within the scanning frame or manually enter the 6-character code."
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Focused Scanner Viewport (7 Cols) */}
+        <div className="lg:col-span-7 space-y-4">
+          <Card className="overflow-hidden border-slate-200/90 dark:border-slate-800 shadow-card">
+            {/* Top Toolbar */}
+            <div className="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/50">
+              <div className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${cameraActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  {cameraActive ? 'Camera Sensor Active' : 'Camera Ready / Test Mode'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setFlashOn(!flashOn)}
+                  className={`h-8 text-xs font-semibold gap-1 ${flashOn ? 'bg-amber-100 text-amber-900 border-amber-300' : ''}`}
+                >
+                  <Flashlight className="h-3.5 w-3.5" />
+                  {flashOn ? 'Flash ON' : 'Flash'}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSimulateScan}
+                  disabled={checking}
+                  className="h-8 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white gap-1"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${checking ? 'animate-spin' : ''}`} />
+                  Simulate Scan
+                </Button>
+              </div>
+            </div>
+
+            {/* Viewfinder Video Frame */}
+            <div className={`relative aspect-square sm:aspect-video w-full flex items-center justify-center overflow-hidden transition-colors ${flashOn ? 'bg-amber-950/30' : 'bg-slate-950'}`}>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+
+              {/* Scanning Target Overlay */}
+              <div className="relative z-10 w-60 h-60 rounded-3xl border-2 border-blue-500/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] flex items-center justify-center pointer-events-none">
+                {/* 4 Corner Markers */}
+                <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-blue-400 rounded-tl-xl -mt-1 -ml-1" />
+                <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-blue-400 rounded-tr-xl -mt-1 -mr-1" />
+                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-blue-400 rounded-bl-xl -mb-1 -ml-1" />
+                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-blue-400 rounded-br-xl -mb-1 -mr-1" />
+
+                {/* Animated Horizontal Laser Line */}
+                <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent animate-bounce opacity-80" />
+              </div>
+
+              {/* Fallback Camera message if blocked */}
+              {!cameraActive && (
+                <div className="absolute bottom-4 left-4 right-4 z-10 text-center">
+                  <span className="text-[11px] text-white/80 bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-full inline-block">
+                    Position QR inside box or click "Simulate Scan" / enter code below
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Instruction Footer */}
+            <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                Secure instant token exchange
+              </span>
+              <span className="font-mono">Counter Slot: LUNCH</span>
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Column: Manual Code Entry & Attendance Status (5 Cols) */}
+        <div className="lg:col-span-5 space-y-5">
+          {/* Manual Code Input Card */}
+          <Card className="p-6 shadow-card space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Hash className="h-4 w-4 text-blue-600" />
+                Manual Counter Code Entry
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                If the camera scanner is obstructed, enter the 6-character counter passcode displayed at the serving line.
+              </p>
+            </div>
+
+            <form onSubmit={handleManualSubmit} className="space-y-3">
+              <Input
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+                placeholder="e.g. LUNCH7"
+                maxLength={8}
+                className="h-11 text-center font-mono font-bold tracking-widest text-base uppercase"
+              />
+              <Button
+                type="submit"
+                disabled={checking || manualCode.length < 4}
+                className="w-full h-11 text-xs font-bold bg-blue-600 hover:bg-blue-700"
+              >
+                {checking ? 'Validating Token...' : 'Confirm Meal Entry'}
+              </Button>
+            </form>
+          </Card>
+
+          {/* Today's Check-in Record Status */}
+          <Card className="p-6 shadow-card space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Today's Verification Status
+            </h4>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-blue-600" />
+                <span className="font-semibold text-slate-800 dark:text-slate-200">Lunch Service</span>
+              </div>
+              <Badge variant={attendanceStatus?.checkedIn ? 'success' : 'neutral'}>
+                {attendanceStatus?.checkedIn ? 'Verified Present' : 'Pending Entry'}
+              </Badge>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              Check-in tokens expire 30 minutes after issuance to prevent proxy dining attendance.
+            </p>
+          </Card>
+        </div>
+      </div>
+
+      {/* Success Modal Overlay */}
+      {overlay === 'success' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in-0 duration-150">
+          <div className="relative w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 text-center space-y-4 shadow-elevated">
+            <div className="h-14 w-14 rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 mx-auto flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                Check-in Verified!
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Meal token registered successfully at {successTime || 'the counter'}.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200/60 text-xs font-semibold text-blue-700 dark:text-blue-300">
+              ✨ +5 Attendance Points Added
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <Button
+                onClick={() => {
+                  setOverlay(null);
+                  navigate('/report-meal?slot=LUNCH');
+                }}
+                className="w-full h-11 text-xs font-bold bg-blue-600 hover:bg-blue-700 gap-1.5"
+              >
+                <Sparkles className="h-4 w-4" /> Report Today's Meal (+20 Pts)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOverlay(null)}
+                className="text-xs font-semibold"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Failure Modal Overlay */}
+      {overlay === 'failure' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in-0 duration-150">
+          <div className="relative w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 text-center space-y-4 shadow-elevated">
+            <div className="h-14 w-14 rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 mx-auto flex items-center justify-center border border-rose-200 dark:border-rose-800">
+              <XCircle className="h-8 w-8" />
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                Invalid Check-in Code
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                The QR code or counter passcode was expired or unrecognized. Please retry.
+              </p>
+            </div>
+
+            <Button
+              onClick={() => setOverlay(null)}
+              className="w-full h-11 text-xs font-bold"
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

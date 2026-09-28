@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export function InstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -33,11 +35,14 @@ export function InstallButton() {
   if (!showButton) return null;
 
   return (
-    <button
+    <Button
+      size="sm"
+      variant="outline"
       onClick={handleInstall}
-      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+      className="hidden sm:inline-flex text-xs font-semibold gap-1.5 h-9"
     >
+      <Download className="h-3.5 w-3.5 text-blue-600" />
       Install App
-    </button>
+    </Button>
   );
 }
