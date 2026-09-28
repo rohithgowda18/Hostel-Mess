@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 
 const MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'];
 
@@ -266,146 +267,118 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* 3. Main Dashboard Grid (Hero Service + Live Consensus + Occupancy/Attendance) */}
+      {/* 3. Real-time Status KPI Metric Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={Clock}
+          title="Current Dining Service"
+          value={mealStatus.mealName}
+          subtitle={`${mealStatus.timerLabel} ${countdownText.h}:${countdownText.m}:${countdownText.s}`}
+          badgeText={mealStatus.active ? 'Serving' : 'Upcoming'}
+          accentColor="blue"
+        />
+        <StatCard
+          icon={TrendingUp}
+          title="Mess Hall Traffic"
+          value={`${occupancy.percentage}%`}
+          subtitle={occupancy.statusLabel}
+          accentColor={occupancy.percentage > 75 ? 'rose' : occupancy.percentage > 40 ? 'amber' : 'emerald'}
+        />
+        <StatCard
+          icon={CheckCircle2}
+          title="My Attendance Intent"
+          value={attendance.expected === true ? 'Will Eat' : attendance.expected === false ? 'Skipping' : 'Not Declared'}
+          subtitle={attendance.expected !== null ? 'Registered with kitchen' : 'Tap to register attendance'}
+          badgeText="Meal RSVP"
+          accentColor={attendance.expected === true ? 'emerald' : attendance.expected === false ? 'rose' : 'indigo'}
+        />
+        <StatCard
+          icon={DoorOpen}
+          title="Housing Allocation"
+          value={userProfile?.roomNumber ? `Room ${userProfile.roomNumber}` : 'Unassigned'}
+          subtitle={userProfile?.hostel || 'Hostel Resident'}
+          accentColor="purple"
+        />
+      </div>
+
+      {/* 4. Main Command Center Grid (7 Cols Spotlight / 5 Cols Community & Actions) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Left Column (5 Cols): Active / Upcoming Meal Card */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
+        {/* Left Column (7 Cols): Today's Active Meal Menu & Consensus Spotlight */}
+        <div className="lg:col-span-7 space-y-6">
           <Card className="p-6 relative overflow-hidden flex flex-col justify-between shadow-card">
-            {/* Live Indicator Background Glow */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            <div>
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <Badge variant={mealStatus.active ? 'success' : 'primary'}>
-                  <span className={`h-2 w-2 rounded-full ${mealStatus.active ? 'bg-emerald-500 animate-pulse' : 'bg-blue-500'}`} />
-                  {mealStatus.title}
-                </Badge>
-                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
-                  {mealStatus.timeRange}
-                </span>
-              </div>
-
-              <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 mt-1">
-                {mealStatus.mealName}
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-                {mealStatus.statusLabel}
-              </p>
-            </div>
-
-            {/* Countdown Clock Display */}
-            <div className="my-5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200/80 dark:border-slate-800 p-4 text-center">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                {mealStatus.timerLabel}
-              </span>
-              <div className="font-mono text-3xl sm:text-4xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 flex items-center justify-center gap-1.5">
-                <span>{countdownText.h}</span>
-                <span className="text-slate-300 dark:text-slate-700 text-2xl">:</span>
-                <span>{countdownText.m}</span>
-                <span className="text-slate-300 dark:text-slate-700 text-2xl">:</span>
-                <span>{countdownText.s}</span>
-              </div>
-            </div>
-
-            {/* Attendance Declaration Toggle */}
-            <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Attending {mealStatus.mealName}?
-                </span>
-                <span className="text-[11px] text-slate-400">Reduces food waste</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => handleAttendance(true)}
-                  className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
-                    attendance.expected === true
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-                  }`}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Will Eat
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAttendance(false)}
-                  className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
-                    attendance.expected === false
-                      ? 'bg-rose-600 text-white shadow-xs'
-                      : 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-                  }`}
-                >
-                  <XCircle className="h-4 w-4" />
-                  Skip Meal
-                </button>
-              </div>
-            </div>
-          </Card>
-
-          {/* Quick Hostel Room Summary Card */}
-          <Card className="p-5 border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/40">
-                  <DoorOpen className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                    My Room Allocation
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {userProfile?.hostel || 'Hostel Unassigned'} · {userProfile?.roomNumber ? `Room ${userProfile.roomNumber}` : 'Room Not Assigned'}
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/directory')}
-                className="text-xs font-semibold"
-              >
-                Directory
-              </Button>
-            </div>
-          </Card>
-        </div>
-
-        {/* Center Column (4 Cols): Live Community Verified Menu Breakdown */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-          <Card className="p-6 flex-1 flex flex-col justify-between shadow-card">
-            <div>
+            <div className="space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="success" className="text-[10px] font-bold">
-                      VERIFIED CONSENSUS
+                    <Badge variant={mealStatus.active ? 'success' : 'primary'}>
+                      <span className={`h-2 w-2 rounded-full ${mealStatus.active ? 'bg-emerald-500 animate-pulse' : 'bg-blue-500'}`} />
+                      {mealStatus.title}
                     </Badge>
-                    {consensusData?.menuChanged && (
-                      <Badge variant="danger" className="text-[10px] font-bold animate-pulse">
-                        Menu Changed!
-                      </Badge>
-                    )}
+                    <span className="text-xs text-slate-400 font-mono">{mealStatus.timeRange}</span>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">
-                    Today's {mealStatus.mealName} Menu
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1.5">
+                    {mealStatus.mealName} Live Consensus
                   </h3>
                 </div>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate('/report-meal?slot=' + mealStatus.mealType)}
-                  className="text-blue-600 hover:text-blue-700 text-xs font-bold"
-                >
-                  Report
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => navigate('/qr-checkin')}
+                    className="text-xs font-bold bg-blue-600 hover:bg-blue-700 gap-1.5"
+                  >
+                    <QrCode className="h-3.5 w-3.5" />
+                    Open Pass
+                  </Button>
+                </div>
+              </div>
+
+              {/* Attendance RSVP Quick Toggle */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block">
+                    Are you dining at {mealStatus.mealName}?
+                  </span>
+                  <span className="text-[11px] text-slate-500">Helps kitchen forecaster avoid food waste</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAttendance(true)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      attendance.expected === true
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Will Eat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAttendance(false)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      attendance.expected === false
+                        ? 'bg-rose-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    Skip Meal
+                  </button>
+                </div>
               </div>
 
               {/* Items Breakdown list */}
-              <div className="py-4 space-y-2.5 max-h-[300px] overflow-y-auto">
+              <div className="space-y-2.5 max-h-[300px] overflow-y-auto">
+                <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
+                  <span>Peer Verified Dish Items</span>
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                    {consensusData?.items?.length || 0} Dishes Confirmed
+                  </span>
+                </div>
+
                 {consensusData?.items && consensusData.items.length > 0 ? (
                   consensusData.items.map((item, idx) => (
                     <div
@@ -427,10 +400,10 @@ export default function DashboardPage() {
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-10 space-y-2">
-                    <UtensilsCrossed className="h-8 w-8 text-slate-300 dark:text-slate-700 mx-auto" />
+                  <div className="text-center py-8 space-y-2 rounded-xl bg-slate-50/50 dark:bg-slate-900/30 border border-dashed border-slate-200 dark:border-slate-800">
+                    <UtensilsCrossed className="h-7 w-7 text-slate-300 dark:text-slate-700 mx-auto" />
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      No peer reports submitted yet for this meal.
+                      No peer verified items logged yet for this meal slot.
                     </p>
                     <Button
                       variant="outline"
@@ -443,129 +416,88 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Official menu note */}
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">Expected: </span>
-              {consensusData?.expectedItems?.join(', ') || mealsByType[mealStatus.mealType]?.items?.join(', ') || 'Published menu items unavailable'}
+              {/* Official menu note */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                <div>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">Expected: </span>
+                  {consensusData?.expectedItems?.join(', ') || mealsByType[mealStatus.mealType]?.items?.join(', ') || 'Published menu items unavailable'}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/meals')}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700 shrink-0"
+                >
+                  Full Menu <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
 
-        {/* Right Column (3 Cols): Mess Hall Occupancy & Buddy Group Quick Action */}
-        <div className="lg:col-span-3 flex flex-col gap-6">
-          {/* Real-time Occupancy Card */}
-          <Card className="p-5 shadow-card">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-              <span className="flex items-center gap-1.5">
-                <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                Live Hall Occupancy
-              </span>
-            </div>
-
-            <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-4xl font-extrabold text-slate-900 dark:text-slate-100">
-                {occupancy.percentage}%
-              </span>
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                {occupancy.statusLabel}
-              </span>
-            </div>
-
-            <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  occupancy.percentage > 75
-                    ? 'bg-rose-500'
-                    : occupancy.percentage > 45
-                    ? 'bg-amber-500'
-                    : 'bg-emerald-500'
-                }`}
-                style={{ width: `${occupancy.percentage}%` }}
-              />
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Based on active counter scanner entries over the last 30 minutes.
-            </p>
-          </Card>
-
-          {/* Buddy Groups Card */}
-          <Card className="p-5 shadow-card flex flex-col justify-between flex-1">
-            <div className="space-y-2">
+        {/* Right Column (5 Cols): Buddy Groups & Quick Navigation Actions */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Buddy Groups Live Widget */}
+          <Card className="p-5 shadow-card space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  Buddy Groups
+                  Buddy Dining Groups
                 </h4>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Coordinate meals with hostel mates and know who is heading down to the mess together.
-              </p>
+              <Badge variant="primary" className="text-[10px]">Social</Badge>
             </div>
 
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => navigate('/groups')}
-              className="w-full mt-4 font-semibold text-xs"
-            >
-              Open Buddy Groups <ArrowRight className="h-3.5 w-3.5 ml-1" />
-            </Button>
-          </Card>
-        </div>
-      </div>
-
-      {/* 4. Today's Full Schedule Preview Timeline */}
-      <div className="pt-2">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              Today's Complete Dining Schedule
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Four scheduled services prepared daily by the central campus kitchen.
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Coordinate dining times with hostel friends and check who is heading down to the mess together right now.
             </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/meals')}
-            className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-          >
-            Weekly Menu <ArrowRight className="h-3.5 w-3.5 ml-1" />
-          </Button>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {SCHEDULES.map((slot) => {
-            const isCurrent = mealStatus.mealType === slot.type;
-            const items = mealsByType[slot.type]?.items || [];
-
-            return (
-              <Card
-                key={slot.type}
-                className={`p-4 transition-all duration-200 ${
-                  isCurrent
-                    ? 'ring-2 ring-blue-600/70 dark:ring-blue-500/70 shadow-card bg-blue-50/20 dark:bg-blue-950/20'
-                    : 'border-slate-200 dark:border-slate-800'
-                }`}
+            <div className="pt-1 flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate('/groups')}
+                className="flex-1 font-semibold text-xs"
               >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                    {slot.name}
-                  </span>
-                  {isCurrent && (
-                    <Badge variant="primary" className="text-[9px] px-1.5 py-0">Active</Badge>
-                  )}
-                </div>
-                <p className="text-[11px] text-slate-400 font-mono mb-2">{slot.time}</p>
-                <div className="text-xs text-slate-600 dark:text-slate-300 min-h-[38px] line-clamp-2">
-                  {items.length > 0 ? items.join(', ') : 'Standard schedule menu'}
-                </div>
-              </Card>
-            );
-          })}
+                Open Buddy Groups <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/feedback')}
+                className="font-semibold text-xs"
+              >
+                Rate Quality
+              </Button>
+            </div>
+          </Card>
+
+          {/* Quick Hub Navigation Cards */}
+          <div className="grid grid-cols-2 gap-3.5">
+            <Card
+              onClick={() => navigate('/meals')}
+              className="p-4 shadow-card hover:border-blue-400 cursor-pointer transition-all space-y-1.5"
+            >
+              <div className="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                <UtensilsCrossed className="h-4 w-4" />
+              </div>
+              <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">Dining Hub</h5>
+              <p className="text-[11px] text-slate-400">Weekly plan & food gallery</p>
+            </Card>
+
+            <Card
+              onClick={() => navigate('/directory')}
+              className="p-4 shadow-card hover:border-blue-400 cursor-pointer transition-all space-y-1.5"
+            >
+              <div className="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                <Building2 className="h-4 w-4" />
+              </div>
+              <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">Hostel Rooms</h5>
+              <p className="text-[11px] text-slate-400">Resident directory & beds</p>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
