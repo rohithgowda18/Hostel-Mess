@@ -223,6 +223,36 @@ export const messApi = {
     return response.data;
   },
 
+  // Central MealService Domain API (User Spec #9)
+  async getCurrentMealService() {
+    try {
+      const response = await apiClient.get('/meal-services/current');
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+  async getCurrentMealService() {
+    try {
+      const response = await apiClient.get('/meal-services/current');
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+  async getTodayMealServices() {
+    try {
+      const response = await apiClient.get('/meal-services/today');
+      return response.data;
+    } catch {
+      return [];
+    }
+  },
+  async updateMealServiceStatus(id, status) {
+    const response = await apiClient.put(`/meal-services/${id}/status`, { status });
+    return response.data;
+  },
+
   // Attendance API
   async setExpectedAttendance(mealType, date, expected) {
     const response = await apiClient.post('/attendance/expected', { mealType, date, expected });

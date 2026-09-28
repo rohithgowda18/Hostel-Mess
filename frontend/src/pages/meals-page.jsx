@@ -25,7 +25,9 @@ import {
   Moon,
   Camera,
   X,
-  User
+  User,
+  Upload,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,6 +86,50 @@ export default function MealsPage() {
   const [showAdminWeeklyEditor, setShowAdminWeeklyEditor] = useState(false);
   const [editedWeekly, setEditedWeekly] = useState(DEFAULT_WEEKLY_SCHEDULE);
   const [saveStatus, setSaveStatus] = useState('');
+
+  // Live Photo Upload states
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadSlot, setUploadSlot] = useState('LUNCH');
+  const [uploadCaption, setUploadCaption] = useState('');
+  const [uploadType, setUploadType] = useState(isAdmin ? 'OFFICIAL' : 'COMMUNITY');
+  const [uploading, setUploading] = useState(false);
+
+  const getPhotoUrl = (p) => {
+    if (!p) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80';
+    if (p.id) return `/api/student-photos/${p.id}/image`;
+    if (p.photoUrl) return p.photoUrl;
+    if (p.imageUrls && p.imageUrls.length > 0) {
+      const u = p.imageUrls[0];
+      return u.startsWith('http') || u.startsWith('/') ? u : `/${u}`;
+    }
+    return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80';
+  };
+
+  const handleUploadPhoto = async (e) => {
+    e.preventDefault();
+    if (!uploadFile) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('images', uploadFile);
+      formData.append('mealType', uploadSlot);
+      formData.append('description', uploadCaption);
+      formData.append('type', uploadType);
+      await messApi.uploadStudentPhoto(formData);
+      setShowUploadModal(false);
+      setUploadFile(null);
+      setUploadCaption('');
+      const updatedPhotos = await messApi.getStudentPhotosToday().catch(() => []);
+      setPhotos(Array.isArray(updatedPhotos) ? updatedPhotos : []);
+      setSaveStatus('Photo successfully streamed to counter evidence gallery!');
+      setTimeout(() => setSaveStatus(''), 4000);
+    } catch (err) {
+      alert('Failed to upload photo. Please ensure it is JPG/PNG/WEBP.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // History compare states
   const [historyDate, setHistoryDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -442,18 +488,18 @@ export default function MealsPage() {
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Camera className="h-4 w-4 text-blue-600" />
-                Student Photo Evidence Gallery
+                Live Food Evidence Gallery
               </h3>
               <p className="text-xs text-slate-500">
-                Verified photos captured at hostel dining counters today.
+                Official chef platings and peer-verified counter photos captured today.
               </p>
             </div>
             <Button
               size="sm"
-              onClick={() => navigate('/report-meal')}
+              onClick={() => setShowUploadModal(true)}
               className="text-xs font-bold bg-blue-600 hover:bg-blue-700 gap-1.5"
             >
-              <Camera className="h-4 w-4" /> Upload Meal Photo
+              <Upload className="h-4 w-4" /> Upload Counter Photo
             </Button>
           </div>
 
@@ -482,45 +528,169 @@ export default function MealsPage() {
                 <EmptyState
                   icon={Camera}
                   title="No food photos shared yet today"
-                  description="Be the first resident to photograph today's meal and upload it with your consensus report."
-                  actionLabel="Upload First Photo (+20 Pts)"
-                  onAction={() => navigate('/report-meal')}
+                  description="Be the first resident to photograph today's meal and upload it with your counter verification."
+                  actionLabel="Upload Counter Photo (+20 Pts)"
+                  onAction={() => setShowUploadModal(true)}
                 />
               );
             }
             return (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredPhotos.map((photo, idx) => (
-                  <Card
-                    key={photo.id || idx}
-                    onClick={() => setLightboxIndex(idx)}
-                    className="overflow-hidden cursor-pointer group shadow-card hover:border-blue-400 transition-all"
-                  >
-                    <div className="relative aspect-square w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                      <img
-                        src={photo.photoUrl}
-                        alt="Meal Evidence"
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                      <Badge variant="primary" className="absolute top-2 left-2 text-[9px] font-bold uppercase backdrop-blur-md">
-                        {photo.mealType || 'Meal'}
-                      </Badge>
-                    </div>
-                    <div className="p-3 text-xs space-y-1">
-                      <div className="font-bold text-slate-800 dark:text-slate-200 truncate">
-                        {photo.description || photo.foodItems?.join(', ') || 'Live Serving Photo'}
+                {filteredPhotos.map((photo, idx) => {
+                  const isOfficial = photo.type === 'OFFICIAL' || photo.uploadedByRole === 'ADMIN';
+                  return (
+                    <Card
+                      key={photo.id || idx}
+                      onClick={() => setLightboxIndex(idx)}
+                      className="overflow-hidden cursor-pointer group shadow-card hover:border-blue-400 transition-all"
+                    >
+                      <div className="relative aspect-square w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        <img
+                          src={getPhotoUrl(photo)}
+                          alt="Meal Evidence"
+                          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80';
+                          }}
+                        />
+                        <div className="absolute top-2 left-2 flex flex-col gap-1">
+                          <Badge variant="primary" className="text-[9px] font-bold uppercase backdrop-blur-md">
+                            {photo.mealType || 'Meal'}
+                          </Badge>
+                          {isOfficial ? (
+                            <Badge variant="primary" className="bg-indigo-600 text-white text-[8px] font-bold gap-1 shadow-xs">
+                              <ShieldCheck className="h-2.5 w-2.5" /> Official Plate
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="bg-slate-900/80 text-white text-[8px] font-bold gap-1 backdrop-blur-xs">
+                              <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" /> Student
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-[11px] text-slate-400 flex items-center justify-between">
-                        <span>{photo.uploadedBy || 'Resident'}</span>
-                        <span>{photo.uploadTime || 'Today'}</span>
+                      <div className="p-3 text-xs space-y-1">
+                        <div className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                          {photo.caption || photo.description || photo.foodItems?.join(', ') || 'Live Counter Plate'}
+                        </div>
+                        <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                          <span className="truncate max-w-[120px]">{photo.uploadedBy || 'Resident'}</span>
+                          <span>{photo.uploadTime || 'Today'}</span>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </div>
             );
           })()}
+
+          {/* Upload Counter Photo Modal */}
+          {showUploadModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in-0 duration-150">
+              <div className="relative w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-elevated space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Camera className="h-5 w-5 text-blue-600" />
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">
+                      {isAdmin ? 'Upload Official / Counter Photo' : 'Upload Meal Evidence'}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowUploadModal(false)}
+                    className="p-1 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleUploadPhoto} className="space-y-4">
+                  {/* File Selection */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                      Select Food Image (JPG, PNG, WEBP)
+                    </label>
+                    <Input
+                      type="file"
+                      accept="image/png, image/jpeg, image/webp"
+                      onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                      required
+                      className="cursor-pointer text-xs"
+                    />
+                  </div>
+
+                  {/* Meal Slot */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                      Meal Service Slot
+                    </label>
+                    <select
+                      value={uploadSlot}
+                      onChange={(e) => setUploadSlot(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="BREAKFAST">Breakfast (07:30 – 09:30 AM)</option>
+                      <option value="LUNCH">Lunch (12:30 – 02:30 PM)</option>
+                      <option value="SNACKS">Evening Snacks (04:30 – 05:30 PM)</option>
+                      <option value="DINNER">Dinner (07:30 – 09:30 PM)</option>
+                    </select>
+                  </div>
+
+                  {/* Caption */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                      Dishes & Caption
+                    </label>
+                    <Input
+                      placeholder="e.g. Masala Dosa, Sambhar, Chutney, Tea"
+                      value={uploadCaption}
+                      onChange={(e) => setUploadCaption(e.target.value)}
+                      className="text-xs"
+                    />
+                  </div>
+
+                  {/* Admin Authority Toggle */}
+                  {isAdmin && (
+                    <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-indigo-900 dark:text-indigo-200 block">
+                          Official Mess Plate
+                        </span>
+                        <span className="text-[11px] text-indigo-700 dark:text-indigo-300">
+                          Marks this photo as the authoritative sample plated by kitchen staff.
+                        </span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={uploadType === 'OFFICIAL'}
+                        onChange={(e) => setUploadType(e.target.checked ? 'OFFICIAL' : 'COMMUNITY')}
+                        className="h-4 w-4 rounded accent-indigo-600 cursor-pointer"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowUploadModal(false)}
+                      className="flex-1 text-xs"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={uploading || !uploadFile}
+                      className="flex-1 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {uploading ? 'Streaming to GridFS...' : 'Upload & Publish'}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
           {/* Lightbox Modal */}
           {lightboxIndex !== null && photos[lightboxIndex] && (
@@ -533,18 +703,36 @@ export default function MealsPage() {
                   <X className="h-4 w-4" />
                 </button>
                 <img
-                  src={photos[lightboxIndex].photoUrl}
+                  src={getPhotoUrl(photos[lightboxIndex])}
                   alt="Expanded"
                   className="w-full max-h-[420px] object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80';
+                  }}
                 />
-                <div className="p-4 space-y-1 text-xs">
+                <div className="p-4 space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <Badge variant="primary">{photos[lightboxIndex].mealType}</Badge>
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant="primary">{photos[lightboxIndex].mealType}</Badge>
+                      {photos[lightboxIndex].type === 'OFFICIAL' || photos[lightboxIndex].uploadedByRole === 'ADMIN' ? (
+                        <Badge variant="primary" className="bg-indigo-600 text-white text-[9px] gap-1">
+                          <ShieldCheck className="h-3 w-3" /> Official Mess Plate
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-[9px] gap-1">
+                          <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Student Verified
+                        </Badge>
+                      )}
+                    </div>
                     <span className="text-slate-400">{photos[lightboxIndex].uploadTime || 'Today'}</span>
                   </div>
                   <p className="font-semibold text-slate-800 dark:text-slate-200 pt-1">
-                    {photos[lightboxIndex].description || 'Counter Verification Evidence'}
+                    {photos[lightboxIndex].caption || photos[lightboxIndex].description || 'Counter Verification Evidence'}
                   </p>
+                  <div className="text-[11px] text-slate-500">
+                    Uploaded by: <span className="font-medium text-slate-700 dark:text-slate-300">{photos[lightboxIndex].uploadedBy || 'Resident'}</span>
+                  </div>
                 </div>
               </div>
             </div>

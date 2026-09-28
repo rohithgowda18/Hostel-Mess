@@ -41,8 +41,13 @@ public class MealController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired(required = false)
+    private com.hostel.mess.service.MealServiceLifecycleService mealServiceLifecycleService;
+
     @org.springframework.beans.factory.annotation.Value("${jwt.secret:${app.jwtSecret:${JWT_SECRET:change-me-in-production-min-32-chars-please}}}")
     private String jwtSecret;
+
+    private static final java.util.concurrent.ConcurrentHashMap<String, Long> ACTIVE_NONCES = new java.util.concurrent.ConcurrentHashMap<>();
 
     private String buildCheckinCode(String mealType, String date) {
         try {
@@ -51,7 +56,13 @@ public class MealController {
             byte[] h = mac.doFinal((date + "|" + mealType.toUpperCase()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
             StringBuilder hex = new StringBuilder();
             for (byte b : h) hex.append(String.format("%02x", b));
-            return "CHECKIN-" + date + "-" + mealType.toUpperCase() + "-" + hex.substring(0, 6).toUpperCase();
+            String signature = hex.substring(0, 6).toUpperCase();
+            
+            // Generate single-use nonce expiring in 70 seconds
+            String nonce = java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+            ACTIVE_NONCES.put(nonce, System.currentTimeMillis() + 70000);
+
+            return "PASS-" + signature + "-" + nonce;
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate check-in code", e);
         }
@@ -164,6 +175,11 @@ public class MealController {
         }
 
         MealAttendance saved = attendanceRepository.save(attendance);
+
+        if (mealServiceLifecycleService != null) {
+            mealServiceLifecycleService.incrementExpectedAttendance(date, mealType, expected);
+        }
+
         return ResponseEntity.ok(saved);
     }
 
@@ -185,7 +201,13 @@ public class MealController {
         if (mealType == null || date == null) {
             return ResponseEntity.badRequest().body("mealType and date are required");
         }
-        return ResponseEntity.ok(Map.of("code", buildCheckinCode(mealType, date)));
+        String code = buildCheckinCode(mealType, date);
+        return ResponseEntity.ok(Map.of(
+            "code", code,
+            "mealType", mealType.toUpperCase(),
+            "date", date,
+            "expiresInSeconds", 60
+        ));
     }
 
     @PostMapping("/api/attendance/check-in")
@@ -199,9 +221,16 @@ public class MealController {
             return ResponseEntity.badRequest().body("mealType, date, and code are required");
         }
 
-        String expectedCode = buildCheckinCode(mealType, date);
-        if (!expectedCode.equalsIgnoreCase(code.trim())) {
-            return ResponseEntity.badRequest().body("Invalid QR check-in code.");
+        // Anti-Replay Nonce Verification (User Spec #16)
+        String[] parts = code.trim().split("-");
+        if (parts.length >= 3) {
+            String nonce = parts[parts.length - 1];
+            Long expiry = ACTIVE_NONCES.get(nonce);
+            if (expiry == null || System.currentTimeMillis() > expiry) {
+                return ResponseEntity.badRequest().body("Dining pass has expired or was already consumed. Please refresh.");
+            }
+            // Consume nonce immediately
+            ACTIVE_NONCES.remove(nonce);
         }
 
         Optional<MealAttendance> attendanceOpt = attendanceRepository.findByUserEmailAndMealTypeAndDate(userEmail, mealType.toUpperCase(), date);
@@ -216,6 +245,11 @@ public class MealController {
         attendance.setCheckedInAt(Instant.now());
 
         MealAttendance saved = attendanceRepository.save(attendance);
+
+        if (mealServiceLifecycleService != null) {
+            mealServiceLifecycleService.incrementActualAttendance(date, mealType);
+        }
+
         return ResponseEntity.ok(saved);
     }
 
