@@ -152,6 +152,26 @@ export default function MealsPage() {
     fetchMealsData();
   }, []);
 
+  useEffect(() => {
+    if (!historyDate) return;
+    const fetchHistory = async () => {
+      try {
+        const slots = ['BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'];
+        const results = await Promise.all(
+          slots.map((s) => messApi.getMealConsensus(s, historyDate).catch(() => null))
+        );
+        const map = {};
+        slots.forEach((s, idx) => {
+          map[s] = results[idx];
+        });
+        setHistoryMenuData(map);
+      } catch (err) {
+        setHistoryMenuData(null);
+      }
+    };
+    fetchHistory();
+  }, [historyDate]);
+
   const handleSaveWeeklySchedule = async () => {
     try {
       const mondayStr = getMondayDateStr();
@@ -527,7 +547,11 @@ export default function MealsPage() {
                   </span>
                   <span className="text-[11px] text-slate-400 font-mono block">{s.time}</span>
                   <p className="text-xs text-slate-600 dark:text-slate-300 pt-2">
-                    Standard scheduled regional hostel items served on {historyDate}.
+                    {historyMenuData?.[s.key]?.items && historyMenuData[s.key].items.length > 0
+                      ? historyMenuData[s.key].items.map((i) => i.name).join(', ')
+                      : historyMenuData?.[s.key]?.expectedItems && historyMenuData[s.key].expectedItems.length > 0
+                      ? historyMenuData[s.key].expectedItems.join(', ')
+                      : `No meal log recorded for ${historyDate}.`}
                   </p>
                 </div>
               ))}

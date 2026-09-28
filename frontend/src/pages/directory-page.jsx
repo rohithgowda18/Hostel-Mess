@@ -51,7 +51,7 @@ export default function DirectoryPage() {
 
   // Modals
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
-  const [newRoom, setNewRoom] = useState({ roomNumber: '', block: 'Freshers Block', capacity: 2, floor: 1 });
+  const [newRoom, setNewRoom] = useState({ roomNumber: '', block: '', capacity: 2, floor: 1 });
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [assignStudentId, setAssignStudentId] = useState('');
@@ -83,7 +83,7 @@ export default function DirectoryPage() {
 
       if (treeData && Array.isArray(treeData)) {
         for (const blockObj of treeData) {
-          const blockName = blockObj.block || 'Freshers Block';
+          const blockName = blockObj.block || 'Hostel Block';
           if (blockObj.floors && Array.isArray(blockObj.floors)) {
             for (const floorObj of blockObj.floors) {
               const floorNum = floorObj.floorNumber || 1;
@@ -100,19 +100,13 @@ export default function DirectoryPage() {
                             id: st.id || st.email,
                             name: st.name || st.email?.split('@')[0] || 'Resident',
                             studentId: st.email || st.id,
-                            hostel: blockName.includes('Aryabhatta')
-                              ? 'Aryabhatta Hostel'
-                              : blockName.includes('NNRI')
-                              ? 'NNRI Hostel'
-                              : blockName.includes('PG')
-                              ? 'PG Hostel'
-                              : 'Freshers Block',
+                            hostel: blockName,
                             block: blockName,
                             room: room.roomNumber,
                             roomId: room.id,
-                            branch: st.branch || 'Computer Science',
-                            year: st.year || '1',
-                            roomType: blockName.includes('NNRI') ? 'Single Sharing (Attached)' : 'Two Sharing (Common)',
+                            branch: st.branch || 'Not Specified',
+                            year: st.year || 'N/A',
+                            roomType: blockName.toLowerCase().includes('single') ? 'Single Sharing (Attached)' : 'Two Sharing (Common)',
                             status: 'present'
                           });
                         });
@@ -130,7 +124,7 @@ export default function DirectoryPage() {
                     capacity: cap,
                     occupancy: occ,
                     occupants: occupants,
-                    roomType: blockName.includes('NNRI') ? 'Single Sharing (Attached)' : 'Two Sharing (Common)',
+                    roomType: blockName.toLowerCase().includes('single') ? 'Single Sharing (Attached)' : 'Two Sharing (Common)',
                     status: occ >= cap ? 'full' : occ === 0 ? 'available' : 'available'
                   });
                 }
@@ -140,31 +134,7 @@ export default function DirectoryPage() {
         }
       }
 
-      // If treeData was empty or mock fallback needed
-      if (roomList.length === 0) {
-        const defaultBlocks = ['Freshers Block', 'Aryabhatta Hostel', 'NNRI Hostel'];
-        defaultBlocks.forEach((b, bIdx) => {
-          for (let f = 1; f <= 3; f++) {
-            for (let r = 1; r <= 4; r++) {
-              const rNum = `${bIdx === 0 ? 'FR' : bIdx === 1 ? 'A' : 'N'}${f * 100 + r}`;
-              const occ = (f + r) % 3;
-              roomList.push({
-                id: `${b}-${rNum}`,
-                roomNumber: rNum,
-                block: b,
-                floor: f,
-                capacity: 2,
-                occupancy: occ,
-                occupants: occ > 0 ? [`student${f}${r}@hostel.app`] : [],
-                roomType: 'Two Sharing (Common)',
-                status: occ >= 2 ? 'full' : 'available'
-              });
-            }
-          }
-        });
-      }
-
-      // Fallback students if tree had none
+      // Load admin students if tree had none
       if (studentList.length === 0) {
         const adminStudents = await messApi.getAdminStudents('').catch(() => []);
         if (Array.isArray(adminStudents) && adminStudents.length > 0) {
@@ -173,12 +143,12 @@ export default function DirectoryPage() {
               id: st.id || st.email,
               name: st.name || st.email?.split('@')[0] || 'Resident',
               studentId: st.email,
-              hostel: st.hostel || 'Freshers Block',
-              block: st.hostel || 'Freshers Block',
-              room: st.roomNumber || 'FR101',
-              branch: st.branch || 'Computer Science',
-              year: st.year || '1',
-              roomType: 'Two Sharing (Common)',
+              hostel: st.hostel || 'Not Assigned',
+              block: st.hostel || 'Not Assigned',
+              room: st.roomNumber || 'N/A',
+              branch: st.branch || 'Not Specified',
+              year: st.year || 'N/A',
+              roomType: 'Standard Sharing',
               status: 'present'
             });
           });
@@ -362,21 +332,21 @@ export default function DirectoryPage() {
         <StatCard
           icon={Users}
           title="Total Residents"
-          value={occupancyStats.totalStudents || students.length || 78}
+          value={occupancyStats.totalStudents || students.length || 0}
           subtitle="Enrolled hostel students"
           accentColor="blue"
         />
         <StatCard
           icon={DoorOpen}
           title="Occupied Rooms"
-          value={occupancyStats.occupiedRooms || 42}
+          value={occupancyStats.occupiedRooms || rooms.filter((r) => (r.occupancy || 0) > 0).length}
           subtitle="Active residential rooms"
           accentColor="indigo"
         />
         <StatCard
           icon={Bed}
           title="Available Vacancies"
-          value={occupancyStats.vacancies || 24}
+          value={occupancyStats.vacancies || rooms.reduce((acc, r) => acc + Math.max(0, (r.capacity || 2) - (r.occupancy || 0)), 0)}
           subtitle="Open beds ready for allocation"
           badgeText="Available"
           accentColor="emerald"
@@ -384,8 +354,8 @@ export default function DirectoryPage() {
         <StatCard
           icon={Building2}
           title="Hostel Blocks"
-          value="4 Blocks"
-          subtitle="Freshers, Aryabhatta, NNRI, PG"
+          value={`${new Set(rooms.map((r) => r.block).filter(Boolean)).size} Blocks`}
+          subtitle={Array.from(new Set(rooms.map((r) => r.block).filter(Boolean))).join(', ') || 'Active residences'}
           accentColor="amber"
         />
       </div>
@@ -446,7 +416,7 @@ export default function DirectoryPage() {
             <Filter className="h-3.5 w-3.5" />
             <span>Block:</span>
           </div>
-          {['All', 'Freshers', 'Aryabhatta', 'NNRI', 'PG'].map((h) => (
+          {['All', ...Array.from(new Set(rooms.map((r) => r.block).filter(Boolean)))].map((h) => (
             <button
               key={h}
               onClick={() => setFilterHostel(h)}
@@ -788,6 +758,7 @@ export default function DirectoryPage() {
                   onChange={(e) => setNewRoom({ ...newRoom, block: e.target.value })}
                   className="w-full h-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 text-xs text-slate-900 dark:text-slate-100 outline-none"
                 >
+                  <option value="">Select Hostel Block</option>
                   <option value="Freshers Block">Freshers Block</option>
                   <option value="Aryabhatta G">Aryabhatta G Block</option>
                   <option value="Aryabhatta F">Aryabhatta F Block</option>

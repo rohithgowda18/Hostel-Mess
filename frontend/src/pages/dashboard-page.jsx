@@ -99,7 +99,7 @@ export default function DashboardPage() {
   const [mealsByType, setMealsByType] = useState({});
   const [announcements, setAnnouncements] = useState([]);
   const [attendance, setAttendance] = useState({ expected: null });
-  const [occupancy, setOccupancy] = useState({ percentage: 54, statusLabel: 'Moderate Queue' });
+  const [occupancy, setOccupancy] = useState({ percentage: 0, statusLabel: 'Live queue tracker' });
   const [mealStatus, setMealStatus] = useState(() => computeMealState());
   const [countdownText, setCountdownText] = useState({ h: '00', m: '00', s: '00' });
   const [showBanner, setShowBanner] = useState(true);
@@ -148,7 +148,7 @@ export default function DashboardPage() {
       setConsensusData(consensus);
       if (meData) setUserProfile(meData);
 
-      if (occStats && typeof occStats.occupancyPercentage === 'number' && occStats.occupancyPercentage > 0) {
+      if (occStats && typeof occStats.occupancyPercentage === 'number') {
         setOccupancy({
           percentage: occStats.occupancyPercentage,
           statusLabel:
@@ -156,11 +156,9 @@ export default function DashboardPage() {
             (occStats.occupancyPercentage > 75 ? 'Crowded (Peak Queue)' : occStats.occupancyPercentage > 40 ? 'Moderate Queue' : 'Quiet / Fast Entry')
         });
       } else {
-        const mins = new Date().getHours() * 60 + new Date().getMinutes();
-        const occPercent = state.active ? (mins % 30 > 15 ? 68 : 46) : 24;
         setOccupancy({
-          percentage: occPercent,
-          statusLabel: occPercent > 70 ? 'Crowded (Peak Queue)' : occPercent > 40 ? 'Moderate Queue' : 'Quiet / Fast Entry'
+          percentage: 0,
+          statusLabel: 'No scanner activity'
         });
       }
     } catch (e) {
@@ -359,7 +357,7 @@ export default function DashboardPage() {
                     My Room Allocation
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {userProfile?.hostel || 'Freshers Block'} · Room {userProfile?.roomNumber || 'FR101'}
+                    {userProfile?.hostel || 'Hostel Unassigned'} · {userProfile?.roomNumber ? `Room ${userProfile.roomNumber}` : 'Room Not Assigned'}
                   </p>
                 </div>
               </div>
@@ -450,7 +448,7 @@ export default function DashboardPage() {
             {/* Official menu note */}
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-semibold text-slate-700 dark:text-slate-300">Expected: </span>
-              {consensusData?.expectedItems?.join(', ') || 'Idli, Sambar, Chutney, Tea'}
+              {consensusData?.expectedItems?.join(', ') || mealsByType[mealStatus.mealType]?.items?.join(', ') || 'Published menu items unavailable'}
             </div>
           </Card>
         </div>

@@ -36,14 +36,14 @@ export default function ProfilePage() {
   const { themeMode, setThemeMode } = useTheme();
   const [userProfile, setUserProfile] = useState(getUser() || {});
   const [stats, setStats] = useState({
-    points: 45,
-    reportsSubmitted: 3,
-    photosUploaded: 2,
-    mealsCheckedIn: 18,
-    attendanceRate: 94,
-    badges: ['Meal Reporter', 'Food Explorer'],
-    rank: 4,
-    totalUsers: 48,
+    points: 0,
+    reportsSubmitted: 0,
+    photosUploaded: 0,
+    mealsCheckedIn: 0,
+    attendanceRate: 0,
+    badges: [],
+    rank: 0,
+    totalUsers: 0,
   });
   const [leaderboard, setLeaderboard] = useState([]);
   const [editing, setEditing] = useState(false);
@@ -129,8 +129,8 @@ export default function ProfilePage() {
         <StatCard
           icon={Trophy}
           title="Contribution Score"
-          value={`${stats.points} Pts`}
-          subtitle={`Campus Rank #${stats.rank || 1} of ${stats.totalUsers || 50}`}
+          value={`${stats.points || 0} Pts`}
+          subtitle={stats.rank > 0 ? `Campus Rank #${stats.rank} of ${stats.totalUsers || 1}` : 'Active Contributor'}
           badgeText="Reputation"
           accentColor="amber"
         />
@@ -151,7 +151,7 @@ export default function ProfilePage() {
         <StatCard
           icon={CheckCircle2}
           title="Attendance Rate"
-          value={`${stats.attendanceRate || 95}%`}
+          value={`${stats.attendanceRate || 0}%`}
           subtitle={`${stats.mealsCheckedIn || 0} meals checked-in`}
           badgeText="Verified"
           accentColor="emerald"
@@ -181,8 +181,11 @@ export default function ProfilePage() {
                 Earned Campus Badges
               </span>
               <div className="flex flex-wrap gap-1.5">
-                {['Meal Reporter', 'Food Explorer', 'Early Bird', 'Active Resident'].map((badge) => {
-                  const hasBadge = (stats.badges || []).includes(badge) || stats.points > 20;
+                {(stats.badges && stats.badges.length > 0
+                  ? stats.badges
+                  : ['Resident Contributor']
+                ).map((badge) => {
+                  const hasBadge = (stats.badges || []).includes(badge) || stats.badges?.length === 0;
                   return (
                     <span
                       key={badge}
@@ -225,11 +228,13 @@ export default function ProfilePage() {
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500">Hostel Block</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">{userProfile.hostel || 'Freshers Block'}</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{userProfile.hostel || 'Not Assigned'}</span>
                 </div>
                 <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500">Allocated Room</span>
-                  <span className="font-bold text-blue-600 dark:text-blue-400">Room {userProfile.roomNumber || 'FR101'}</span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                    {userProfile.roomNumber ? `Room ${userProfile.roomNumber}` : 'Not Allocated'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500">Contact Phone</span>
@@ -316,49 +321,47 @@ export default function ProfilePage() {
               <Badge variant="primary">Top 10</Badge>
             </div>
 
-            <div className="space-y-2">
-              {(leaderboard.length > 0
-                ? leaderboard
-                : [
-                    { name: 'Rohith G.', email: 'student@hostel.app', points: 65, rank: 1 },
-                    { name: 'Arun K.', email: 'arun@hostel.app', points: 55, rank: 2 },
-                    { name: 'Priya M.', email: 'priya@hostel.app', points: 50, rank: 3 },
-                    { name: 'Kavya S.', email: 'kavya@hostel.app', points: 45, rank: 4 },
-                  ]
-              ).map((user, idx) => {
-                const isMe = user.email === userProfile.email;
-                return (
-                  <div
-                    key={idx}
-                    className={`flex items-center justify-between p-3 rounded-2xl border transition-all text-xs ${
-                      isMe
-                        ? 'bg-blue-50/80 dark:bg-blue-950/60 border-blue-200 dark:border-blue-900/60 font-bold'
-                        : 'bg-slate-50/50 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="font-black text-sm text-slate-400 w-5">
-                        #{idx + 1}
-                      </span>
-                      <div className="h-8 w-8 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center text-xs">
-                        {(user.name || user.email).slice(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <span className="text-slate-900 dark:text-slate-100 block">
-                          {user.name || user.email?.split('@')[0]} {isMe && '(You)'}
+            {leaderboard.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">
+                No leaderboard rankings recorded yet this semester.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {leaderboard.map((user, idx) => {
+                  const isMe = user.email === userProfile.email;
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex items-center justify-between p-3 rounded-2xl border transition-all text-xs ${
+                        isMe
+                          ? 'bg-blue-50/80 dark:bg-blue-950/60 border-blue-200 dark:border-blue-900/60 font-bold'
+                          : 'bg-slate-50/50 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-black text-sm text-slate-400 w-5">
+                          #{idx + 1}
                         </span>
-                        <span className="text-[10px] text-slate-400">Hostel Resident</span>
+                        <div className="h-8 w-8 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center text-xs">
+                          {(user.name || user.email || 'U').slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="text-slate-900 dark:text-slate-100 block">
+                            {user.name || user.email?.split('@')[0]} {isMe && '(You)'}
+                          </span>
+                          <span className="text-[10px] text-slate-400">Hostel Resident</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 font-black text-amber-600 dark:text-amber-400">
+                        <span>{user.points ?? 0}</span>
+                        <span className="text-[10px] text-slate-400 font-normal">pts</span>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-1.5 font-black text-amber-600 dark:text-amber-400">
-                      <span>{user.points || 45}</span>
-                      <span className="text-[10px] text-slate-400 font-normal">pts</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </Card>
         </div>
       </div>

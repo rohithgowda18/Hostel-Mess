@@ -27,10 +27,10 @@ export default function LoginPage({ onLogin }) {
     email: '',
     password: '',
     confirmPassword: '',
-    hostel: 'Freshers Block',
+    hostel: '',
     roomNumber: '',
     year: '1',
-    branch: 'Computer Science',
+    branch: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -320,6 +320,7 @@ export default function LoginPage({ onLogin }) {
                     onChange={(e) => setRegData({ ...regData, hostel: e.target.value })}
                     className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 outline-none"
                   >
+                    <option value="">Select Hostel Block</option>
                     <option value="Freshers Block">Freshers Block</option>
                     <option value="Aryabhatta Hostel">Aryabhatta Hostel</option>
                     <option value="NNRI Hostel">NNRI Hostel</option>
@@ -356,10 +357,10 @@ export default function LoginPage({ onLogin }) {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Branch
+                    Branch / Department
                   </label>
                   <Input
-                    placeholder="Computer Science"
+                    placeholder="e.g. Computer Science, Mechanical..."
                     value={regData.branch}
                     onChange={(e) => setRegData({ ...regData, branch: e.target.value })}
                   />
