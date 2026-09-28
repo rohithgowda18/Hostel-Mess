@@ -54,7 +54,7 @@ export default function AdminStudentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-black text-text tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Resident Student Management
             </h1>
             <Badge variant="primary" className="text-[11px] font-bold">
@@ -88,7 +88,7 @@ export default function AdminStudentsPage() {
             className="pl-10 text-xs bg-surface border-border h-10"
           />
         </div>
-        <Button type="submit" size="sm" className="bg-primary hover:bg-primary-hover text-white font-bold text-xs h-10 px-4">
+        <Button type="submit" size="sm" className="font-bold text-xs h-10 px-4">
           Search
         </Button>
       </form>
@@ -132,7 +132,7 @@ export default function AdminStudentsPage() {
                   return (
                     <tr key={st.id} className="hover:bg-surface-elevated/50 transition-colors">
                       <td className="px-4 py-3 font-bold text-text flex items-center gap-2">
-                        <div className="h-7 w-7 rounded-lg bg-surface-elevated border border-border flex items-center justify-center text-xs font-bold text-text-secondary">
+                        <div className="h-7 w-7 rounded-md bg-surface-elevated border border-border flex items-center justify-center text-xs font-bold text-text-secondary">
                           {(st.name || st.email || 'S').slice(0, 2).toUpperCase()}
                         </div>
                         <span>{st.name || st.email?.split('@')[0]}</span>
@@ -165,8 +165,8 @@ export default function AdminStudentsPage() {
                       </td>
 
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-success">
-                          <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                           Active
                         </span>
                       </td>
@@ -175,7 +175,7 @@ export default function AdminStudentsPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => setSelectedStudent(st)}
-                            className="p-1.5 rounded-lg border border-border text-text-secondary hover:text-text hover:bg-surface-elevated cursor-pointer"
+                            className="p-1.5 rounded-md border border-border text-text-secondary hover:text-text hover:bg-surface-elevated cursor-pointer"
                             title="View Student Details"
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
@@ -194,11 +194,11 @@ export default function AdminStudentsPage() {
       {/* Student Details Modal (Section 31) */}
       {selectedStudent && (
         <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-surface rounded-2xl p-5 border border-border shadow-2xl space-y-4">
+          <div className="max-w-md w-full bg-surface rounded-lg p-5 border border-border shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
-                  <User className="h-5 w-5" />
+                <div className="h-9 w-9 rounded-md bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 flex items-center justify-center font-bold">
+                  <User className="h-4.5 w-4.5" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-text">
@@ -209,7 +209,7 @@ export default function AdminStudentsPage() {
               </div>
               <button
                 onClick={() => setSelectedStudent(null)}
-                className="p-1.5 rounded-lg hover:bg-surface-elevated text-text-muted hover:text-text cursor-pointer"
+                className="p-1.5 rounded-md hover:bg-surface-elevated text-text-muted hover:text-text cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>

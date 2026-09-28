@@ -66,7 +66,7 @@ export default function AdminAnalyticsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-black text-text tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Operational Dining Analytics
             </h1>
             <Badge variant="primary" className="text-[11px] font-bold">
@@ -95,7 +95,7 @@ export default function AdminAnalyticsPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Registered Diners</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-3xl font-black text-text">{analytics?.totalStudents || 0}</span>
+            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{analytics?.totalStudents || 0}</span>
             <span className="text-xs text-text-muted">students</span>
           </div>
           <p className="text-[11px] text-text-muted mt-1">Total active hostel residents</p>
@@ -104,7 +104,7 @@ export default function AdminAnalyticsPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Attendance Rate</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-3xl font-black text-success">{attendanceRate}%</span>
+            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{attendanceRate}%</span>
             <span className="text-xs text-text-muted">today</span>
           </div>
           <p className="text-[11px] text-text-muted mt-1">{checkedIn} / {expected} checked in</p>
@@ -113,7 +113,7 @@ export default function AdminAnalyticsPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Average Rating</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-3xl font-black text-text">{analytics?.averageOverallRating || '0.0'}</span>
+            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{analytics?.averageOverallRating || '0.0'}</span>
             <span className="text-xs text-text-muted">/ 5.0</span>
           </div>
           <p className="text-[11px] text-text-muted mt-1">{analytics?.totalRatings || 0} reviews logged</p>
@@ -122,7 +122,7 @@ export default function AdminAnalyticsPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Grievances</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-3xl font-black text-danger">{analytics?.openComplaints || 0}</span>
+            <span className="text-2xl font-bold text-danger">{analytics?.openComplaints || 0}</span>
             <span className="text-xs text-text-muted">open</span>
           </div>
           <p className="text-[11px] text-text-muted mt-1">{analytics?.totalComplaints || 0} total tickets</p>
@@ -155,11 +155,11 @@ export default function AdminAnalyticsPage() {
                   <div key={meal} className="space-y-1">
                     <div className="flex justify-between items-center text-xs">
                       <span className="font-bold text-text">{meal}</span>
-                      <span className="font-black text-text">{score} / 5.0</span>
+                      <span className="font-bold text-text">{score} / 5.0</span>
                     </div>
                     <div className="w-full bg-surface-elevated border border-border h-2 rounded-full overflow-hidden">
                       <div
-                        className="bg-primary h-full rounded-full transition-all duration-300"
+                        className="bg-teal-700 dark:bg-teal-500 h-full rounded-full transition-all duration-300"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -233,11 +233,11 @@ export default function AdminAnalyticsPage() {
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {Object.entries(hostelDist).map(([hostel, count]) => (
-                <div key={hostel} className="p-3 rounded-xl bg-surface-elevated border border-border">
+                <div key={hostel} className="p-3 rounded-md bg-surface-elevated border border-border">
                   <span className="text-[10px] uppercase font-bold text-text-muted block truncate">
                     {hostel}
                   </span>
-                  <span className="text-xl font-black text-text mt-0.5 block">{count}</span>
+                  <span className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-0.5 block">{count}</span>
                 </div>
               ))}
             </div>
@@ -248,7 +248,7 @@ export default function AdminAnalyticsPage() {
         <Card className="p-5 bg-surface border-border space-y-4">
           <div className="flex items-center justify-between border-b border-border pb-3">
             <h3 className="text-sm font-bold text-text flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
+              <Users className="h-4 w-4 text-teal-700 dark:text-teal-400" />
               Academic Branch Breakdown
             </h3>
           </div>
@@ -260,11 +260,11 @@ export default function AdminAnalyticsPage() {
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {Object.entries(branchDist).map(([branch, count]) => (
-                <div key={branch} className="p-3 rounded-xl bg-surface-elevated border border-border">
+                <div key={branch} className="p-3 rounded-md bg-surface-elevated border border-border">
                   <span className="text-[10px] uppercase font-bold text-text-muted block truncate">
                     {branch}
                   </span>
-                  <span className="text-xl font-black text-text mt-0.5 block">{count}</span>
+                  <span className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-0.5 block">{count}</span>
                 </div>
               ))}
             </div>

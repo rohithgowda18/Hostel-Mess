@@ -23,13 +23,13 @@ const DialogContent = forwardRef(({ className, children, ...props }, ref) => (
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-200 bg-white p-6 shadow-elevated dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 max-h-[90vh] overflow-y-auto overscroll-contain animate-in fade-in-0 zoom-in-95 duration-200',
+        'fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg border border-slate-200 bg-white p-6 shadow-dropdown dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 max-h-[90vh] overflow-y-auto overscroll-contain animate-in fade-in-0 zoom-in-95 duration-200',
         className
       )}
       {...props}
     >
       {children}
-      <DialogClose className="absolute right-4 top-4 rounded-xl p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100">
+      <DialogClose className="absolute right-4 top-4 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogClose>

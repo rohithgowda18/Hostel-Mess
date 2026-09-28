@@ -99,7 +99,7 @@ export default function AdminMealsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-black text-text tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Live Meal Operations Desk
             </h1>
             <Badge variant={isLive ? 'success' : 'default'} className="text-[11px] font-bold">
@@ -133,9 +133,9 @@ export default function AdminMealsPage() {
             <button
               key={key}
               onClick={() => setSelectedSlotKey(key)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2 rounded-md text-xs font-bold transition-colors shrink-0 flex items-center gap-2 cursor-pointer ${
                 isSelected
-                  ? 'bg-primary text-white shadow-xs'
+                  ? 'bg-teal-700 text-white dark:bg-teal-500 dark:text-slate-950 shadow-xs'
                   : 'bg-surface border border-border text-text-secondary hover:text-text hover:bg-surface-elevated'
               }`}
             >
@@ -144,7 +144,7 @@ export default function AdminMealsPage() {
                 ({slot.start}–{slot.end})
               </span>
               {isCurrentActive && (
-                <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               )}
             </button>
           );
@@ -156,8 +156,8 @@ export default function AdminMealsPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Service Window</p>
           <div className="flex items-center gap-2 mt-1.5">
-            <Clock className="h-5 w-5 text-primary" />
-            <span className="text-lg font-bold text-text">{getSlotTimeLabel(slotDef)}</span>
+            <Clock className="h-4 w-4 text-teal-700 dark:text-teal-400" />
+            <span className="text-base font-bold text-text">{getSlotTimeLabel(slotDef)}</span>
           </div>
           <p className="text-[11px] text-text-muted mt-1">
             {isLive ? 'Serving now in Dining Hall' : 'Completed or upcoming dining window'}
@@ -167,7 +167,7 @@ export default function AdminMealsPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Student Reports</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-black text-primary">{totalSubmissions}</span>
+            <span className="text-2xl font-bold text-teal-700 dark:text-teal-400">{totalSubmissions}</span>
             <span className="text-xs text-text-muted">submissions</span>
           </div>
           <p className="text-[11px] text-text-muted mt-1">Crowdsourced dining entries</p>
@@ -176,7 +176,7 @@ export default function AdminMealsPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Photo Evidence</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-black text-text">{photos.length}</span>
+            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{photos.length}</span>
             <span className="text-xs text-text-muted">uploaded plates</span>
           </div>
           <p className="text-[11px] text-text-muted mt-1">Plate photos captured by residents</p>
@@ -362,7 +362,7 @@ export default function AdminMealsPage() {
       {/* Lightbox Modal (Section 25) */}
       {activePhoto && (
         <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
-          <div className="relative max-w-3xl w-full bg-surface rounded-2xl overflow-hidden border border-border shadow-2xl">
+          <div className="relative max-w-3xl w-full bg-surface rounded-lg overflow-hidden border border-border shadow-2xl">
             <div className="p-4 border-b border-border flex items-center justify-between">
               <div>
                 <h4 className="text-sm font-bold text-text">Dining Plate Photo Evidence</h4>
@@ -372,9 +372,9 @@ export default function AdminMealsPage() {
               </div>
               <button
                 onClick={() => setActivePhoto(null)}
-                className="p-1.5 rounded-lg hover:bg-surface-elevated text-text-muted hover:text-text cursor-pointer"
+                className="p-1.5 rounded-md hover:bg-surface-elevated text-text-muted hover:text-text cursor-pointer"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 

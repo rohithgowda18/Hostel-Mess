@@ -106,7 +106,7 @@ export default function AdminAttendancePage() {
           <Button
             size="sm"
             onClick={handleExportCsv}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2 text-xs"
+            className="font-bold gap-2 text-xs"
           >
             <Download className="h-4 w-4" /> Export CSV
           </Button>
@@ -118,19 +118,19 @@ export default function AdminAttendancePage() {
         <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
           <CardContent className="p-4">
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expected Diners</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1">{expectedCount.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{expectedCount.toLocaleString()}</p>
           </CardContent>
         </Card>
         <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
           <CardContent className="p-4">
-            <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Checked In</p>
-            <p className="text-2xl font-black text-blue-600 mt-1">{checkedInCount.toLocaleString()}</p>
+            <p className="text-[11px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider">Checked In</p>
+            <p className="text-2xl font-bold text-teal-700 dark:text-teal-400 mt-1">{checkedInCount.toLocaleString()}</p>
           </CardContent>
         </Card>
         <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
           <CardContent className="p-4">
             <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Turnout Rate</p>
-            <p className="text-2xl font-black text-emerald-600 mt-1">{attendancePct}%</p>
+            <p className="text-2xl font-bold text-emerald-600 mt-1">{attendancePct}%</p>
           </CardContent>
         </Card>
       </div>
@@ -141,9 +141,9 @@ export default function AdminAttendancePage() {
           <button
             key={slot}
             onClick={() => setSelectedMeal(slot)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            className={`px-4 py-2 rounded-md text-xs font-bold transition-colors shrink-0 cursor-pointer ${
               selectedMeal === slot
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-teal-700 dark:bg-teal-600 text-white shadow-xs'
                 : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
             }`}
           >
@@ -167,7 +167,7 @@ export default function AdminAttendancePage() {
         <select
           value={selectedBlock}
           onChange={(e) => setSelectedBlock(e.target.value)}
-          className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300"
+          className="rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300"
         >
           <option value="ALL">All Blocks</option>
           <option value="A">Block A</option>

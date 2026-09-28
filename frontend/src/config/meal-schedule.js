@@ -71,9 +71,9 @@ export function isSlotActive(slot, date = new Date()) {
 
 /**
  * Returns the currently active slot key ('BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'),
- * or if no slot is active, returns the next upcoming meal slot.
+ * or null if no meal slot is currently active.
  */
-export function getCurrentMealSlot(date = new Date()) {
+export function getActiveMealSlotKey(date = new Date()) {
   const currentMinutes = date.getHours() * 60 + date.getMinutes();
 
   for (const [key, slot] of Object.entries(MEAL_SLOTS)) {
@@ -83,8 +83,15 @@ export function getCurrentMealSlot(date = new Date()) {
       return key;
     }
   }
+  return null;
+}
 
-  // If outside all active slots, determine next upcoming slot
+/**
+ * Returns the next upcoming meal slot key
+ */
+export function getNextMealSlotKey(date = new Date()) {
+  const currentMinutes = date.getHours() * 60 + date.getMinutes();
+
   if (currentMinutes < MEAL_SLOTS.BREAKFAST.startHour * 60 + MEAL_SLOTS.BREAKFAST.startMinute) {
     return 'BREAKFAST';
   }
@@ -97,9 +104,35 @@ export function getCurrentMealSlot(date = new Date()) {
   if (currentMinutes < MEAL_SLOTS.DINNER.startHour * 60 + MEAL_SLOTS.DINNER.startMinute) {
     return 'DINNER';
   }
+  return 'BREAKFAST'; // Tomorrow breakfast
+}
 
-  // After dinner -> next day's breakfast
-  return 'BREAKFAST';
+/**
+ * Returns the status of a specific slot at the given time:
+ * 'ACTIVE', 'CLOSED', or 'UPCOMING'
+ */
+export function getSlotStatus(slotKey, date = new Date()) {
+  const slot = MEAL_SLOTS[slotKey];
+  if (!slot) return 'CLOSED';
+
+  const currentMinutes = date.getHours() * 60 + date.getMinutes();
+  const startMinutes = slot.startHour * 60 + slot.startMinute;
+  const endMinutes = slot.endHour * 60 + slot.endMinute;
+
+  if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+    return 'ACTIVE';
+  }
+  if (currentMinutes >= endMinutes) {
+    return 'CLOSED';
+  }
+  return 'UPCOMING';
+}
+
+/**
+ * Returns currently active slot key, or falls back to next upcoming slot
+ */
+export function getCurrentMealSlot(date = new Date()) {
+  return getActiveMealSlotKey(date) || getNextMealSlotKey(date);
 }
 
 /**

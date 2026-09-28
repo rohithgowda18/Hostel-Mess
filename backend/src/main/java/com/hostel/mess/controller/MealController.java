@@ -49,6 +49,11 @@ public class MealController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/api/meals/active-slot")
+    public ResponseEntity<?> getActiveSlotInfo() {
+        return ResponseEntity.ok(mealService.getActiveSlotInfo());
+    }
+
     @PostMapping("/api/meals/submit-consensus")
     public ResponseEntity<?> submitConsensus(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -161,8 +166,8 @@ public class MealController {
         try {
             MealPhoto saved = mealService.uploadMealPhoto(images, description, mealTypeParam, principal);
             return ResponseEntity.ok(saved);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (com.hostel.mess.exception.BadRequestException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage(), "message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to upload image: " + e.getMessage()));

@@ -125,9 +125,9 @@ export default function FeedbackPage() {
                 key={slot.key}
                 type="button"
                 onClick={() => setSelectedSlot(slot.key)}
-                className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
+                className={`p-2.5 rounded-lg border text-left transition-colors cursor-pointer ${
                   isSelected
-                    ? 'bg-teal-50 text-teal-900 border-teal-300 dark:bg-teal-950/60 dark:text-teal-200 dark:border-teal-700 font-bold'
+                    ? 'bg-teal-50 text-teal-900 border-teal-600 dark:bg-teal-950/60 dark:text-teal-200 dark:border-teal-500 font-bold shadow-xs'
                     : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
                 }`}
               >
@@ -140,18 +140,18 @@ export default function FeedbackPage() {
       </div>
 
       {/* Rating Form Card */}
-      <Card className="p-6 space-y-5 shadow-sm border-slate-200 dark:border-slate-800">
+      <Card className="p-5 space-y-4 border-slate-200 dark:border-slate-800">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
               {selectedSlot} • Today
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-[11px] text-slate-400">
               {submittedRating ? `You rated this meal ${submittedRating}/5` : 'Rate overall meal satisfaction'}
             </p>
           </div>
           {submittedRating && (
-            <Badge variant="verified" className="text-xs font-bold">
+            <Badge variant="verified" className="text-[11px] font-bold">
               Rated {submittedRating}/5
             </Badge>
           )}
@@ -170,10 +170,10 @@ export default function FeedbackPage() {
                     onMouseEnter={() => setHoverRating(star)}
                     onMouseLeave={() => setHoverRating(0)}
                     onClick={() => setRatingValue(star)}
-                    className="p-1 text-2xl transition-transform active:scale-95 cursor-pointer focus:outline-none"
+                    className="p-1 transition-transform active:scale-95 cursor-pointer focus:outline-none"
                   >
                     <Star
-                      className={`h-8 w-8 transition-colors ${
+                      className={`h-7 w-7 transition-colors ${
                         filled ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-700'
                       }`}
                     />
@@ -201,10 +201,10 @@ export default function FeedbackPage() {
             </label>
             <textarea
               rows={3}
-              placeholder="Add any specific feedback on food taste, warmth, or quantity..."
+              placeholder="Add specific feedback on food taste, warmth, or quantity..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2.5 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-700 focus:border-teal-700"
             />
           </div>
 

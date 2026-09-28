@@ -6,13 +6,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.hostel.mess.exception.BadRequestException;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,33 +79,152 @@ public class MealService {
     private static final ConcurrentHashMap<String, ConcurrentHashMap<String, String>> VERIFICATION_VOTES = new ConcurrentHashMap<>();
 
     // Time windows for each meal type
-    private static final Map<String, TimeWindow> MEAL_TIME_WINDOWS = Map.of(
-            "BREAKFAST", new TimeWindow(LocalTime.of(7, 30), LocalTime.of(9, 30)),
-            "LUNCH", new TimeWindow(LocalTime.of(12, 30), LocalTime.of(14, 30)),
-            "SNACKS", new TimeWindow(LocalTime.of(16, 30), LocalTime.of(17, 30)),
-            "DINNER", new TimeWindow(LocalTime.of(19, 30), LocalTime.of(21, 30))
-    );
+    // Breakfast: 07:30 – 09:30
+    // Lunch:     12:30 – 14:30
+    // Snacks:    16:30 – 17:30
+    // Dinner:    19:30 – 21:30
+    public static class TimeWindow {
+        public final LocalTime start;
+        public final LocalTime end;
+        public final String name;
 
-    private static class TimeWindow {
-        final LocalTime start;
-        final LocalTime end;
-
-        TimeWindow(LocalTime start, LocalTime end) {
+        TimeWindow(LocalTime start, LocalTime end, String name) {
             this.start = start;
             this.end = end;
+            this.name = name;
         }
+    }
+
+    private static final Map<String, TimeWindow> MEAL_TIME_WINDOWS = new LinkedHashMap<>();
+    static {
+        MEAL_TIME_WINDOWS.put("BREAKFAST", new TimeWindow(LocalTime.of(7, 30), LocalTime.of(9, 30), "Breakfast"));
+        MEAL_TIME_WINDOWS.put("LUNCH", new TimeWindow(LocalTime.of(12, 30), LocalTime.of(14, 30), "Lunch"));
+        MEAL_TIME_WINDOWS.put("SNACKS", new TimeWindow(LocalTime.of(16, 30), LocalTime.of(17, 30), "Snacks"));
+        MEAL_TIME_WINDOWS.put("DINNER", new TimeWindow(LocalTime.of(19, 30), LocalTime.of(21, 30), "Dinner"));
     }
 
     public boolean isWithinTimeWindow(String mealType) {
         if (disableTimeRestrictions) {
             return true;
         }
+        if (mealType == null) {
+            return false;
+        }
         TimeWindow window = MEAL_TIME_WINDOWS.get(mealType.toUpperCase());
         if (window == null) {
             return false;
         }
         LocalTime now = LocalTime.now(IST);
-        return !now.isBefore(window.start) && !now.isAfter(window.end);
+        return !now.isBefore(window.start) && now.isBefore(window.end);
+    }
+
+    public String getActiveMealTypeAt(LocalTime time) {
+        if (time == null) return null;
+        for (Map.Entry<String, TimeWindow> entry : MEAL_TIME_WINDOWS.entrySet()) {
+            TimeWindow w = entry.getValue();
+            if (!time.isBefore(w.start) && time.isBefore(w.end)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    public String getCurrentActiveMealType() {
+        if (disableTimeRestrictions) {
+            return detectMealType();
+        }
+        return getActiveMealTypeAt(LocalTime.now(IST));
+    }
+
+    public void validateActiveMealAt(String requestedMealType, String actionName, LocalTime time) {
+        if (disableTimeRestrictions) {
+            return;
+        }
+        String active = getActiveMealTypeAt(time);
+        String action = (actionName != null && !actionName.isEmpty()) ? actionName : "reporting";
+
+        if (active == null) {
+            throw new BadRequestException("No meal is currently being served. " + capitalize(action) + " is closed.");
+        }
+
+        if (requestedMealType != null && !requestedMealType.trim().isEmpty()) {
+            String reqUpper = requestedMealType.trim().toUpperCase();
+            if (!reqUpper.equals(active)) {
+                String reqCap = capitalize(reqUpper);
+                String activeCap = capitalize(active);
+                throw new BadRequestException(reqCap + " " + action + " is closed. " + activeCap + " is currently being served.");
+            }
+        }
+    }
+
+    public void validateActiveMeal(String requestedMealType, String actionName) {
+        validateActiveMealAt(requestedMealType, actionName, LocalTime.now(IST));
+    }
+
+    private String capitalize(String text) {
+        if (text == null || text.isEmpty()) return "";
+        return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
+    }
+
+    public Map<String, Object> getActiveSlotInfo() {
+        ZonedDateTime now = ZonedDateTime.now(IST);
+        LocalTime localNow = now.toLocalTime();
+        String activeKey = getCurrentActiveMealType();
+        boolean isActive = (activeKey != null);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("serverTime", now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        result.put("serverTimeMillis", now.toInstant().toEpochMilli());
+        result.put("serverDate", now.toLocalDate().toString());
+        result.put("serverTimeString", localNow.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        result.put("isActive", isActive);
+        result.put("activeSlot", activeKey);
+
+        if (isActive) {
+            TimeWindow activeWindow = MEAL_TIME_WINDOWS.get(activeKey);
+            result.put("slotName", activeWindow.name);
+            result.put("startTime", activeWindow.start.toString());
+            result.put("endTime", activeWindow.end.toString());
+            result.put("time", String.format("%s – %s", activeWindow.start, activeWindow.end));
+
+            ZonedDateTime endZdt = now.with(activeWindow.end).withSecond(0).withNano(0);
+            long endMillis = endZdt.toInstant().toEpochMilli();
+            long remainingSeconds = Math.max(0, Duration.between(now, endZdt).getSeconds());
+            result.put("endTimeMillis", endMillis);
+            result.put("remainingSeconds", remainingSeconds);
+        } else {
+            result.put("slotName", null);
+            result.put("startTime", null);
+            result.put("endTime", null);
+            result.put("time", null);
+            result.put("endTimeMillis", null);
+            result.put("remainingSeconds", 0L);
+        }
+
+        // Determine next upcoming slot
+        Map<String, Object> nextSlot = new LinkedHashMap<>();
+        String nextKey;
+        if (localNow.isBefore(LocalTime.of(7, 30))) {
+            nextKey = "BREAKFAST";
+        } else if (localNow.isBefore(LocalTime.of(12, 30))) {
+            nextKey = "LUNCH";
+        } else if (localNow.isBefore(LocalTime.of(16, 30))) {
+            nextKey = "SNACKS";
+        } else if (localNow.isBefore(LocalTime.of(19, 30))) {
+            nextKey = "DINNER";
+        } else {
+            nextKey = "BREAKFAST"; // Tomorrow's breakfast
+        }
+
+        TimeWindow nextWindow = MEAL_TIME_WINDOWS.get(nextKey);
+        nextSlot.put("key", nextKey);
+        nextSlot.put("name", nextWindow.name);
+        nextSlot.put("startTime", nextWindow.start.toString());
+        nextSlot.put("endTime", nextWindow.end.toString());
+        nextSlot.put("time", String.format("%s – %s", nextWindow.start, nextWindow.end));
+        result.put("nextSlot", nextSlot);
+
+        return result;
     }
 
     public String getTimeWindowMessage(String mealType) {
@@ -136,6 +259,7 @@ public class MealService {
     }
 
     public Map<String, Object> processStudentSubmission(User user, String mealType, String date, List<String> items, String photoUrl) {
+        validateActiveMeal(mealType, "reporting");
         String mType = mealType.toUpperCase();
         Optional<MealSubmission> existing = submissionRepository.findByStudentEmailAndMealTypeAndDate(user.getEmail(), mType, date);
         boolean isFirstReporterForMeal = submissionRepository.findByMealTypeAndDate(mType, date).isEmpty();
@@ -434,7 +558,7 @@ public class MealService {
         for (com.hostel.mess.model.MealService s : services) {
             LocalTime sTime = LocalTime.parse(s.getStartTime());
             LocalTime eTime = LocalTime.parse(s.getEndTime());
-            if (!now.isBefore(sTime) && !now.isAfter(eTime)) {
+            if (!now.isBefore(sTime) && now.isBefore(eTime)) {
                 if (!"OPEN".equals(s.getStatus())) {
                     s.setStatus("OPEN");
                     mealServiceRepository.save(s);
@@ -468,13 +592,16 @@ public class MealService {
             throw new IllegalArgumentException("At least one image is required");
         }
 
+        validateActiveMeal(mealTypeParam, "photo upload");
+
         String uploaderEmail = principal != null ? principal.getName() : "student@hostel.app";
         User user = userRepository.findById(uploaderEmail).orElse(null);
         String uploaderName = (user != null && user.getEmail() != null) ? user.getEmail().split("@")[0] : uploaderEmail.split("@")[0];
 
-        String mealType = (mealTypeParam != null && !mealTypeParam.trim().isEmpty())
-                ? mealTypeParam.toUpperCase()
-                : detectMealType();
+        String active = getCurrentActiveMealType();
+        String mealType = (active != null)
+                ? active
+                : ((mealTypeParam != null && !mealTypeParam.trim().isEmpty()) ? mealTypeParam.toUpperCase() : "LUNCH");
 
         String today = LocalDate.now(IST).toString();
         List<String> imageUrls = new ArrayList<>();

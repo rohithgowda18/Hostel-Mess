@@ -223,11 +223,11 @@ export default function GroupsPage() {
       />
 
       {/* Main Container: Split List & Chat */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card overflow-hidden min-h-[640px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden min-h-[640px]">
         
         {/* Left Side: Groups List (Hidden on mobile when chat is active) */}
         <div
-          className={`lg:col-span-4 border-r border-slate-200/90 dark:border-slate-800 flex flex-col ${
+          className={`lg:col-span-4 border-r border-slate-200 dark:border-slate-800 flex flex-col ${
             mobileChatOpen ? 'hidden lg:flex' : 'flex'
           }`}
         >
@@ -237,7 +237,7 @@ export default function GroupsPage() {
             </span>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="text-xs font-bold text-primary hover:text-primary-hover flex items-center gap-1"
+              className="text-xs font-bold text-teal-700 dark:text-teal-400 hover:underline flex items-center gap-1 cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" /> New
             </button>
@@ -245,11 +245,11 @@ export default function GroupsPage() {
 
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {loading ? (
-              <div className="py-12 text-center text-xs text-text-muted">Loading your groups...</div>
+              <div className="py-12 text-center text-xs text-slate-400">Loading your groups...</div>
             ) : userGroups.length === 0 ? (
               <div className="py-12 text-center p-4 space-y-3">
-                <Users className="h-8 w-8 text-text-muted mx-auto" />
-                <p className="text-xs text-text-secondary">You haven't joined any groups yet.</p>
+                <Users className="h-8 w-8 text-slate-400 mx-auto" />
+                <p className="text-xs text-slate-500">You haven't joined any groups yet.</p>
                 <Button size="sm" onClick={() => setShowCreateModal(true)} className="text-xs">
                   Create First Group
                 </Button>
@@ -264,25 +264,25 @@ export default function GroupsPage() {
                       setActiveGroup(group);
                       setMobileChatOpen(true);
                     }}
-                    className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-3 ${
+                    className={`w-full text-left p-3 rounded-md transition-colors flex items-center gap-3 cursor-pointer ${
                       isActive
-                        ? 'bg-primary/10 border border-primary/30'
-                        : 'hover:bg-surface-elevated'
+                        ? 'bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800'
+                        : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                     }`}
                   >
-                    <div className="h-11 w-11 rounded-2xl bg-primary text-white font-bold text-sm flex items-center justify-center shrink-0">
+                    <div className="h-10 w-10 rounded-md bg-teal-700 dark:bg-teal-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
                       {group.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-bold text-text truncate">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                           {group.name}
                         </h4>
-                        <span className="text-[10px] text-text-muted font-mono">
+                        <span className="text-[10px] text-slate-400 font-mono">
                           {group.groupCode}
                         </span>
                       </div>
-                      <p className="text-xs text-text-secondary truncate mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                         {group.members?.length || 1} members · Click to chat
                       </p>
                     </div>
@@ -308,21 +308,21 @@ export default function GroupsPage() {
                     variant="ghost"
                     size="iconSm"
                     onClick={() => setMobileChatOpen(false)}
-                    className="lg:hidden text-text-secondary"
+                    className="lg:hidden text-slate-500"
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
-                  <div className="h-10 w-10 rounded-xl bg-primary text-white font-bold text-sm flex items-center justify-center shrink-0">
+                  <div className="h-10 w-10 rounded-md bg-teal-700 dark:bg-teal-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
                     {activeGroup.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-base font-bold text-text truncate">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">
                       {activeGroup.name}
                     </h3>
-                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                       <button
                         onClick={copyCode}
-                        className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-primary hover:underline"
+                        className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-teal-700 dark:text-teal-400 hover:underline cursor-pointer"
                       >
                         <Copy className="h-3 w-3" />
                         {copiedCode ? 'Copied!' : `Code: ${activeGroup.groupCode}`}
@@ -346,9 +346,9 @@ export default function GroupsPage() {
               </div>
 
               {/* Meal Going Coordination Bar */}
-              <div className="px-5 py-3 bg-blue-50/60 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="px-5 py-3 bg-teal-50/60 dark:bg-teal-950/30 border-b border-teal-100 dark:border-teal-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2.5">
-                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <div className="h-2 w-2 rounded-full bg-teal-600 dark:bg-teal-400 animate-pulse shrink-0" />
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                     Heading for Lunch ({goingUsers.length}):
                   </span>
@@ -392,16 +392,16 @@ export default function GroupsPage() {
                           </span>
                         )}
                         <div
-                          className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-xs font-medium leading-relaxed ${
+                          className={`max-w-[78%] rounded-md px-3.5 py-2 text-xs font-medium leading-relaxed ${
                             isMe
-                              ? 'bg-primary text-white rounded-br-xs shadow-xs'
-                              : 'bg-surface-elevated text-text rounded-bl-xs border border-border'
+                              ? 'bg-teal-700 text-white shadow-xs'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700'
                           }`}
                         >
                           <p>{msg.message || msg.content}</p>
                           <span
                             className={`block text-[9px] mt-1 text-right ${
-                              isMe ? 'text-white/80' : 'text-text-muted'
+                              isMe ? 'text-teal-200' : 'text-slate-400'
                             }`}
                           >
                             {msg.timestamp
@@ -420,25 +420,25 @@ export default function GroupsPage() {
               </div>
 
               {/* Message Input Box */}
-              <form onSubmit={handleSendMessage} className="p-3 border-t border-border flex items-center gap-2">
+              <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2">
                 <Input
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder={`Message ${activeGroup.name}...`}
-                  className="flex-1 h-11 text-xs bg-surface border-border"
+                  className="flex-1 h-9 text-xs"
                 />
                 <Button
                   type="submit"
                   disabled={!messageText.trim()}
-                  className="h-11 px-4 bg-primary hover:bg-primary-hover text-white font-bold"
+                  className="h-9 px-3.5 bg-teal-700 hover:bg-teal-800 text-white font-bold"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3.5 w-3.5" />
                 </Button>
               </form>
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400">
-              <Users className="h-12 w-12 text-slate-300 dark:text-slate-700 mb-2" />
+              <Users className="h-10 w-10 text-slate-300 dark:text-slate-700 mb-2" />
               <p className="text-sm font-semibold">Select a group or create one to start coordinating meals.</p>
             </div>
           )}
@@ -448,16 +448,16 @@ export default function GroupsPage() {
       {/* Create Group Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
-          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-dropdown space-y-4 animate-in fade-in-0 zoom-in-95 duration-150">
-            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Create Buddy Group</h3>
-              <button onClick={() => setShowCreateModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
-                <X className="h-5 w-5" />
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs" onClick={() => setShowCreateModal(false)} />
+          <div className="relative w-full max-w-md rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2.5">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Create Buddy Group</h3>
+              <button onClick={() => setShowCreateModal(false)} className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateGroup} className="space-y-4">
+            <form onSubmit={handleCreateGroup} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Group Name
@@ -467,15 +467,15 @@ export default function GroupsPage() {
                   placeholder="e.g. 2nd Floor Foodies / Breakfast Squad"
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
-                  className="h-10 text-xs"
+                  className="h-9 text-xs"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <Button variant="outline" size="sm" onClick={() => setShowCreateModal(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" size="sm" className="font-bold bg-primary hover:bg-primary-hover">
+                <Button type="submit" size="sm" className="font-bold">
                   Create Group
                 </Button>
               </div>
@@ -487,16 +487,16 @@ export default function GroupsPage() {
       {/* Join Group Modal */}
       {showJoinModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setShowJoinModal(false)} />
-          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-dropdown space-y-4 animate-in fade-in-0 zoom-in-95 duration-150">
-            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Join Buddy Group</h3>
-              <button onClick={() => setShowJoinModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
-                <X className="h-5 w-5" />
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs" onClick={() => setShowJoinModal(false)} />
+          <div className="relative w-full max-w-md rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2.5">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Join Buddy Group</h3>
+              <button onClick={() => setShowJoinModal(false)} className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleJoinGroup} className="space-y-4">
+            <form onSubmit={handleJoinGroup} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Enter 6-Character Group Code
@@ -506,15 +506,15 @@ export default function GroupsPage() {
                   placeholder="e.g. X9K2LM"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  className="h-10 text-xs font-mono uppercase"
+                  className="h-9 text-xs font-mono uppercase"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <Button variant="outline" size="sm" onClick={() => setShowJoinModal(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" size="sm" className="font-bold bg-primary hover:bg-primary-hover">
+                <Button type="submit" size="sm" className="font-bold">
                   Join Group
                 </Button>
               </div>

@@ -1,4 +1,4 @@
-import { User, MapPin, GraduationCap, Phone, Mail, Building } from 'lucide-react';
+import { User, MapPin, GraduationCap, Phone, Mail, Building, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -32,7 +32,7 @@ export function StudentCard({
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
       className={cn(
-        'group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 text-left shadow-xs transition-all duration-200 hover:shadow-card-hover hover:border-blue-400 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500 cursor-pointer active:scale-[0.99]',
+        'group relative flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 text-left shadow-xs transition-colors hover:border-teal-500 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-teal-500 cursor-pointer',
         className
       )}
     >
@@ -40,11 +40,11 @@ export function StudentCard({
         {/* Header: Avatar, Name & Status */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-sm shadow-xs">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-teal-700 dark:bg-teal-600 text-white font-bold text-xs shadow-xs">
               {displayInitials}
             </div>
             <div className="min-w-0">
-              <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-teal-700 dark:group-hover:text-teal-400 transition-colors">
                 {name}
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">
@@ -60,12 +60,12 @@ export function StudentCard({
         </div>
 
         {/* Hostel & Room Location Box */}
-        <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80 mb-3 space-y-1">
+        <div className="rounded-md bg-slate-50 p-2.5 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80 mb-3 space-y-1">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 dark:text-slate-200">
-            <Building className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+            <Building className="h-3.5 w-3.5 text-teal-700 dark:text-teal-400 shrink-0" />
             <span className="truncate">{hostel || block}</span>
             <span className="text-slate-400">·</span>
-            <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0">Room {room}</span>
+            <span className="text-teal-700 dark:text-teal-400 font-bold shrink-0">Room {room}</span>
           </div>
           {roomType && (
             <p className="text-[11px] text-slate-500 dark:text-slate-400 pl-5 truncate">
@@ -83,9 +83,9 @@ export function StudentCard({
       </div>
 
       {/* Footer hint */}
-      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+      <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] font-semibold text-teal-700 dark:text-teal-400">
         <span>View Full Profile</span>
-        <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-0.5">arrow_forward</span>
+        <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
       </div>
     </div>
   );

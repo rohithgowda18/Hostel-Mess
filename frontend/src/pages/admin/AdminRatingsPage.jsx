@@ -72,7 +72,7 @@ export default function AdminRatingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-black text-text tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Meal Ratings & Quality Feedback
             </h1>
             <Badge variant="primary" className="text-[11px] font-bold">
@@ -101,7 +101,7 @@ export default function AdminRatingsPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Average Rating</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-3xl font-black text-text">{avgOverall}</span>
+            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{avgOverall}</span>
             <span className="text-xs font-semibold text-text-muted">/ 5.0</span>
           </div>
           <div className="flex items-center gap-1 text-amber-500 pt-1">
@@ -122,7 +122,7 @@ export default function AdminRatingsPage() {
               {item.meal}
             </p>
             <div className="flex items-baseline gap-1 mt-1.5">
-              <span className="text-2xl font-black text-text">{item.avg}</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-slate-100">{item.avg}</span>
               <span className="text-xs text-text-muted">avg</span>
             </div>
             <p className="text-[11px] text-text-muted mt-1">{item.count} student ratings</p>
@@ -140,9 +140,9 @@ export default function AdminRatingsPage() {
             <button
               key={m}
               onClick={() => setSelectedMeal(m)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                 selectedMeal === m
-                  ? 'bg-primary text-white'
+                  ? 'bg-teal-700 text-white dark:bg-teal-500 dark:text-slate-950 font-bold'
                   : 'bg-surface-elevated border border-border text-text-secondary hover:text-text'
               }`}
             >
@@ -157,7 +157,7 @@ export default function AdminRatingsPage() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-2.5 py-1 text-xs rounded-lg border border-border bg-surface text-text"
+            className="px-2.5 py-1 text-xs rounded-md border border-border bg-surface text-text"
           />
           {selectedDate && (
             <button

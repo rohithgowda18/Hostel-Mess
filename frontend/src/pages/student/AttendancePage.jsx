@@ -14,17 +14,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { getCurrentMealSlot } from '@/config/meal-schedule';
 
 const MEAL_SLOTS = ['BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'];
-
-function getCurrentMealSlot() {
-  const hour = new Date().getHours();
-  if (hour >= 7 && hour < 10) return 'BREAKFAST';
-  if (hour >= 12 && hour < 15) return 'LUNCH';
-  if (hour >= 16 && hour < 18) return 'SNACKS';
-  if (hour >= 19 && hour < 22) return 'DINNER';
-  return 'LUNCH';
-}
 
 export default function AttendancePage() {
   const currentUser = getUser() || {};

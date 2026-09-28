@@ -485,5 +485,28 @@ export const messApi = {
     } catch {
       return [];
     }
+  },
+
+  async getStudentPhotosToday() {
+    return this.getTodayPhotos();
+  },
+
+  async uploadStudentPhoto(formData) {
+    const response = await apiClient.post('/student-photos/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  },
+
+  async getActiveSlotInfo() {
+    try {
+      const response = await apiClient.get('/meals/active-slot');
+      return response.data;
+    } catch (err) {
+      console.error('Failed to get active slot info:', err);
+      return null;
+    }
   }
 };

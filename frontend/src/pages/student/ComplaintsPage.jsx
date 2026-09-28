@@ -142,7 +142,7 @@ export default function ComplaintsPage() {
       </div>
 
       {successMsg && (
-        <div className="p-3.5 rounded-xl bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900/40 text-green-800 dark:text-green-200 text-xs font-semibold flex items-center gap-2">
+        <div className="p-3 rounded-md bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900/40 text-green-800 dark:text-green-200 text-xs font-semibold flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
           <span>{successMsg}</span>
         </div>
@@ -155,7 +155,7 @@ export default function ComplaintsPage() {
             key={st}
             type="button"
             onClick={() => setStatusFilter(st)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
               statusFilter === st
                 ? 'bg-teal-700 text-white dark:bg-teal-500 dark:text-slate-950 font-bold'
                 : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
@@ -168,7 +168,7 @@ export default function ComplaintsPage() {
 
       {/* Complaints List */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 space-y-3 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-8">
+        <div className="text-center py-16 space-y-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 p-8">
           <MessageSquareWarning className="h-8 w-8 text-slate-400 mx-auto" />
           <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">
             No complaints found.
@@ -234,7 +234,7 @@ export default function ComplaintsPage() {
       {/* New Complaint Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xl space-y-4">
+          <div className="relative w-full max-w-md rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
               <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                 Log New Mess Complaint
@@ -242,7 +242,7 @@ export default function ComplaintsPage() {
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -256,7 +256,7 @@ export default function ComplaintsPage() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
+                  className="w-full h-9 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -272,7 +272,7 @@ export default function ComplaintsPage() {
                   <select
                     value={mealType}
                     onChange={(e) => setMealType(e.target.value)}
-                    className="w-full h-9 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
+                    className="w-full h-9 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
                   >
                     <option value="BREAKFAST">Breakfast</option>
                     <option value="LUNCH">Lunch</option>
@@ -303,7 +303,7 @@ export default function ComplaintsPage() {
                   placeholder="Describe the issue clearly..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
+                  className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none"
                 />
               </div>
 

@@ -7,7 +7,9 @@ export const ENDPOINTS = {
   },
   MEALS: {
     TODAY: '/meals/today',
+    ACTIVE_SLOT: '/meals/active-slot',
     REPORT: '/meals/report',
+    SUBMIT_CONSENSUS: '/meals/submit-consensus',
     VERIFY: '/meals/verify',
     HISTORY: '/meals/history',
     WEEKLY_MENU: '/weekly-menu',

@@ -184,18 +184,18 @@ export default function GroupDetailPage() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-6 p-5 rounded-2xl bg-surface-elevated border border-border">
-              <div className="p-3 bg-white rounded-2xl shadow-xs border border-border shrink-0">
+            <div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-md bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+              <div className="p-3 bg-white rounded-md border border-slate-200 dark:border-slate-700 shrink-0">
                 <QRCodeSVG value={inviteLink} size={140} />
               </div>
 
               <div className="space-y-4 w-full">
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted block mb-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
                     Group Code
                   </span>
                   <div className="flex gap-2">
-                    <code className="flex-1 rounded-xl border border-border bg-surface p-2.5 text-base font-mono font-bold text-primary">
+                    <code className="flex-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-base font-mono font-bold text-teal-700 dark:text-teal-400">
                       {group.groupCode}
                     </code>
                     <Button variant="outline" size="sm" onClick={copyGroupCode} className="text-xs font-bold gap-1 shrink-0">
@@ -209,7 +209,7 @@ export default function GroupDetailPage() {
                     Direct Invite URL
                   </span>
                   <div className="flex gap-2">
-                    <Input value={inviteLink} readOnly className="text-xs h-10 font-mono" />
+                    <Input value={inviteLink} readOnly className="text-xs h-9 font-mono" />
                     <Button variant="outline" size="sm" onClick={copyInviteLink} className="text-xs font-bold gap-1 shrink-0">
                       <Share2 className="h-4 w-4" /> {copiedLink ? 'Copied' : 'Share'}
                     </Button>
@@ -222,7 +222,7 @@ export default function GroupDetailPage() {
 
         {/* Right Column: Members & Meal Coordination */}
         <div className="lg:col-span-5 space-y-6">
-          <Card className="p-6 shadow-card space-y-4">
+          <Card className="p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -245,8 +245,8 @@ export default function GroupDetailPage() {
                     key={member}
                     disabled={!isMe}
                     onClick={() => handleToggleGoing(member)}
-                    className={`w-full flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${
-                      isMe ? 'hover:border-blue-400 cursor-pointer' : 'cursor-default'
+                    className={`w-full flex items-center justify-between p-2.5 rounded-md border text-xs transition-colors ${
+                      isMe ? 'hover:border-teal-500 cursor-pointer' : 'cursor-default'
                     } ${
                       isGoing
                         ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 font-semibold'
@@ -254,7 +254,7 @@ export default function GroupDetailPage() {
                     }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center text-[10px] shrink-0">
+                      <div className="h-7 w-7 rounded-md bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 font-bold flex items-center justify-center text-[10px] shrink-0">
                         {member.slice(0, 2).toUpperCase()}
                       </div>
                       <span className="truncate">

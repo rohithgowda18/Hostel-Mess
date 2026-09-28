@@ -143,28 +143,10 @@ export default function DashboardLayout({ user, onLogout, children }) {
       )}
 
       {/* Mobile-First Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around h-16 px-2 pb-safe shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around h-15 px-2 pb-safe shadow-[0_-1px_3px_rgba(0,0,0,0.03)]">
         {mobileNavItems.map((item) => {
           const Icon = item.icon;
           const active = location.pathname === item.path;
-
-          if (item.isHero) {
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => navigate(item.path)}
-                className="relative -top-3 flex flex-col items-center justify-center cursor-pointer"
-              >
-                <div className="h-12 w-12 rounded-full bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-950 flex items-center justify-center shadow-md active:scale-95 transition-transform">
-                  <Icon className="h-6 w-6" />
-                </div>
-                <span className="text-[10px] font-bold mt-0.5 text-teal-700 dark:text-teal-400">
-                  {item.label}
-                </span>
-              </button>
-            );
-          }
 
           return (
             <button
@@ -172,32 +154,25 @@ export default function DashboardLayout({ user, onLogout, children }) {
               type="button"
               onClick={() => navigate(item.path)}
               className={cn(
-                'flex flex-col items-center justify-center flex-1 py-1 text-[11px] font-medium transition-colors cursor-pointer',
+                'flex flex-col items-center justify-center flex-1 py-1 text-[10px] font-medium transition-colors cursor-pointer',
                 active
-                  ? 'text-teal-700 dark:text-teal-400 font-bold'
+                  ? 'text-teal-800 dark:text-teal-300 font-bold'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               )}
             >
-              <Icon className="h-5 w-5 mb-0.5" />
-              <span>{item.label}</span>
+              <div
+                className={cn(
+                  'flex items-center justify-center h-7 w-7 rounded-md mb-0.5 transition-colors',
+                  item.isHero && 'bg-teal-700 text-white dark:bg-teal-500 dark:text-slate-950 shadow-xs',
+                  !item.isHero && active && 'text-teal-700 dark:text-teal-400'
+                )}
+              >
+                <Icon className={cn('h-4 w-4', item.isHero && 'h-4.5 w-4.5')} />
+              </div>
+              <span className="truncate">{item.label}</span>
             </button>
           );
         })}
-
-        {/* More actions trigger */}
-        <button
-          type="button"
-          onClick={() => setMoreDrawerOpen(true)}
-          className={cn(
-            'flex flex-col items-center justify-center flex-1 py-1 text-[11px] font-medium transition-colors cursor-pointer',
-            moreDrawerOpen
-              ? 'text-teal-700 dark:text-teal-400 font-bold'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-          )}
-        >
-          <MoreHorizontal className="h-5 w-5 mb-0.5" />
-          <span>More</span>
-        </button>
       </nav>
     </div>
   );

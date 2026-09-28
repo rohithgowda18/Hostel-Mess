@@ -20,16 +20,6 @@ import com.hostel.mess.security.JwtService;
 public class SecurityConfig {
 
     @Bean
-    public JwtService jwtService() {
-        return new JwtService();
-    }
-
-    @Bean
-    public CustomUserDetailsService customUserDetailsService() {
-        return new CustomUserDetailsService();
-    }
-
-    @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService, CustomUserDetailsService customUserDetailsService) {
         return new JwtAuthenticationFilter(jwtService, customUserDetailsService);
     }
@@ -40,14 +30,14 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthFilter) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/", "/index.html", "/static/**", "/public/**", "/ws/**", "/health", "/actuator/health").permitAll()
-                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/uploads/**", "/api/student-photos/*/image", "/api/student-photos/**/image").permitAll()
                 .requestMatchers("/api/groups/**").authenticated()
                 .requestMatchers("/api/group-meal-status/**").authenticated()
                 .requestMatchers("/api/complaints/**").authenticated()
@@ -66,7 +56,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").authenticated()
                 .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter(jwtService(), customUserDetailsService()), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

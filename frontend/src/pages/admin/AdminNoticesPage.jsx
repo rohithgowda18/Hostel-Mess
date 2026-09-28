@@ -123,7 +123,7 @@ export default function NoticesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-black text-text tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Hostel Mess Notices
             </h1>
             <Badge variant="primary" className="text-[11px] font-bold">
@@ -139,7 +139,7 @@ export default function NoticesPage() {
           <Button
             size="sm"
             onClick={() => setCreateModalOpen(true)}
-            className="bg-primary hover:bg-primary-hover text-white font-bold gap-1.5 text-xs self-start sm:self-auto"
+            className="font-bold gap-1.5 text-xs self-start sm:self-auto"
           >
             <Plus className="h-3.5 w-3.5" /> Publish Notice
           </Button>
@@ -147,8 +147,8 @@ export default function NoticesPage() {
       </div>
 
       {successMsg && (
-        <div className="p-3.5 rounded-xl bg-success/10 border border-success/30 text-success text-xs font-semibold flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <div className="p-3 rounded-md bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900/40 text-green-800 dark:text-green-200 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
           <span>{successMsg}</span>
         </div>
       )}
@@ -157,12 +157,12 @@ export default function NoticesPage() {
       {pinnedNotice && (
         <div className="space-y-2">
           <span className="text-[11px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
-            <Pin className="h-3.5 w-3.5 text-primary" /> Pinned Important Circular
+            <Pin className="h-3.5 w-3.5 text-teal-700 dark:text-teal-400" /> Pinned Important Circular
           </span>
-          <Card className="bg-surface border-l-4 border-l-primary border-border p-5 space-y-3 shadow-xs">
+          <Card className="bg-surface border-l-4 border-l-teal-700 dark:border-l-teal-400 border-border p-5 space-y-3 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider">
+                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider">
                   <AlertTriangle className="h-3 w-3" /> Priority Notice
                 </span>
                 <span className="px-2 py-0.5 rounded-md bg-surface-elevated text-text-secondary text-[10px] font-bold uppercase tracking-wider border border-border">
@@ -188,7 +188,7 @@ export default function NoticesPage() {
         </span>
 
         {recentNotices.length === 0 ? (
-          <div className="text-center py-12 bg-surface border border-border rounded-2xl p-8">
+          <div className="text-center py-12 bg-surface border border-border rounded-lg p-8">
             <Bell className="h-8 w-8 text-text-muted mx-auto mb-2 opacity-50" />
             <p className="text-xs font-bold text-text">No additional notices posted</p>
           </div>
@@ -216,7 +216,7 @@ export default function NoticesPage() {
       {/* Admin Publish Modal */}
       {createModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-surface rounded-2xl p-5 border border-border shadow-2xl space-y-4">
+          <div className="max-w-md w-full bg-surface rounded-lg p-5 border border-border shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
                 <h3 className="text-sm font-bold text-text">Publish Official Mess Notice</h3>
@@ -239,7 +239,7 @@ export default function NoticesPage() {
                   placeholder="e.g. Service Timing Shift Today"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full rounded-xl border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
+                  className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
                 />
               </div>
 
@@ -249,7 +249,7 @@ export default function NoticesPage() {
                   <select
                     value={form.priority}
                     onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
+                    className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
                   >
                     <option value="IMPORTANT">IMPORTANT (Pinned)</option>
                     <option value="NORMAL">NORMAL</option>
@@ -260,7 +260,7 @@ export default function NoticesPage() {
                   <select
                     value={form.category}
                     onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
+                    className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
                   >
                     <option value="MENU">MENU</option>
                     <option value="TIMINGS">TIMINGS</option>
@@ -278,7 +278,7 @@ export default function NoticesPage() {
                   placeholder="Provide precise details for dining residents..."
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  className="w-full rounded-xl border border-border bg-surface-elevated p-3 text-xs text-text"
+                  className="w-full rounded-md border border-border bg-surface-elevated p-3 text-xs text-text"
                 />
               </div>
 

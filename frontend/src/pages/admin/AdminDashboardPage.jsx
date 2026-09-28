@@ -111,7 +111,7 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-black text-text tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Hostel Mess Operations
             </h1>
             <Badge variant={isLive ? 'success' : 'default'} className="text-[11px] font-bold">
@@ -137,7 +137,7 @@ export default function AdminDashboardPage() {
           <Button
             size="sm"
             onClick={() => navigate('/admin/meals')}
-            className="bg-primary hover:bg-primary-hover text-white font-bold text-xs gap-1.5"
+            className="font-bold text-xs gap-1.5"
           >
             <UtensilsCrossed className="h-3.5 w-3.5" />
             Live Meal Desk
@@ -150,7 +150,7 @@ export default function AdminDashboardPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Students Expected</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl md:text-3xl font-black text-text">{stats.expectedToday}</span>
+            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.expectedToday}</span>
             <span className="text-xs text-text-muted">RSVPs</span>
           </div>
           <p className="text-[11px] text-text-muted mt-1">Today's total expected diners</p>
@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Checked In</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl md:text-3xl font-black text-success">{stats.checkedIn}</span>
+            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.checkedIn}</span>
             <span className="text-xs font-semibold text-text-muted">({attendanceRate}%)</span>
           </div>
           <p className="text-[11px] text-text-muted mt-1">Scanned dining passes</p>
@@ -168,7 +168,7 @@ export default function AdminDashboardPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Meal Reports</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl md:text-3xl font-black text-primary">{stats.mealReportsToday}</span>
+            <span className="text-2xl font-bold text-teal-700 dark:text-teal-400">{stats.mealReportsToday}</span>
             <span className="text-xs text-text-muted">today</span>
           </div>
           <p className="text-[11px] text-text-muted mt-1">Student dining submissions</p>
@@ -177,7 +177,7 @@ export default function AdminDashboardPage() {
         <Card className="p-4 bg-surface border-border">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Verified Items</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl md:text-3xl font-black text-text">{verifiedCount}</span>
+            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{verifiedCount}</span>
             <span className="text-xs text-text-muted">current meal</span>
           </div>
           <p className="text-[11px] text-text-muted mt-1">Community peer confirmed</p>
@@ -186,7 +186,7 @@ export default function AdminDashboardPage() {
         <Card className="p-4 bg-surface border-border col-span-2 md:col-span-1">
           <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Open Complaints</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className={`text-2xl md:text-3xl font-black ${stats.openComplaints > 0 ? 'text-danger' : 'text-success'}`}>
+            <span className={`text-2xl font-bold ${stats.openComplaints > 0 ? 'text-danger' : 'text-emerald-600 dark:text-emerald-400'}`}>
               {stats.openComplaints}
             </span>
             <span className="text-xs text-text-muted">active</span>
@@ -199,8 +199,8 @@ export default function AdminDashboardPage() {
       <Card className="bg-surface border-border overflow-hidden">
         <div className="p-4 md:p-5 border-b border-border flex flex-wrap items-center justify-between gap-3 bg-surface-elevated">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black">
-              <UtensilsCrossed className="h-5 w-5" />
+            <div className="h-9 w-9 rounded-md bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 flex items-center justify-center font-bold">
+              <UtensilsCrossed className="h-4.5 w-4.5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -245,7 +245,7 @@ export default function AdminDashboardPage() {
                 {officialMenu.map((dish, idx) => (
                   <span
                     key={idx}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-elevated border border-border text-text"
+                    className="px-3 py-1.5 rounded-md text-xs font-medium bg-surface-elevated border border-border text-text"
                   >
                     {dish}
                   </span>
@@ -258,7 +258,7 @@ export default function AdminDashboardPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-border">
               <span className="text-xs font-bold text-text uppercase tracking-wider flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-success" />
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 Community Reported Dishes
               </span>
               <span className="text-[11px] text-text-muted">
@@ -278,10 +278,10 @@ export default function AdminDashboardPage() {
                   return (
                     <span
                       key={idx}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-success/10 border border-success/30 text-success flex items-center gap-2"
+                      className="px-3 py-1.5 rounded-md text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 flex items-center gap-2"
                     >
                       <span>{dishName}</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-success/20">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60">
                         {count} reports
                       </span>
                     </span>
@@ -300,7 +300,7 @@ export default function AdminDashboardPage() {
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div>
               <h3 className="text-sm font-bold text-text flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-primary" />
+                <TrendingUp className="h-4 w-4 text-teal-700 dark:text-teal-400" />
                 Meal Attendance Progress
               </h3>
               <p className="text-xs text-text-secondary">Expected attendance vs scanned check-ins</p>
@@ -309,7 +309,7 @@ export default function AdminDashboardPage() {
               size="sm"
               variant="ghost"
               onClick={() => navigate('/admin/attendance')}
-              className="text-xs font-bold text-primary p-0 h-auto"
+              className="text-xs font-bold text-teal-700 dark:text-teal-400 p-0 h-auto"
             >
               Full Roster →
             </Button>
@@ -320,25 +320,25 @@ export default function AdminDashboardPage() {
               <span className="text-text-secondary">Turnout Rate</span>
               <span className="text-text font-bold">{attendanceRate}% Recorded</span>
             </div>
-            <div className="w-full bg-surface-elevated border border-border h-2.5 rounded-full overflow-hidden">
+            <div className="w-full bg-surface-elevated border border-border h-2 rounded-full overflow-hidden">
               <div
-                className="bg-primary h-full rounded-full transition-all duration-300"
+                className="bg-teal-700 dark:bg-teal-500 h-full rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(100, attendanceRate)}%` }}
               />
             </div>
 
             <div className="grid grid-cols-3 gap-2 pt-2 text-center">
-              <div className="p-2.5 rounded-xl bg-surface-elevated border border-border">
+              <div className="p-2.5 rounded-md bg-surface-elevated border border-border">
                 <span className="text-[10px] uppercase font-bold text-text-muted block">Expected</span>
-                <span className="text-lg font-black text-text">{stats.expectedToday}</span>
+                <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.expectedToday}</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-surface-elevated border border-border">
+              <div className="p-2.5 rounded-md bg-surface-elevated border border-border">
                 <span className="text-[10px] uppercase font-bold text-text-muted block">Checked In</span>
-                <span className="text-lg font-black text-success">{stats.checkedIn}</span>
+                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{stats.checkedIn}</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-surface-elevated border border-border">
+              <div className="p-2.5 rounded-md bg-surface-elevated border border-border">
                 <span className="text-[10px] uppercase font-bold text-text-muted block">Pending</span>
-                <span className="text-lg font-black text-text-secondary">
+                <span className="text-lg font-bold text-slate-500 dark:text-slate-400">
                   {Math.max(0, stats.expectedToday - stats.checkedIn)}
                 </span>
               </div>
@@ -360,7 +360,7 @@ export default function AdminDashboardPage() {
               size="sm"
               variant="ghost"
               onClick={() => navigate('/admin/complaints')}
-              className="text-xs font-bold text-primary p-0 h-auto"
+              className="text-xs font-bold text-teal-700 dark:text-teal-400 p-0 h-auto"
             >
               Manage All →
             </Button>
@@ -368,7 +368,7 @@ export default function AdminDashboardPage() {
 
           {recentComplaints.length === 0 ? (
             <div className="py-8 text-center text-xs text-text-muted">
-              <CheckCircle2 className="h-6 w-6 text-success mx-auto mb-1 opacity-70" />
+              <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400 mx-auto mb-1 opacity-70" />
               All student complaints have been addressed and resolved.
             </div>
           ) : (
@@ -377,7 +377,7 @@ export default function AdminDashboardPage() {
                 <div
                   key={c.id || c._id}
                   onClick={() => navigate('/admin/complaints')}
-                  className="flex items-center justify-between p-3 rounded-xl border border-border bg-surface-elevated hover:border-primary/40 cursor-pointer transition-all text-xs"
+                  className="flex items-center justify-between p-3 rounded-md border border-border bg-surface-elevated hover:border-teal-500 cursor-pointer transition-colors text-xs"
                 >
                   <div className="space-y-0.5 max-w-[70%]">
                     <span className="font-bold text-text block truncate">

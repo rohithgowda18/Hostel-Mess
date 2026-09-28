@@ -22,14 +22,14 @@ export function StatCard({
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-card hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700',
+        'relative overflow-hidden rounded-lg border border-slate-200 bg-white p-4 shadow-xs transition-colors hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700',
         className
       )}
     >
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">{title}</span>
         {Icon && (
-          <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border', accentStyles[accentColor] || accentStyles.blue)}>
+          <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-md border', accentStyles[accentColor] || accentStyles.blue)}>
             <Icon className="h-4 w-4" />
           </div>
         )}

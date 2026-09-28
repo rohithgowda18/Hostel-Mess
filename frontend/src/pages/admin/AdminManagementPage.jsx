@@ -98,7 +98,7 @@ export default function AdminManagementPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-black text-text tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Administrative Access & Roles
             </h1>
             <Badge variant="primary" className="text-[11px] font-bold">
@@ -124,14 +124,14 @@ export default function AdminManagementPage() {
       {/* Feedback banner */}
       {feedback && (
         <div
-          className={`p-4 rounded-xl border flex items-center gap-3 text-xs font-semibold ${
+          className={`p-3.5 rounded-md border flex items-center gap-3 text-xs font-semibold ${
             feedback.type === 'success'
-              ? 'bg-success/10 border-success/30 text-success'
-              : 'bg-danger/10 border-danger/30 text-danger'
+              ? 'bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-900/40 text-green-800 dark:text-green-200'
+              : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-200'
           }`}
         >
           {feedback.type === 'success' ? (
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
           ) : (
             <AlertTriangle className="h-4 w-4 shrink-0" />
           )}
@@ -277,16 +277,16 @@ export default function AdminManagementPage() {
       {/* Confirmation Modal (Section 32) */}
       {confirmModal.open && (
         <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-surface rounded-2xl p-5 border border-border shadow-2xl space-y-4">
+          <div className="max-w-md w-full bg-surface rounded-lg p-5 border border-border shadow-xl space-y-4">
             <div className="flex items-center gap-3">
               <div
-                className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                className={`h-9 w-9 rounded-md flex items-center justify-center ${
                   confirmModal.targetRole === 'STUDENT'
-                    ? 'bg-danger/10 text-danger'
-                    : 'bg-primary/10 text-primary'
+                    ? 'bg-red-50 dark:bg-red-950/40 text-red-600'
+                    : 'bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400'
                 }`}
               >
-                <ShieldAlert className="h-5 w-5" />
+                <ShieldAlert className="h-4.5 w-4.5" />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-text">

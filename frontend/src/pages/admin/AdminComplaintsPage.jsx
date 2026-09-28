@@ -89,7 +89,7 @@ export default function AdminComplaintsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-black text-text tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Student Grievances & Complaints Desk
             </h1>
             <Badge variant="primary" className="text-[11px] font-bold">
@@ -115,8 +115,8 @@ export default function AdminComplaintsPage() {
 
       {/* Success banner */}
       {successMsg && (
-        <div className="p-3.5 rounded-xl bg-success/10 border border-success/30 text-success text-xs font-semibold flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <div className="p-3 rounded-md bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900/40 text-green-800 dark:text-green-200 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
           <span>{successMsg}</span>
         </div>
       )}
@@ -125,39 +125,39 @@ export default function AdminComplaintsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card
           onClick={() => setStatusFilter('OPEN')}
-          className={`p-4 bg-surface border cursor-pointer transition-all ${
+          className={`p-4 bg-surface border cursor-pointer transition-colors ${
             statusFilter === 'OPEN' ? 'border-danger ring-1 ring-danger/40' : 'border-border'
           }`}
         >
           <p className="text-[11px] font-bold text-danger uppercase tracking-wider">Open Tickets</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-3xl font-black text-danger">{openCount}</span>
+            <span className="text-2xl font-bold text-danger">{openCount}</span>
             <span className="text-xs text-text-muted">pending triage</span>
           </div>
         </Card>
 
         <Card
           onClick={() => setStatusFilter('IN_PROGRESS')}
-          className={`p-4 bg-surface border cursor-pointer transition-all ${
-            statusFilter === 'IN_PROGRESS' ? 'border-warning ring-1 ring-warning/40' : 'border-border'
+          className={`p-4 bg-surface border cursor-pointer transition-colors ${
+            statusFilter === 'IN_PROGRESS' ? 'border-amber-500 ring-1 ring-amber-500/40' : 'border-border'
           }`}
         >
-          <p className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">In Progress</p>
+          <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">In Progress</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-3xl font-black text-amber-500">{inProgressCount}</span>
+            <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">{inProgressCount}</span>
             <span className="text-xs text-text-muted">under investigation</span>
           </div>
         </Card>
 
         <Card
           onClick={() => setStatusFilter('RESOLVED')}
-          className={`p-4 bg-surface border cursor-pointer transition-all ${
-            statusFilter === 'RESOLVED' ? 'border-success ring-1 ring-success/40' : 'border-border'
+          className={`p-4 bg-surface border cursor-pointer transition-colors ${
+            statusFilter === 'RESOLVED' ? 'border-emerald-600 ring-1 ring-emerald-600/40' : 'border-border'
           }`}
         >
-          <p className="text-[11px] font-bold text-success uppercase tracking-wider">Resolved</p>
+          <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Resolved</p>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-3xl font-black text-success">{resolvedCount}</span>
+            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{resolvedCount}</span>
             <span className="text-xs text-text-muted">closed tickets</span>
           </div>
         </Card>
@@ -173,9 +173,9 @@ export default function AdminComplaintsPage() {
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                 statusFilter === s
-                  ? 'bg-primary text-white'
+                  ? 'bg-teal-700 text-white dark:bg-teal-500 dark:text-slate-950 font-bold'
                   : 'bg-surface-elevated border border-border text-text-secondary hover:text-text'
               }`}
             >
@@ -277,7 +277,7 @@ export default function AdminComplaintsPage() {
       {/* Complaint Detail & Action Modal (Section 29) */}
       {selectedComplaint && (
         <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-          <div className="max-w-lg w-full bg-surface rounded-2xl p-5 border border-border shadow-2xl space-y-4">
+          <div className="max-w-lg w-full bg-surface rounded-lg p-5 border border-border shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
                 <div className="flex items-center gap-2">
@@ -304,14 +304,14 @@ export default function AdminComplaintsPage() {
 
               <button
                 onClick={() => setSelectedComplaint(null)}
-                className="p-1 rounded-lg text-text-muted hover:text-text cursor-pointer"
+                className="p-1.5 rounded-md text-text-muted hover:text-text cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-surface-elevated border border-border">
+              <div className="grid grid-cols-2 gap-2 p-3 rounded-md bg-surface-elevated border border-border">
                 <div>
                   <span className="text-text-muted block text-[10px] uppercase font-bold">Category</span>
                   <span className="font-semibold text-text">{selectedComplaint.category || 'General'}</span>

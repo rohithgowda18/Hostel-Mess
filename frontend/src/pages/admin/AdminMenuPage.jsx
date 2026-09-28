@@ -156,7 +156,7 @@ export default function AdminMenuPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-black text-text tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Weekly Menu Management
             </h1>
             <Badge variant="primary" className="text-[11px] font-bold">
@@ -256,7 +256,7 @@ export default function AdminMenuPage() {
       {/* Edit Slot Modal */}
       {editModal.open && (
         <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-surface rounded-2xl p-5 border border-border shadow-2xl space-y-4">
+          <div className="max-w-md w-full bg-surface rounded-lg p-5 border border-border shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
                 <h3 className="text-sm font-bold text-text">
@@ -266,7 +266,7 @@ export default function AdminMenuPage() {
               </div>
               <button
                 onClick={() => setEditModal({ open: false, day: '', meal: '', itemsText: '' })}
-                className="p-1 rounded-lg text-text-muted hover:text-text cursor-pointer"
+                className="p-1 rounded-md text-text-muted hover:text-text cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -281,7 +281,7 @@ export default function AdminMenuPage() {
                   value={editModal.itemsText}
                   onChange={(e) => setEditModal({ ...editModal, itemsText: e.target.value })}
                   placeholder="e.g.&#10;Steamed Idli&#10;Medu Vada&#10;Sambar"
-                  className="w-full rounded-xl border border-border bg-surface-elevated p-3 text-xs text-text font-mono focus:border-primary focus:outline-none"
+                  className="w-full rounded-md border border-border bg-surface-elevated p-3 text-xs text-text font-mono focus:border-teal-600 focus:outline-none"
                 />
               </div>
 
@@ -295,7 +295,7 @@ export default function AdminMenuPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" size="sm" className="bg-primary hover:bg-primary-hover text-white font-bold text-xs">
+                <Button type="submit" size="sm" className="font-bold text-xs">
                   Save Changes
                 </Button>
               </div>
@@ -307,7 +307,7 @@ export default function AdminMenuPage() {
       {/* Emergency Replacement Modal */}
       {replacementModal && (
         <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-surface rounded-2xl p-5 border border-border shadow-2xl space-y-4">
+          <div className="max-w-md w-full bg-surface rounded-lg p-5 border border-border shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
@@ -318,7 +318,7 @@ export default function AdminMenuPage() {
               </div>
               <button
                 onClick={() => setReplacementModal(false)}
-                className="p-1 rounded-lg text-text-muted hover:text-text cursor-pointer"
+                className="p-1 rounded-md text-text-muted hover:text-text cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -333,7 +333,7 @@ export default function AdminMenuPage() {
                   placeholder="e.g. Paneer Butter Masala"
                   value={replaceTarget}
                   onChange={(e) => setReplaceTarget(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
+                  className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
                 />
               </div>
 
@@ -345,7 +345,7 @@ export default function AdminMenuPage() {
                   placeholder="e.g. Mixed Vegetable Curry"
                   value={replacementName}
                   onChange={(e) => setReplacementName(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
+                  className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
                 />
               </div>
 
@@ -356,7 +356,7 @@ export default function AdminMenuPage() {
                   placeholder="e.g. Supply shortage or dairy delivery delay"
                   value={replacementReason}
                   onChange={(e) => setReplacementReason(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
+                  className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-xs text-text"
                 />
               </div>
 
