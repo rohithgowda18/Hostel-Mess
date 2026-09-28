@@ -474,29 +474,56 @@ export default function DashboardPage() {
             </div>
           </Card>
 
-          {/* Quick Hub Navigation Cards */}
-          <div className="grid grid-cols-2 gap-3.5">
-            <Card
-              onClick={() => navigate('/meals')}
-              className="p-4 shadow-card hover:border-blue-400 cursor-pointer transition-all space-y-1.5"
-            >
-              <div className="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                <UtensilsCrossed className="h-4 w-4" />
-              </div>
-              <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">Dining Hub</h5>
-              <p className="text-[11px] text-slate-400">Weekly plan & food gallery</p>
-            </Card>
+          {/* Quick Hub Action Grid (User Spec #3) */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
+              Quick Actions
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <Card
+                onClick={() => navigate('/qr-checkin')}
+                className="p-3.5 shadow-xs hover:border-blue-500 cursor-pointer transition-all space-y-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+              >
+                <div className="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <QrCode className="h-4 w-4" />
+                </div>
+                <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">Dining Pass</h5>
+                <p className="text-[10px] text-slate-400">Counter QR check-in</p>
+              </Card>
 
-            <Card
-              onClick={() => navigate('/directory')}
-              className="p-4 shadow-card hover:border-blue-400 cursor-pointer transition-all space-y-1.5"
-            >
-              <div className="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                <Building2 className="h-4 w-4" />
-              </div>
-              <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">Hostel Rooms</h5>
-              <p className="text-[11px] text-slate-400">Resident directory & beds</p>
-            </Card>
+              <Card
+                onClick={() => navigate('/complaints')}
+                className="p-3.5 shadow-xs hover:border-rose-500 cursor-pointer transition-all space-y-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+              >
+                <div className="h-8 w-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                  <MessageSquareWarning className="h-4 w-4" />
+                </div>
+                <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">Report Issue</h5>
+                <p className="text-[10px] text-slate-400">File food grievance</p>
+              </Card>
+
+              <Card
+                onClick={() => navigate('/feedback')}
+                className="p-3.5 shadow-xs hover:border-amber-500 cursor-pointer transition-all space-y-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+              >
+                <div className="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                  <Star className="h-4 w-4" />
+                </div>
+                <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">Give Feedback</h5>
+                <p className="text-[10px] text-slate-400">Rate taste & hygiene</p>
+              </Card>
+
+              <Card
+                onClick={() => navigate('/meals')}
+                className="p-3.5 shadow-xs hover:border-indigo-500 cursor-pointer transition-all space-y-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+              >
+                <div className="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                  <UtensilsCrossed className="h-4 w-4" />
+                </div>
+                <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">View Menu</h5>
+                <p className="text-[10px] text-slate-400">Weekly schedule</p>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

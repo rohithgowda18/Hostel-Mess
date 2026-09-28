@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { navigationSections } from '@/config/navigation';
-import { getUser, logout } from '@/services/auth-service';
+import { getNavigationSections } from '@/config/navigation';
+import { getUser, logout, setUserRole } from '@/services/auth-service';
 import { cn } from '@/lib/utils';
 
 function AppSidebar({
@@ -26,6 +26,13 @@ function AppSidebar({
   const location = useLocation();
   const user = getUser() || {};
   const isAdmin = user?.role === 'ADMIN';
+  const sections = getNavigationSections(user?.role);
+
+  const handleRoleToggle = () => {
+    const nextRole = isAdmin ? 'STUDENT' : 'ADMIN';
+    setUserRole(nextRole);
+    navigate(nextRole === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard');
+  };
 
   const handleNavigate = (path, key) => {
     navigate(path);
@@ -40,7 +47,7 @@ function AppSidebar({
 
   const isCurrentActive = (item) => {
     if (location.pathname === item.path) return true;
-    if (item.path !== '/dashboard' && location.pathname.startsWith(item.path)) return true;
+    if (item.path !== '/dashboard' && item.path !== '/admin/dashboard' && item.path !== '/student/dashboard' && location.pathname.startsWith(item.path)) return true;
     if (item.key === activeItem) return true;
     return false;
   };
@@ -67,17 +74,29 @@ function AppSidebar({
         {/* Brand Header */}
         <div className="flex h-16 items-center justify-between border-b border-slate-100 dark:border-slate-800/80 px-4">
           <div className={cn('flex items-center gap-3', collapsed && 'md:justify-center md:w-full')}>
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
-              <Building className="h-5 w-5" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs font-black text-sm">
+              HP
             </div>
             <div className={cn(collapsed && 'md:hidden')}>
-              <div className="flex items-center gap-1.5">
-                <span className="text-base font-extrabold tracking-tight text-slate-900 dark:text-slate-100">HostelOS</span>
-                <span className="rounded-md bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60">
-                  {isAdmin ? 'ADMIN' : 'STUDENT'}
-                </span>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-extrabold tracking-tight text-slate-900 dark:text-slate-100">Hostel Mess</span>
+                <button
+                  type="button"
+                  onClick={handleRoleToggle}
+                  title="Click to toggle between Student & Admin preview"
+                  className={cn(
+                    'rounded-md px-1.5 py-0.5 text-[10px] font-bold border transition-all cursor-pointer hover:scale-105 active:scale-95',
+                    isAdmin
+                      ? 'bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800'
+                      : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
+                  )}
+                >
+                  {isAdmin ? 'ADMIN ⇄' : 'STUDENT ⇄'}
+                </button>
               </div>
-              <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">University Mess & Hostel</p>
+              <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                {isAdmin ? 'Warden & Management' : 'Hostel & Dining Hub'}
+              </p>
             </div>
           </div>
 
@@ -94,7 +113,7 @@ function AppSidebar({
 
         {/* Navigation Sections */}
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
-          {navigationSections.map((section, sIdx) => (
+          {sections.map((section, sIdx) => (
             <div key={sIdx} className="space-y-1">
               {!collapsed && (
                 <div className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">

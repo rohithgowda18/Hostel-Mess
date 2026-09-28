@@ -275,14 +275,37 @@ function DashboardLayout({ user, onLogout, children }) {
           onClick={() => setMoreOpen(false)}
         />
       )}
+      {/* Mobile Drawer "More" Dropup */}
+      {moreOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="md:hidden fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs"
+          onClick={() => setMoreOpen(false)}
+        />
+      )}
       {moreOpen && (
         <div className="md:hidden fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-dropdown p-2 space-y-1 animate-in fade-in-0 slide-in-from-bottom-2 duration-150">
-          {[
-            { label: 'Hostel & Rooms', path: '/directory', icon: Building2 },
-            { label: 'Feedback & Reports', path: '/feedback', icon: MessageSquare },
-            { label: 'Food Gallery', path: '/student-photos', icon: Calendar },
-            { label: 'My Profile & Settings', path: '/profile', icon: User },
-          ].map((item) => {
+          {(user?.role === 'ADMIN'
+            ? [
+                { label: 'Quality Analytics', path: '/admin/quality', icon: Star },
+                { label: 'Waste Tracking', path: '/admin/waste', icon: LayoutDashboard },
+                { label: 'Turnout Forecast', path: '/admin/analytics', icon: LayoutDashboard },
+                { label: 'Students & Rooms', path: '/admin/students', icon: Users },
+                { label: 'Consensus Polls', path: '/admin/polls', icon: MessageSquare },
+                { label: 'Official Notices', path: '/admin/notices', icon: MessageSquare },
+                { label: 'Vendor & SLA', path: '/admin/vendor', icon: Building2 },
+                { label: 'Settings', path: '/profile', icon: User }
+              ]
+            : [
+                { label: 'Give Feedback', path: '/student/feedback', icon: Star },
+                { label: 'Consensus Polls', path: '/student/polls', icon: MessageSquare },
+                { label: 'Official Notices', path: '/student/notices', icon: Calendar },
+                { label: 'Buddy Groups', path: '/groups', icon: Users },
+                { label: 'Hostel & Rooms', path: '/directory', icon: Building2 },
+                { label: 'Profile & Settings', path: '/profile', icon: User }
+              ]
+          ).map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             return (
@@ -307,24 +330,33 @@ function DashboardLayout({ user, onLogout, children }) {
         </div>
       )}
 
-      {/* Fixed Mobile Bottom Navigation Bar */}
+      {/* Fixed Mobile Bottom Navigation Bar (User Spec #2) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800/80 flex items-stretch justify-around min-h-[4rem] pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-1">
-        {[
-          { label: 'Home', path: '/dashboard', icon: LayoutDashboard },
-          { label: 'Meals', path: '/meals', icon: UtensilsCrossed },
-          { label: 'Check In', path: '/qr-checkin', icon: QrCode, isHero: true },
-          { label: 'Groups', path: '/groups', icon: Users },
-          { label: 'More', icon: MoreHorizontal, isMore: true },
-        ].map((item) => {
+        {(user?.role === 'ADMIN'
+          ? [
+              { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+              { label: 'Attendance', path: '/admin/attendance', icon: UtensilsCrossed },
+              { label: 'Menu', path: '/admin/menu', icon: UtensilsCrossed, isHero: true },
+              { label: 'Issues', path: '/admin/complaints', icon: MessageSquare },
+              { label: 'More', icon: MoreHorizontal, isMore: true }
+            ]
+          : [
+              { label: 'Home', path: '/student/dashboard', icon: LayoutDashboard },
+              { label: 'Meals', path: '/student/meals', icon: UtensilsCrossed },
+              { label: 'Pass', path: '/student/dining', icon: QrCode, isHero: true },
+              { label: 'Complaints', path: '/student/complaints', icon: MessageSquare },
+              { label: 'More', icon: MoreHorizontal, isMore: true }
+            ]
+        ).map((item) => {
           const Icon = item.icon;
-          const isActive = item.path ? location.pathname === item.path : moreOpen;
+          const isActive = item.path ? (location.pathname === item.path || (item.path.includes('dashboard') && location.pathname === '/dashboard')) : moreOpen;
 
           if (item.isHero) {
             return (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                aria-label="QR check-in"
+                aria-label="Dining Action"
                 className="flex flex-col items-center justify-center relative -top-3 active:scale-95 transition-transform min-w-[64px]"
               >
                 <div className="w-13 h-13 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/30 border-2 border-white dark:border-slate-900">

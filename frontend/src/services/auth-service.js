@@ -101,6 +101,14 @@ export function isAuthenticated() {
   return Boolean(getToken());
 }
 
+export function setUserRole(newRole) {
+  const raw = localStorage.getItem(USER_KEY);
+  const current = raw ? JSON.parse(raw) : { email: 'student@hostel.app' };
+  current.role = newRole.toUpperCase();
+  localStorage.setItem(USER_KEY, JSON.stringify(current));
+  window.dispatchEvent(new Event('auth-change'));
+}
+
 export function getAuthHeader() {
   const token = getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
