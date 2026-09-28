@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { messApi } from '@/services/mess-api';
 import { getUser } from '@/services/auth-service';
 import {
@@ -18,10 +18,14 @@ import {
   TrendingUp,
   Star,
   ChevronRight,
+  ChevronLeft,
   Coffee,
   Sun,
   Sunset,
-  Moon
+  Moon,
+  Camera,
+  X,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +36,7 @@ import { Input } from '@/components/ui/input';
 
 const TABS = [
   { id: 'today', label: "Today's Live Menu", icon: UtensilsCrossed },
+  { id: 'photos', label: 'Live Food Gallery', icon: Camera },
   { id: 'weekly', label: 'Weekly Schedule', icon: Calendar },
   { id: 'history', label: 'Menu History & Compare', icon: History },
 ];
@@ -65,9 +70,15 @@ export default function MealsPage() {
   const currentUser = getUser() || {};
   const isAdmin = currentUser.role === 'ADMIN';
 
-  const [activeTab, setActiveTab] = useState('today');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'today';
+
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [todayMeals, setTodayMeals] = useState([]);
   const [weeklyMenu, setWeeklyMenu] = useState(DEFAULT_WEEKLY_SCHEDULE);
+  const [photos, setPhotos] = useState([]);
+  const [photoFilter, setPhotoFilter] = useState('ALL');
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const [loading, setLoading] = useState(true);
   const [consensusData, setConsensusData] = useState({});
   const [showAdminWeeklyEditor, setShowAdminWeeklyEditor] = useState(false);
@@ -93,10 +104,13 @@ export default function MealsPage() {
     try {
       const todayStr = new Date().toISOString().split('T')[0];
       const slots = ['BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'];
-      const [mealMap, ...consensusResults] = await Promise.all([
+      const [mealMap, photoList, ...consensusResults] = await Promise.all([
         messApi.getAllTodayMeals(slots).catch(() => ({})),
+        messApi.getStudentPhotosToday().catch(() => []),
         ...slots.map((s) => messApi.getMealConsensus(s, todayStr).catch(() => null)),
       ]);
+
+      setPhotos(Array.isArray(photoList) ? photoList : []);
 
       const consensusMap = {};
       slots.forEach((s, idx) => {
@@ -421,8 +435,123 @@ export default function MealsPage() {
             );
           })}
         </div>
+      ) : activeTab === 'photos' ? (
+        /* ─────────────── TAB 2: LIVE FOOD EVIDENCE GALLERY ─────────────── */
+        <div className="space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Camera className="h-4 w-4 text-blue-600" />
+                Student Photo Evidence Gallery
+              </h3>
+              <p className="text-xs text-slate-500">
+                Verified photos captured at hostel dining counters today.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => navigate('/report-meal')}
+              className="text-xs font-bold bg-blue-600 hover:bg-blue-700 gap-1.5"
+            >
+              <Camera className="h-4 w-4" /> Upload Meal Photo
+            </Button>
+          </div>
+
+          {/* Meal Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            {['ALL', 'BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'].map((slot) => (
+              <button
+                key={slot}
+                onClick={() => setPhotoFilter(slot)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                  photoFilter === slot
+                    ? 'bg-blue-600 text-white font-bold shadow-xs'
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                {slot === 'ALL' ? 'All Meals' : slot}
+              </button>
+            ))}
+          </div>
+
+          {/* Grid of photos */}
+          {(() => {
+            const filteredPhotos = photoFilter === 'ALL' ? photos : photos.filter(p => (p.mealType || '').toUpperCase() === photoFilter);
+            if (filteredPhotos.length === 0) {
+              return (
+                <EmptyState
+                  icon={Camera}
+                  title="No food photos shared yet today"
+                  description="Be the first resident to photograph today's meal and upload it with your consensus report."
+                  actionLabel="Upload First Photo (+20 Pts)"
+                  onAction={() => navigate('/report-meal')}
+                />
+              );
+            }
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredPhotos.map((photo, idx) => (
+                  <Card
+                    key={photo.id || idx}
+                    onClick={() => setLightboxIndex(idx)}
+                    className="overflow-hidden cursor-pointer group shadow-card hover:border-blue-400 transition-all"
+                  >
+                    <div className="relative aspect-square w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <img
+                        src={photo.photoUrl}
+                        alt="Meal Evidence"
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <Badge variant="primary" className="absolute top-2 left-2 text-[9px] font-bold uppercase backdrop-blur-md">
+                        {photo.mealType || 'Meal'}
+                      </Badge>
+                    </div>
+                    <div className="p-3 text-xs space-y-1">
+                      <div className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                        {photo.description || photo.foodItems?.join(', ') || 'Live Serving Photo'}
+                      </div>
+                      <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                        <span>{photo.uploadedBy || 'Resident'}</span>
+                        <span>{photo.uploadTime || 'Today'}</span>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            );
+          })()}
+
+          {/* Lightbox Modal */}
+          {lightboxIndex !== null && photos[lightboxIndex] && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in-0 duration-150">
+              <div className="relative max-w-xl w-full rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-elevated">
+                <button
+                  onClick={() => setLightboxIndex(null)}
+                  className="absolute top-3 right-3 z-10 p-2 rounded-full bg-black/60 text-white hover:bg-black/80"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <img
+                  src={photos[lightboxIndex].photoUrl}
+                  alt="Expanded"
+                  className="w-full max-h-[420px] object-cover"
+                />
+                <div className="p-4 space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="primary">{photos[lightboxIndex].mealType}</Badge>
+                    <span className="text-slate-400">{photos[lightboxIndex].uploadTime || 'Today'}</span>
+                  </div>
+                  <p className="font-semibold text-slate-800 dark:text-slate-200 pt-1">
+                    {photos[lightboxIndex].description || 'Counter Verification Evidence'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       ) : activeTab === 'weekly' ? (
-        /* ─────────────── TAB 2: WEEKLY SCHEDULE ─────────────── */
+        /* ─────────────── TAB 3: WEEKLY SCHEDULE ─────────────── */
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>

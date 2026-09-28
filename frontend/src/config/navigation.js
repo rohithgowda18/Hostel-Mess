@@ -21,8 +21,7 @@ export const navigationSections = [
       { key: 'meals', label: 'Mess & Meals', path: '/meals', icon: UtensilsCrossed },
       { key: 'directory', label: 'Hostel & Rooms', path: '/directory', icon: Building2 },
       { key: 'groups', label: 'Buddy Groups', path: '/groups', icon: Users2 },
-      { key: 'qr-checkin', label: 'QR Check-in', path: '/qr-checkin', icon: QrCode },
-      { key: 'student-photos', label: 'Food Gallery', path: '/student-photos', icon: Camera }
+      { key: 'qr-checkin', label: 'QR Check-in', path: '/qr-checkin', icon: QrCode }
     ]
   },
   {

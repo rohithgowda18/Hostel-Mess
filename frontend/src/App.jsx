@@ -75,15 +75,7 @@ function App() {
       />
       <Route
         path="/student-photos"
-        element={
-          authenticated ? (
-            <DashboardLayout user={appUser} onLogout={handleLogout}>
-              <StudentFoodPhotosPage />
-            </DashboardLayout>
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={<Navigate to="/meals?tab=photos" replace />}
       />
       <Route
         path="/groups"
