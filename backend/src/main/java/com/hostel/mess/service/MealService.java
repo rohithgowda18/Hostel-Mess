@@ -1,26 +1,44 @@
 package com.hostel.mess.service;
 
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.Principal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.hostel.mess.dto.MealResponse;
-import com.hostel.mess.model.WeeklyMenu;
-import com.hostel.mess.model.MealAttendance;
-import com.hostel.mess.model.FoodRating;
+import com.hostel.mess.model.MealPhoto;
 import com.hostel.mess.model.MealSubmission;
 import com.hostel.mess.model.User;
-import com.hostel.mess.repository.WeeklyMenuRepository;
-import com.hostel.mess.repository.MealAttendanceRepository;
-import com.hostel.mess.repository.FoodRatingRepository;
+import com.hostel.mess.model.WeeklyMenu;
+import com.hostel.mess.repository.MealPhotoRepository;
+import com.hostel.mess.repository.MealServiceRepository;
 import com.hostel.mess.repository.MealSubmissionRepository;
 import com.hostel.mess.repository.UserRepository;
+import com.hostel.mess.repository.WeeklyMenuRepository;
 
 @Service
 public class MealService {
@@ -29,27 +47,32 @@ public class MealService {
     private WeeklyMenuRepository weeklyMenuRepository;
 
     @Autowired
-    private MealAttendanceRepository attendanceRepository;
-
-    @Autowired
-    private FoodRatingRepository ratingRepository;
-
-    @Autowired
     private MealSubmissionRepository submissionRepository;
+
+    @Autowired
+    private MealPhotoRepository mealPhotoRepository;
+
+    @Autowired
+    private MealServiceRepository mealServiceRepository;
 
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private WebSocketEventService wsService;
+    @Autowired(required = false)
+    private GridFsTemplate gridFsTemplate;
 
-    @Autowired
-    private com.hostel.mess.repository.MealPhotoRepository mealPhotoRepository;
+    @Autowired(required = false)
+    private WebSocketEventService wsService;
 
     @Value("${app.disable-time-restrictions:false}")
     private boolean disableTimeRestrictions;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
+    private static final String UPLOAD_DIR = "uploads/student-photos/";
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
+
+    private static final ConcurrentHashMap<String, ConcurrentHashMap<String, String>> VERIFICATION_VOTES = new ConcurrentHashMap<>();
 
     // Time windows for each meal type
     private static final Map<String, TimeWindow> MEAL_TIME_WINDOWS = Map.of(
@@ -60,7 +83,6 @@ public class MealService {
     );
 
     private static class TimeWindow {
-
         final LocalTime start;
         final LocalTime end;
 
@@ -78,7 +100,7 @@ public class MealService {
         if (window == null) {
             return false;
         }
-        LocalTime now = LocalTime.now();
+        LocalTime now = LocalTime.now(IST);
         return !now.isBefore(window.start) && !now.isAfter(window.end);
     }
 
@@ -94,12 +116,8 @@ public class MealService {
         }
     }
 
-    /**
-     * Get today's meal for a specific meal type from live student consensus and
-     * official weekly menu
-     */
     public MealResponse getTodayMeal(String mealType) {
-        String today = LocalDate.now().format(DATE_FORMATTER);
+        String today = LocalDate.now(IST).format(DATE_FORMATTER);
         Map<String, Object> consensus = getMealConsensus(mealType, today);
 
         MealResponse response = new MealResponse();
@@ -115,88 +133,6 @@ public class MealService {
         response.setVerificationStatus((Boolean) consensus.getOrDefault("menuChanged", false) ? "MENU_CHANGED" : "VERIFIED");
 
         return response;
-    }
-
-// Food Ratings logic
-    public FoodRating saveOrUpdateRating(FoodRating rating) {
-        Optional<FoodRating> existing = ratingRepository.findByUserEmailAndMealTypeAndDate(
-                rating.getUserEmail(), rating.getMealType(), rating.getDate()
-        );
-
-        FoodRating saved;
-        if (existing.isPresent()) {
-            FoodRating f = existing.get();
-            f.setRatingOverall(rating.getRatingOverall());
-            f.setTaste(rating.getTaste());
-            f.setQuality(rating.getQuality());
-            f.setQuantity(rating.getQuantity());
-            f.setTemperature(rating.getTemperature());
-            f.setCleanliness(rating.getCleanliness());
-            f.setPresentation(rating.getPresentation());
-            f.setReviewText(rating.getReviewText());
-            f.setCreatedAt(Instant.now());
-            saved = ratingRepository.save(f);
-        } else {
-            saved = ratingRepository.save(rating);
-        }
-
-        wsService.broadcastAppEvent("RATINGS_UPDATED", Map.of(
-                "mealType", rating.getMealType(),
-                "date", rating.getDate(),
-                "rating", saved
-        ));
-
-        return saved;
-    }
-
-    public List<FoodRating> getMealRatings(String mealType, String date) {
-        return ratingRepository.findByMealTypeAndDate(mealType, date);
-    }
-
-    public Map<String, Object> getMealRatingsSummary(String mealType, String date) {
-        List<FoodRating> ratings = getMealRatings(mealType, date);
-        double avgOverall = 0, avgTaste = 0, avgQuality = 0, avgQuantity = 0, avgTemperature = 0, avgCleanliness = 0, avgPresentation = 0;
-        int[] distribution = new int[6];
-
-        for (FoodRating r : ratings) {
-            avgOverall += r.getRatingOverall();
-            avgTaste += r.getTaste();
-            avgQuality += r.getQuality();
-            avgQuantity += r.getQuantity();
-            avgTemperature += r.getTemperature();
-            avgCleanliness += r.getCleanliness();
-            avgPresentation += r.getPresentation();
-
-            int overall = r.getRatingOverall();
-            if (overall >= 1 && overall <= 5) {
-                distribution[overall]++;
-            }
-        }
-
-        int count = ratings.size();
-        if (count > 0) {
-            avgOverall /= count;
-            avgTaste /= count;
-            avgQuality /= count;
-            avgQuantity /= count;
-            avgTemperature /= count;
-            avgCleanliness /= count;
-            avgPresentation /= count;
-        }
-
-        Map<String, Object> summary = new HashMap<>();
-        summary.put("mealType", mealType);
-        summary.put("date", date);
-        summary.put("totalRatings", count);
-        summary.put("averageOverall", Math.round(avgOverall * 100.0) / 100.0);
-        summary.put("averageTaste", Math.round(avgTaste * 100.0) / 100.0);
-        summary.put("averageQuality", Math.round(avgQuality * 100.0) / 100.0);
-        summary.put("averageQuantity", Math.round(avgQuantity * 100.0) / 100.0);
-        summary.put("averageTemperature", Math.round(avgTemperature * 100.0) / 100.0);
-        summary.put("averageCleanliness", Math.round(avgCleanliness * 100.0) / 100.0);
-        summary.put("averagePresentation", Math.round(avgPresentation * 100.0) / 100.0);
-        summary.put("distribution", distribution);
-        return summary;
     }
 
     public Map<String, Object> processStudentSubmission(User user, String mealType, String date, List<String> items, String photoUrl) {
@@ -237,7 +173,7 @@ public class MealService {
         submissionRepository.save(sub);
 
         if (photoUrl != null && !photoUrl.isEmpty()) {
-            com.hostel.mess.model.MealPhoto photo = new com.hostel.mess.model.MealPhoto();
+            MealPhoto photo = new MealPhoto();
             photo.setMealType(mType);
             photo.setDate(date);
             photo.setImageUrls(List.of(photoUrl));
@@ -247,7 +183,9 @@ public class MealService {
         }
 
         Map<String, Object> consensus = getMealConsensus(mType, date);
-        wsService.broadcastAppEvent("MEAL_CONSENSUS_UPDATED", consensus);
+        if (wsService != null) {
+            wsService.broadcastAppEvent("MEAL_CONSENSUS_UPDATED", consensus);
+        }
 
         String msg = isFirstReporterForMeal ? "You are the FIRST reporter! +" + pointsEarned + " Pts awarded!" : "Meal report submitted! +" + pointsEarned + " Pts awarded!";
 
@@ -257,6 +195,18 @@ public class MealService {
                 "pointsEarned", pointsEarned,
                 "consensus", consensus
         );
+    }
+
+    public Map<String, Object> processVerification(String userEmail, String mealType, String date, String foodItem, String vote) {
+        String mType = mealType.toUpperCase();
+        String itemKey = date + ":" + mType + ":" + foodItem.trim().toLowerCase();
+        VERIFICATION_VOTES.computeIfAbsent(itemKey, k -> new ConcurrentHashMap<>()).put(userEmail, vote.toUpperCase());
+
+        Map<String, Object> consensus = getMealConsensus(mType, date);
+        if (wsService != null) {
+            wsService.broadcastAppEvent("MEAL_VERIFICATION_UPDATED", consensus);
+        }
+        return consensus;
     }
 
     public Map<String, Object> getMealConsensus(String mealType, String date) {
@@ -285,7 +235,32 @@ public class MealService {
             itemData.put("name", item);
             itemData.put("votes", votes);
             itemData.put("confidence", confidence);
-            itemData.put("verified", votes >= 2);
+
+            String itemKey = date + ":" + mType + ":" + item.trim().toLowerCase();
+            ConcurrentHashMap<String, String> userVotes = VERIFICATION_VOTES.get(itemKey);
+            int yesVotes = 0;
+            int noVotes = 0;
+            if (userVotes != null) {
+                for (String v : userVotes.values()) {
+                    if ("YES".equalsIgnoreCase(v)) yesVotes++;
+                    else if ("NO".equalsIgnoreCase(v)) noVotes++;
+                }
+            }
+            itemData.put("yesVotes", yesVotes);
+            itemData.put("noVotes", noVotes);
+
+            String status = "Awaiting verification";
+            if (!isWithinTimeWindow(mType)) {
+                status = "Closed/expired";
+            } else if (yesVotes >= 3 || votes >= 3) {
+                status = "Verified";
+            } else if (yesVotes >= 1 && noVotes >= 1) {
+                status = "Conflicting reports";
+            } else if (yesVotes >= 1 || votes >= 1) {
+                status = "Community confirmed";
+            }
+            itemData.put("status", status);
+            itemData.put("verified", "Verified".equals(status) || votes >= 2);
             itemConfidenceList.add(itemData);
         });
 
@@ -298,11 +273,21 @@ public class MealService {
             confidenceRating = "MEDIUM";
         }
 
+        // Resolve planned menu from weekly menu repository
         List<String> expectedItems = List.of("Idli", "Vada", "Sambar", "Chutney", "Tea");
         List<WeeklyMenu> allMenus = weeklyMenuRepository.findAll();
         if (!allMenus.isEmpty()) {
             WeeklyMenu menu = allMenus.get(0);
-            Map<String, List<String>> dayMenu = menu.getMonday();
+            String dayOfWeek = LocalDate.now(IST).getDayOfWeek().name();
+            Map<String, List<String>> dayMenu = switch (dayOfWeek) {
+                case "TUESDAY" -> menu.getTuesday();
+                case "WEDNESDAY" -> menu.getWednesday();
+                case "THURSDAY" -> menu.getThursday();
+                case "FRIDAY" -> menu.getFriday();
+                case "SATURDAY" -> menu.getSaturday();
+                case "SUNDAY" -> menu.getSunday();
+                default -> menu.getMonday();
+            };
             if (dayMenu != null && dayMenu.containsKey(mType)) {
                 expectedItems = dayMenu.get(mType);
             }
@@ -334,5 +319,283 @@ public class MealService {
         response.put("photos", photos);
 
         return response;
+    }
+
+    // ==========================================
+    // WEEKLY MENU
+    // ==========================================
+
+    public WeeklyMenu getWeeklyMenu(String weekStartDate) {
+        if (weekStartDate != null) {
+            Optional<WeeklyMenu> menuOpt = weeklyMenuRepository.findByWeekStartDate(weekStartDate);
+            if (menuOpt.isPresent()) {
+                return menuOpt.get();
+            }
+        }
+        List<WeeklyMenu> allMenus = weeklyMenuRepository.findAll();
+        if (!allMenus.isEmpty()) {
+            return allMenus.get(0);
+        }
+        return seedDefaultWeeklyMenu(weekStartDate);
+    }
+
+    public WeeklyMenu saveWeeklyMenu(WeeklyMenu weeklyMenu) {
+        if (weeklyMenu.getWeekStartDate() == null) {
+            throw new IllegalArgumentException("weekStartDate is required");
+        }
+        Optional<WeeklyMenu> existing = weeklyMenuRepository.findByWeekStartDate(weeklyMenu.getWeekStartDate());
+        existing.ifPresent(menu -> weeklyMenu.setId(menu.getId()));
+        return weeklyMenuRepository.save(weeklyMenu);
+    }
+
+    private WeeklyMenu seedDefaultWeeklyMenu(String weekStartDate) {
+        String startDate = weekStartDate != null ? weekStartDate : LocalDate.now(IST).toString();
+        WeeklyMenu menu = new WeeklyMenu();
+        menu.setWeekStartDate(startDate);
+
+        Map<String, List<String>> monday = new HashMap<>();
+        monday.put("BREAKFAST", List.of("Idli", "Vada", "Sambar", "Coconut Chutney", "Tea/Coffee"));
+        monday.put("LUNCH", List.of("Steamed Rice", "Dal Tadka", "Paneer Curry", "Roti", "Curd"));
+        monday.put("SNACKS", List.of("Veg Pakoda", "Green Chutney", "Tea/Coffee"));
+        monday.put("DINNER", List.of("Jeera Rice", "Aloo Gobi", "Dal", "Roti", "Gulab Jamun"));
+        menu.setMonday(monday);
+
+        Map<String, List<String>> tuesday = new HashMap<>();
+        tuesday.put("BREAKFAST", List.of("Poori", "Saagu", "Kesari Bath", "Tea/Coffee"));
+        tuesday.put("LUNCH", List.of("Rice", "Rasam", "Chole Masala", "Bhature", "Salad"));
+        tuesday.put("SNACKS", List.of("Samosa", "Sweet Chutney", "Tea/Coffee"));
+        tuesday.put("DINNER", List.of("Fried Rice", "Veg Manchurian", "Roti", "Dal", "Banana"));
+        menu.setTuesday(tuesday);
+
+        menu.setWednesday(monday);
+        menu.setThursday(tuesday);
+        menu.setFriday(monday);
+        menu.setSaturday(tuesday);
+        menu.setSunday(monday);
+
+        return weeklyMenuRepository.save(menu);
+    }
+
+    // ==========================================
+    // MEAL SERVICE LIFECYCLE
+    // ==========================================
+
+    public List<com.hostel.mess.model.MealService> getOrInitServicesForDate(String date) {
+        List<com.hostel.mess.model.MealService> existing = mealServiceRepository.findByDate(date);
+        if (existing.size() >= 4) {
+            return existing;
+        }
+
+        Map<String, String[]> schedule = new LinkedHashMap<>();
+        schedule.put("BREAKFAST", new String[]{"07:30", "09:30"});
+        schedule.put("LUNCH", new String[]{"12:30", "14:30"});
+        schedule.put("SNACKS", new String[]{"16:30", "17:30"});
+        schedule.put("DINNER", new String[]{"19:30", "21:30"});
+
+        Set<String> existingTypes = new HashSet<>();
+        for (com.hostel.mess.model.MealService s : existing) {
+            existingTypes.add(s.getMealType().toUpperCase());
+        }
+
+        LocalTime now = LocalTime.now(IST);
+        boolean isToday = LocalDate.now(IST).toString().equals(date);
+
+        List<com.hostel.mess.model.MealService> created = new ArrayList<>(existing);
+        for (Map.Entry<String, String[]> entry : schedule.entrySet()) {
+            String type = entry.getKey();
+            if (!existingTypes.contains(type)) {
+                String start = entry.getValue()[0];
+                String end = entry.getValue()[1];
+
+                String initialStatus = "SCHEDULED";
+                if (isToday) {
+                    LocalTime sTime = LocalTime.parse(start);
+                    LocalTime eTime = LocalTime.parse(end);
+                    if (!now.isBefore(sTime) && !now.isAfter(eTime)) {
+                        initialStatus = "OPEN";
+                    } else if (now.isAfter(eTime)) {
+                        initialStatus = "COMPLETED";
+                    }
+                }
+
+                com.hostel.mess.model.MealService ms = new com.hostel.mess.model.MealService(date, type, start, end, initialStatus);
+                ms = mealServiceRepository.save(ms);
+                created.add(ms);
+            }
+        }
+        return created;
+    }
+
+    public com.hostel.mess.model.MealService getCurrentOrNextService() {
+        String today = LocalDate.now(IST).toString();
+        List<com.hostel.mess.model.MealService> services = getOrInitServicesForDate(today);
+        LocalTime now = LocalTime.now(IST);
+
+        for (com.hostel.mess.model.MealService s : services) {
+            LocalTime sTime = LocalTime.parse(s.getStartTime());
+            LocalTime eTime = LocalTime.parse(s.getEndTime());
+            if (!now.isBefore(sTime) && !now.isAfter(eTime)) {
+                if (!"OPEN".equals(s.getStatus())) {
+                    s.setStatus("OPEN");
+                    mealServiceRepository.save(s);
+                }
+                return s;
+            }
+        }
+
+        for (com.hostel.mess.model.MealService s : services) {
+            LocalTime sTime = LocalTime.parse(s.getStartTime());
+            if (now.isBefore(sTime)) {
+                return s;
+            }
+        }
+        return services.isEmpty() ? null : services.get(0);
+    }
+
+    public com.hostel.mess.model.MealService updateMealServiceStatus(String id, String status) {
+        com.hostel.mess.model.MealService service = mealServiceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("MealService not found: " + id));
+        service.setStatus(status.toUpperCase());
+        return mealServiceRepository.save(service);
+    }
+
+    // ==========================================
+    // MEAL PHOTO EVIDENCE
+    // ==========================================
+
+    public MealPhoto uploadMealPhoto(List<MultipartFile> images, String description, String mealTypeParam, Principal principal) throws Exception {
+        if (images == null || images.isEmpty() || images.stream().allMatch(MultipartFile::isEmpty)) {
+            throw new IllegalArgumentException("At least one image is required");
+        }
+
+        String uploaderEmail = principal != null ? principal.getName() : "student@hostel.app";
+        User user = userRepository.findById(uploaderEmail).orElse(null);
+        String uploaderName = (user != null && user.getEmail() != null) ? user.getEmail().split("@")[0] : uploaderEmail.split("@")[0];
+
+        String mealType = (mealTypeParam != null && !mealTypeParam.trim().isEmpty())
+                ? mealTypeParam.toUpperCase()
+                : detectMealType();
+
+        String today = LocalDate.now(IST).toString();
+        List<String> imageUrls = new ArrayList<>();
+        String gridFsFileId = null;
+
+        for (MultipartFile image : images) {
+            if (image.isEmpty()) continue;
+            String contentType = image.getContentType();
+            if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+                contentType = "image/jpeg";
+            }
+
+            if (gridFsTemplate != null) {
+                try {
+                    ObjectId fileId = gridFsTemplate.store(
+                            image.getInputStream(),
+                            image.getOriginalFilename(),
+                            contentType
+                    );
+                    gridFsFileId = fileId.toString();
+                    imageUrls.add("/api/student-photos/" + gridFsFileId + "/image");
+                } catch (Exception ignored) {}
+            }
+
+            if (imageUrls.isEmpty()) {
+                Path dir = Paths.get(UPLOAD_DIR);
+                if (!Files.exists(dir)) Files.createDirectories(dir);
+                String filename = System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 6) + ".jpg";
+                Path target = dir.resolve(filename);
+                image.transferTo(target);
+                imageUrls.add("/" + UPLOAD_DIR + filename);
+            }
+        }
+
+        MealPhoto photo = new MealPhoto();
+        photo.setUserEmail(uploaderEmail);
+        photo.setUploadedBy(uploaderName);
+        photo.setMealType(mealType);
+        photo.setDate(today);
+        photo.setImageUrls(imageUrls);
+        photo.setGridFsFileId(gridFsFileId);
+        photo.setDescription(description != null ? description : "Meal Photo");
+        photo.setUploadedAt(new Date());
+
+        MealPhoto saved = mealPhotoRepository.save(photo);
+        if (wsService != null) {
+            wsService.broadcastAppEvent("MEAL_PHOTO_ADDED", saved);
+        }
+        return saved;
+    }
+
+    public List<MealPhoto> getTodayPhotos() {
+        String today = LocalDate.now(IST).toString();
+        List<MealPhoto> list = mealPhotoRepository.findByDate(today);
+        return list.size() > 100 ? list.subList(list.size() - 100, list.size()) : list;
+    }
+
+    public ResponseEntity<?> streamMealPhotoImage(String id) {
+        Optional<MealPhoto> opt = mealPhotoRepository.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        MealPhoto photo = opt.get();
+
+        if (photo.getGridFsFileId() != null && gridFsTemplate != null) {
+            try {
+                com.mongodb.client.gridfs.model.GridFSFile gridFile = gridFsTemplate.findOne(
+                        new Query(Criteria.where("_id").is(new ObjectId(photo.getGridFsFileId())))
+                );
+                if (gridFile != null) {
+                    GridFsResource resource = gridFsTemplate.getResource(gridFile);
+                    if (resource != null && resource.exists()) {
+                        String ct = (gridFile.getMetadata() != null && gridFile.getMetadata().getString("_contentType") != null)
+                                ? gridFile.getMetadata().getString("_contentType")
+                                : "image/jpeg";
+                        return ResponseEntity.ok()
+                                .contentType(MediaType.parseMediaType(ct))
+                                .body(new InputStreamResource(resource.getInputStream()));
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (photo.getImageUrls() != null && !photo.getImageUrls().isEmpty()) {
+            for (String url : photo.getImageUrls()) {
+                if (url.startsWith("/" + UPLOAD_DIR)) {
+                    File f = new File(url.substring(1));
+                    if (f.exists()) {
+                        try {
+                            byte[] bytes = Files.readAllBytes(f.toPath());
+                            return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(bytes);
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    // ==========================================
+    // FAVORITE FOODS
+    // ==========================================
+
+    public List<String> getFavorites(String userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getFavoriteFoods() != null ? user.getFavoriteFoods() : List.of();
+    }
+
+    public List<String> saveFavorites(String userId, List<String> items) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setFavoriteFoods(items != null ? items : new ArrayList<>());
+        userRepository.save(user);
+        return user.getFavoriteFoods();
+    }
+
+    private String detectMealType() {
+        LocalTime now = LocalTime.now(IST);
+        if (now.isAfter(LocalTime.of(7, 0)) && now.isBefore(LocalTime.of(10, 1))) return "BREAKFAST";
+        if (now.isAfter(LocalTime.of(12, 0)) && now.isBefore(LocalTime.of(15, 1))) return "LUNCH";
+        if (now.isAfter(LocalTime.of(16, 0)) && now.isBefore(LocalTime.of(18, 1))) return "SNACKS";
+        if (now.isAfter(LocalTime.of(19, 0)) && now.isBefore(LocalTime.of(22, 1))) return "DINNER";
+        return "LUNCH";
     }
 }

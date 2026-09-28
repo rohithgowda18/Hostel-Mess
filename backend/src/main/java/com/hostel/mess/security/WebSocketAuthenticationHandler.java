@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class WebSocketAuthenticationHandler implements ChannelInterceptor {
 
     @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private JwtService jwtService;
 
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
@@ -37,11 +37,11 @@ public class WebSocketAuthenticationHandler implements ChannelInterceptor {
             }
 
             String token = authHeader.substring(7);
-            if (!jwtTokenProvider.validateToken(token)) {
+            if (!jwtService.validateToken(token)) {
                 throw new SecurityException("Invalid JWT token on STOMP CONNECT");
             }
 
-            String userId = jwtTokenProvider.getUserIdFromToken(token);
+            String userId = jwtService.getUserIdFromToken(token);
             UserDetails userDetails = customUserDetailsService.loadUserByUsername(userId);
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

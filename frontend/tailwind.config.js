@@ -5,126 +5,64 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554'
-        },
+        // Design system teal primary
         primary: {
-          DEFAULT: '#2563eb',
-          foreground: '#ffffff',
-          dark: '#1d4ed8',
-          light: '#3b82f6',
-          subtle: '#eff6ff'
+          DEFAULT: '#0F766E',
+          hover: '#0B5E57',
+          subtle: '#F0FDFA',
+          dark: '#2DD4BF',
+          'dark-hover': '#14B8A6',
+          'dark-subtle': 'rgba(45, 212, 191, 0.12)',
         },
-        secondary: {
-          DEFAULT: '#059669',
-          foreground: '#ffffff',
-          subtle: '#ecfdf5'
+        surface: {
+          DEFAULT: '#FFFFFF',
+          elevated: '#FCFCFA',
+          dark: '#111827',
+          'dark-elevated': '#172033',
         },
-        background: '#f8fafc',
-        foreground: '#0f172a',
-        card: {
-          DEFAULT: '#ffffff',
-          foreground: '#0f172a'
+        page: {
+          DEFAULT: '#F7F8F6',
+          dark: '#0B1220',
         },
-        muted: {
-          DEFAULT: '#64748b',
-          foreground: '#94a3b8'
+        verified: {
+          DEFAULT: '#15803D',
+          dark: '#4ADE80',
+          subtle: '#F0FDF4',
         },
-        border: '#e2e8f0',
-        input: '#e2e8f0',
-        ring: '#2563eb',
-        success: {
-          DEFAULT: '#10b981',
-          foreground: '#ffffff',
-          subtle: '#ecfdf5'
-        },
-        warning: {
-          DEFAULT: '#f59e0b',
-          foreground: '#ffffff',
-          subtle: '#fffbeb'
+        pending: {
+          DEFAULT: '#B45309',
+          dark: '#FBBF24',
+          subtle: '#FFFBEB',
         },
         danger: {
-          DEFAULT: '#ef4444',
-          foreground: '#ffffff',
-          subtle: '#fff1f2'
+          DEFAULT: '#B91C1C',
+          dark: '#F87171',
+          subtle: '#FEF2F2',
         },
-        error: {
-          DEFAULT: '#ef4444',
-          foreground: '#ffffff',
-          subtle: '#fff1f2'
+        info: {
+          DEFAULT: '#2563EB',
+          dark: '#60A5FA',
+          subtle: '#EFF6FF',
         },
-        
-        // Mapped legacy tokens for backwards compatibility
-        'secondary-container': '#dcfce7',
-        'on-secondary-container': '#15803d',
-        'on-primary': '#ffffff',
-        'surface-bright': '#f8fafc',
-        'on-primary-container': '#1e40af',
-        'tertiary-fixed-dim': '#cbd5e1',
-        'surface-dim': '#e2e8f0',
-        'inverse-on-surface': '#f8fafc',
-        'on-secondary': '#ffffff',
-        'primary-container': '#eff6ff',
-        'surface-container-lowest': '#ffffff',
-        'secondary-fixed-dim': '#86efac',
-        'tertiary-container': '#f1f5f9',
-        'surface-container-highest': '#e2e8f0',
-        'outline-variant': '#e2e8f0',
-        'on-background': '#0f172a',
-        'on-primary-fixed-variant': '#1e3a8a',
-        'surface-container-low': '#f8fafc',
-        'tertiary': '#475569',
-        'surface-tint': '#2563eb',
-        'inverse-primary': '#93c5fd',
-        'surface-container-high': '#f1f5f9',
-        'error-container': '#fee2e2',
-        'tertiary-fixed': '#e2e8f0',
-        'on-error': '#ffffff',
-        'primary-fixed-dim': '#93c5fd',
-        'on-tertiary-fixed-variant': '#334155',
-        'on-tertiary-fixed': '#0f172a',
-        'surface': '#ffffff',
-        'primary-fixed': '#dbeafe',
-        'on-secondary-fixed': '#064e3b',
-        'surface-variant': '#f1f5f9',
-        'on-tertiary-container': '#1e293b',
-        'secondary-fixed': '#bbf7d0',
-        'on-secondary-fixed-variant': '#065f46',
-        'on-surface-variant': '#64748b',
-        'inverse-surface': '#1e293b',
-        'surface-container': '#f8fafc',
-        'on-error-container': '#991b1b',
-        'on-primary-fixed': '#172554',
-        'on-tertiary': '#ffffff',
-        'on-surface': '#0f172a',
-        'outline': '#94a3b8'
+        border: {
+          DEFAULT: '#E2E8F0',
+          dark: '#263244',
+        }
       },
       boxShadow: {
         'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        'soft': '0 2px 6px -1px rgba(0, 0, 0, 0.05), 0 1px 4px -1px rgba(0, 0, 0, 0.03)',
-        'card': '0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04)',
-        'card-hover': '0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
-        'elevated': '0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05)',
-        'dropdown': '0 12px 32px -4px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.06)',
+        'sm': '0 1px 3px 0 rgba(17, 24, 39, 0.06), 0 1px 2px -1px rgba(17, 24, 39, 0.04)',
+        'card': '0 1px 3px 0 rgba(17, 24, 39, 0.06), 0 1px 2px -1px rgba(17, 24, 39, 0.04)',
+        'card-hover': '0 4px 6px -1px rgba(17, 24, 39, 0.07), 0 2px 4px -2px rgba(17, 24, 39, 0.04)',
+        'elevated': '0 10px 15px -3px rgba(17, 24, 39, 0.08), 0 4px 6px -4px rgba(17, 24, 39, 0.04)',
+        'dropdown': '0 10px 25px -3px rgba(17, 24, 39, 0.1), 0 4px 6px -2px rgba(17, 24, 39, 0.05)',
       },
       borderRadius: {
         DEFAULT: '0.375rem',
-        sm: '0.25rem',
-        md: '0.5rem',
-        lg: '0.75rem',
-        xl: '1rem',
-        '2xl': '1.25rem',
-        '3xl': '1.5rem',
+        sm: '6px',
+        md: '10px',
+        lg: '14px',
+        xl: '16px',
         full: '9999px'
       },
       fontFamily: {

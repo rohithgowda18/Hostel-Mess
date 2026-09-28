@@ -17,6 +17,8 @@ public class ComplaintResponse {
     
     private String status;
     private double agreePercentage;
+    private java.time.Instant createdAt;
+    private java.time.Instant updatedAt;
     
     // Constructors
     public ComplaintResponse() {}
@@ -131,5 +133,21 @@ public class ComplaintResponse {
     
     public void setAgreePercentage(double agreePercentage) {
         this.agreePercentage = agreePercentage;
+    }
+
+    public java.time.Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public java.time.Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.Instant updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

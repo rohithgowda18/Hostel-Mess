@@ -16,6 +16,11 @@ export const messApi = {
     return response.data;
   },
 
+  async verifyMealItem(mealType, date, foodItem, vote) {
+    const response = await apiClient.post('/meals/verify', { mealType, date, foodItem, vote });
+    return response.data;
+  },
+
   async getProfileStats() {
     const response = await apiClient.get('/users/profile-stats');
     return response.data;
@@ -353,5 +358,132 @@ export const messApi = {
   async downloadOccupancyReport() {
     const response = await apiClient.get('/admin/occupancy-report', { responseType: 'blob' });
     return response.data;
+  },
+
+  async getAdminUsers(query) {
+    const response = await apiClient.get('/admin/users', { params: { query } });
+    return response.data;
+  },
+
+  async updateUserRole(userId, role) {
+    const response = await apiClient.put(`/admin/users/${userId}/role`, { role });
+    return response.data;
+  },
+
+  async getAdminDashboardStats() {
+    const response = await apiClient.get('/admin/dashboard');
+    return response.data;
+  },
+
+  // Dashboard Analytics API
+  async getDashboardAnalytics() {
+    try {
+      const response = await apiClient.get('/analytics/dashboard');
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+
+  // Attendance Roster API
+  async getAttendanceRoster(mealType, date) {
+    try {
+      const response = await apiClient.get('/attendance/roster', { params: { mealType, date } });
+      return response.data;
+    } catch {
+      return [];
+    }
+  },
+
+  // Consensus Polls API
+  async getPolls() {
+    try {
+      const response = await apiClient.get('/polls');
+      return response.data;
+    } catch {
+      return [];
+    }
+  },
+  async createPoll(data) {
+    const response = await apiClient.post('/polls', data);
+    return response.data;
+  },
+  async votePoll(id, optionId) {
+    const response = await apiClient.post(`/polls/${id}/vote`, { optionId });
+    return response.data;
+  },
+  async deletePoll(id) {
+    const response = await apiClient.delete(`/polls/${id}`);
+    return response.data;
+  },
+
+  // Food Waste API
+  async getWasteLogs() {
+    try {
+      const response = await apiClient.get('/food-waste');
+      return response.data;
+    } catch {
+      return [];
+    }
+  },
+  async saveWasteLog(data) {
+    const response = await apiClient.post('/food-waste', data);
+    return response.data;
+  },
+  async getWasteStats() {
+    try {
+      const response = await apiClient.get('/food-waste/stats');
+      return response.data;
+    } catch {
+      return { totalPreparedKg: 0, totalServedKg: 0, totalWasteKg: 0, wasteRatePercentage: 0, totalCostInr: 0 };
+    }
+  },
+  async deleteWasteLog(id) {
+    const response = await apiClient.delete(`/food-waste/${id}`);
+    return response.data;
+  },
+
+  // Announcements & Notices API
+  async getAnnouncements() {
+    try {
+      const response = await apiClient.get('/announcements');
+      return response.data;
+    } catch {
+      return [];
+    }
+  },
+  async postAnnouncement(data) {
+    const response = await apiClient.post('/announcements', data);
+    return response.data;
+  },
+
+  // Admin Operations & Management API
+  async getAdminDashboardStats() {
+    const response = await apiClient.get('/admin/dashboard');
+    return response.data;
+  },
+
+  async getAdminUsers(query = '') {
+    const response = await apiClient.get(`/admin/users${query ? `?query=${encodeURIComponent(query)}` : ''}`);
+    return response.data;
+  },
+
+  async updateUserRole(userId, role) {
+    const response = await apiClient.put(`/admin/users/${userId}/role`, { role });
+    return response.data;
+  },
+
+  async getAdminRatings() {
+    const response = await apiClient.get('/admin/ratings');
+    return response.data;
+  },
+
+  async getTodayPhotos() {
+    try {
+      const response = await apiClient.get('/student-photos/today');
+      return response.data;
+    } catch {
+      return [];
+    }
   }
 };

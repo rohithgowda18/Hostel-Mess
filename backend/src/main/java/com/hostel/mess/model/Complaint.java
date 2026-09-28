@@ -162,5 +162,26 @@ public class Complaint {
         }
         votedUserIds.add(userId);
     }
+
+    public void addAgreeVote(String userId) {
+        if (hasUserVoted(userId)) return;
+        this.agreeVotes++;
+        addVoter(userId);
+    }
+
+    public void addDisagreeVote(String userId) {
+        if (hasUserVoted(userId)) return;
+        this.disagreeVotes++;
+        addVoter(userId);
+    }
+
+    public int getTotalVotes() {
+        return agreeVotes + disagreeVotes;
+    }
+
+    public double getAgreePercentage() {
+        int total = getTotalVotes();
+        return total == 0 ? 0.0 : ((double) agreeVotes / total) * 100.0;
+    }
 }
 

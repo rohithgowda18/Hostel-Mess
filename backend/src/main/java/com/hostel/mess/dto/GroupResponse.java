@@ -24,6 +24,18 @@ public class GroupResponse {
         this.memberCount = members != null ? members.size() : 0;
         this.createdAt = createdAt;
     }
+
+    public GroupResponse(com.hostel.mess.model.Group group) {
+        if (group != null) {
+            this.id = group.getId();
+            this.name = group.getName();
+            this.groupCode = group.getGroupCode();
+            this.members = group.getMembers();
+            this.creator = group.getCreator();
+            this.memberCount = group.getMembers() != null ? group.getMembers().size() : 0;
+            this.createdAt = group.getCreatedAt();
+        }
+    }
     
     // Getters and Setters
     public String getId() {

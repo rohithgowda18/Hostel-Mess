@@ -1,6 +1,6 @@
 package com.hostel.mess.config;
 
-import com.hostel.mess.repository.ChatRepository;
+import com.hostel.mess.repository.ChatMessageRepository;
 import com.hostel.mess.repository.ComplaintRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,11 +12,11 @@ import java.time.temporal.ChronoUnit;
 @Component
 public class CleanupScheduler {
 
-    private final ChatRepository chatRepository;
+    private final ChatMessageRepository chatRepository;
     private final ComplaintRepository complaintRepository;
 
     @Autowired
-    public CleanupScheduler(ChatRepository chatRepository, ComplaintRepository complaintRepository) {
+    public CleanupScheduler(ChatMessageRepository chatRepository, ComplaintRepository complaintRepository) {
         this.chatRepository = chatRepository;
         this.complaintRepository = complaintRepository;
     }

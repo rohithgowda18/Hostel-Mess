@@ -26,6 +26,164 @@ For exhaustive developer guides and specifications on each architecture layer, r
 
 ---
 
+## 🏗️ Project Architecture
+
+```
+hostel-mess/
+│
+├── backend/
+│   ├── pom.xml
+│   ├── mvnw
+│   ├── mvnw.cmd
+│   │
+│   └── src/
+│       └── main/
+│           ├── java/
+│           │   └── com/
+│           │       └── hostel/
+│           │           └── mess/
+│           │               │
+│           │               ├── HostelMessApplication.java
+│           │               │
+│           │               ├── config/
+│           │               │   ├── SecurityConfig.java
+│           │               │   ├── CorsConfig.java
+│           │               │   ├── WebSocketConfig.java
+│           │               │   └── CleanupScheduler.java
+│           │               │
+│           │               ├── controller/
+│           │               │   ├── AuthController.java
+│           │               │   ├── MealController.java
+│           │               │   ├── AttendanceController.java
+│           │               │   ├── CommunityController.java
+│           │               │   ├── UserController.java
+│           │               │   ├── AdminController.java
+│           │               │   └── NotificationController.java
+│           │               │
+│           │               ├── service/
+│           │               │   ├── AuthService.java
+│           │               │   ├── MealService.java
+│           │               │   ├── AttendanceService.java
+│           │               │   ├── CommunityService.java
+│           │               │   ├── UserService.java
+│           │               │   ├── AdminService.java
+│           │               │   └── NotificationService.java
+│           │               │
+│           │               ├── repository/
+│           │               │   ├── UserRepository.java
+│           │               │   ├── MealSubmissionRepository.java
+│           │               │   ├── MealPhotoRepository.java
+│           │               │   ├── MealAttendanceRepository.java
+│           │               │   ├── WeeklyMenuRepository.java
+│           │               │   ├── FoodRatingRepository.java
+│           │               │   ├── ComplaintRepository.java
+│           │               │   ├── GroupRepository.java
+│           │               │   ├── ChatMessageRepository.java
+│           │               │   └── NotificationRepository.java
+│           │               │
+│           │               ├── model/
+│           │               │   ├── User.java
+│           │               │   ├── MealSubmission.java
+│           │               │   ├── MealPhoto.java
+│           │               │   ├── MealAttendance.java
+│           │               │   ├── WeeklyMenu.java
+│           │               │   ├── FoodRating.java
+│           │               │   ├── Complaint.java
+│           │               │   ├── Group.java
+│           │               │   ├── ChatMessage.java
+│           │               │   └── Notification.java
+│           │               │
+│           │               ├── security/
+│           │               │   ├── JwtAuthenticationFilter.java
+│           │               │   ├── JwtService.java
+│           │               │   └── CustomUserDetailsService.java
+│           │               │
+│           │               ├── dto/
+│           │               │   ├── LoginRequest.java
+│           │               │   ├── RegisterRequest.java
+│           │               │   ├── MealReportRequest.java
+│           │               │   ├── MealVerificationRequest.java
+│           │               │   ├── AttendanceRequest.java
+│           │               │   ├── RatingRequest.java
+│           │               │   └── ComplaintRequest.java
+│           │               │
+│           │               └── exception/
+│           │                   ├── GlobalExceptionHandler.java
+│           │                   ├── ResourceNotFoundException.java
+│           │                   └── BadRequestException.java
+│           │
+│           └── resources/
+│               ├── application.properties
+│               ├── food-options.json
+│               └── static/
+│
+├── frontend/
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── index.html
+│   │
+│   └── src/
+│       ├── main.jsx
+│       ├── App.jsx
+│       │
+│       ├── api/
+│       │   ├── restClient.js
+│       │   └── endpoints.js
+│       │
+│       ├── context/
+│       │   ├── auth-context.jsx
+│       │   └── theme-context.jsx
+│       │
+│       ├── components/
+│       │   ├── ui/
+│       │   ├── layout/
+│       │   ├── meal/
+│       │   ├── attendance/
+│       │   ├── community/
+│       │   └── admin/
+│       │
+│       ├── pages/
+│       │   ├── auth/
+│       │   │   └── LoginPage.jsx
+│       │   │
+│       │   ├── student/
+│       │   │   ├── DashboardPage.jsx
+│       │   │   ├── MealsPage.jsx
+│       │   │   ├── ReportMealPage.jsx
+│       │   │   ├── AttendancePage.jsx
+│       │   │   ├── FeedbackPage.jsx
+│       │   │   ├── ComplaintsPage.jsx
+│       │   │   ├── GroupsPage.jsx
+│       │   │   ├── GroupDetailsPage.jsx
+│       │   │   ├── NoticesPage.jsx
+│       │   │   └── ProfilePage.jsx
+│       │   │
+│       │   └── admin/
+│       │       ├── AdminDashboardPage.jsx
+│       │       ├── AdminMealsPage.jsx
+│       │       ├── AdminMenuPage.jsx
+│       │       ├── AdminAttendancePage.jsx
+│       │       ├── AdminRatingsPage.jsx
+│       │       ├── AdminComplaintsPage.jsx
+│       │       ├── AdminAnalyticsPage.jsx
+│       │       ├── AdminStudentsPage.jsx
+│       │       ├── AdminNoticesPage.jsx
+│       │       └── AdminManagementPage.jsx
+│       │
+│       ├── routes/
+│       │   └── AppRoutes.jsx
+│       │
+│       ├── hooks/
+│       ├── utils/
+│       ├── constants/
+│       └── styles/
+│           └── index.css
+│
+└── README.md
+```
+
+---
+
 ## 🛠️ Technology Stack
 
 | Layer | Technology | Description |

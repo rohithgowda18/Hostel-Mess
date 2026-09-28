@@ -1,191 +1,93 @@
 package com.hostel.mess.controller;
 
-import com.hostel.mess.dto.UserInfo;
-import com.hostel.mess.model.User;
-import com.hostel.mess.repository.UserRepository;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
-import java.util.List;
-import java.util.ArrayList;
+import com.hostel.mess.dto.UserInfo;
+import com.hostel.mess.model.MealSubmission;
+import com.hostel.mess.service.UserService;
 
+/**
+ * Controller 5: UserController
+ * Domain: User-facing account/profile/contribution information,
+ * leaderboard, favorites, and search.
+ */
 @RestController
-@RequestMapping("/api/users")
 public class UserController {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     // Get logged-in user's private profile
-    @GetMapping("/me")
+    @GetMapping("/api/users/me")
     public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        User user = userOpt.get();
-        UserInfo info = new UserInfo(
-                user.getId(), user.getEmail(), user.getHostel(), user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
-                user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
-        );
-        return ResponseEntity.ok(info);
+        return userService.getMyProfile(userId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // Update logged-in user's profile
-    @PutMapping("/me")
+    @PutMapping("/api/users/me")
     public ResponseEntity<?> updateMyProfile(@AuthenticationPrincipal UserDetails userDetails, @RequestBody UserInfo update) {
         String userId = userDetails.getUsername();
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        User user = userOpt.get();
-        user.setHostel(update.getHostel());
-        user.setFloor(update.getFloor());
-        user.setRoomNumber(update.getRoomNumber());
-        user.setYear(update.getYear());
-        user.setBranch(update.getBranch());
-        user.setDirectoryVisible(update.getDirectoryVisible());
-        user.setPhoneNumber(update.getPhoneNumber());
-        user.setProfilePhoto(update.getProfilePhoto());
-        if (update.getFavoriteFoods() != null) {
-            user.setFavoriteFoods(update.getFavoriteFoods());
-        }
-        userRepository.save(user);
-        UserInfo info = new UserInfo(
-                user.getId(), user.getEmail(), user.getHostel(), user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
-                user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
-        );
-        return ResponseEntity.ok(info);
+        return userService.updateMyProfile(userId, update)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // Get public profile by userId
-    @GetMapping("/{userId}")
+    @GetMapping("/api/users/{userId}")
     public ResponseEntity<?> getPublicProfile(@PathVariable String userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        User user = userOpt.get();
-        // Hide private details if directoryVisible is false
-        if (Boolean.FALSE.equals(user.getDirectoryVisible())) {
-            UserInfo info = new UserInfo(
-                    user.getId(), "private@hostel.com", user.getHostel(), null, user.getYear(), user.getBranch(), user.getRole(),
-                    user.getFloor(), false, null, null, new ArrayList<>()
-            );
-            return ResponseEntity.ok(info);
-        }
-        UserInfo info = new UserInfo(
-                user.getId(), user.getEmail(), user.getHostel(), user.getRoomNumber(), user.getYear(), user.getBranch(), user.getRole(),
-                user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(), user.getProfilePhoto(), user.getFavoriteFoods()
-        );
-        return ResponseEntity.ok(info);
+        return userService.getPublicProfile(userId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Favorites endpoints merged into UserController
-    @GetMapping("/favorites")
-    public ResponseEntity<?> getFavorites(@AuthenticationPrincipal UserDetails userDetails) {
+    // Favorites endpoints
+    @GetMapping("/api/users/favorites")
+    public ResponseEntity<List<String>> getFavorites(@AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return ResponseEntity.ok(user.getFavoriteFoods());
+        return ResponseEntity.ok(userService.getFavorites(userId));
     }
 
-    @PostMapping("/favorites")
-    public ResponseEntity<?> saveFavorites(
+    @PostMapping("/api/users/favorites")
+    public ResponseEntity<List<String>> saveFavorites(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody List<String> items) {
         String userId = userDetails.getUsername();
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setFavoriteFoods(items != null ? items : new ArrayList<>());
-        userRepository.save(user);
-        return ResponseEntity.ok(user.getFavoriteFoods());
+        return ResponseEntity.ok(userService.saveFavorites(userId, items));
     }
-
-    @Autowired
-    private com.hostel.mess.repository.MealSubmissionRepository submissionRepository;
-
-    @Autowired
-    private com.hostel.mess.repository.MealAttendanceRepository attendanceRepository;
 
     // Get logged-in user's meal report history (submissions)
-    @GetMapping("/my-reports")
-    public ResponseEntity<?> getMyReports(@AuthenticationPrincipal UserDetails userDetails) {
+    @GetMapping("/api/users/my-reports")
+    public ResponseEntity<List<MealSubmission>> getMyReports(@AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        User user = userOpt.get();
-        List<com.hostel.mess.model.MealSubmission> submissions = submissionRepository.findByStudentEmail(user.getEmail());
-        return ResponseEntity.ok(submissions);
+        return ResponseEntity.ok(userService.getMyReports(userId));
     }
 
-    @GetMapping("/profile-stats")
-    public ResponseEntity<?> getProfileStats(@AuthenticationPrincipal UserDetails userDetails) {
+    // Get profile contribution & leaderboard statistics
+    @GetMapping("/api/users/profile-stats")
+    public ResponseEntity<Map<String, Object>> getProfileStats(@AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        User user = userOpt.get();
-
-        List<com.hostel.mess.model.MealSubmission> submissions = submissionRepository.findByStudentEmail(user.getEmail());
-        long photoCount = submissions.stream().filter(s -> s.getPhotoUrl() != null && !s.getPhotoUrl().isEmpty()).count();
-
-        List<com.hostel.mess.model.MealAttendance> attendances = attendanceRepository.findByUserEmail(user.getEmail());
-        long checkedInCount = attendances.stream().filter(a -> Boolean.TRUE.equals(a.getPresent())).count();
-        int attendanceRate = attendances.size() > 0 ? (int) Math.round(((double) checkedInCount / attendances.size()) * 100) : 95;
-
-        // Calculate leaderboard position
-        List<User> allUsers = userRepository.findAll();
-        allUsers.sort((a, b) -> Integer.compare(b.getPoints(), a.getPoints()));
-        int rank = 1;
-        for (int i = 0; i < allUsers.size(); i++) {
-            if (allUsers.get(i).getEmail().equalsIgnoreCase(user.getEmail())) {
-                rank = i + 1;
-                break;
-            }
-        }
-
-        java.util.Map<String, Object> stats = new java.util.HashMap<>();
-        stats.put("points", user.getPoints());
-        stats.put("reportsSubmitted", submissions.size());
-        stats.put("photosUploaded", photoCount);
-        stats.put("mealsCheckedIn", checkedInCount);
-        stats.put("attendanceRate", attendanceRate);
-        stats.put("badges", user.getBadges());
-        stats.put("rank", rank);
-        stats.put("totalUsers", allUsers.size());
-
-        return ResponseEntity.ok(stats);
+        return ResponseEntity.ok(userService.getProfileStats(userId));
     }
 
-    @GetMapping("/leaderboard")
-    public ResponseEntity<?> getLeaderboard() {
-        List<User> users = userRepository.findAll();
-        users.sort((a, b) -> Integer.compare(b.getPoints(), a.getPoints()));
-        List<java.util.Map<String, Object>> leaderboard = new ArrayList<>();
-        int rank = 1;
-        for (User u : users) {
-            if (leaderboard.size() >= 10) {
-                break;
-            }
-            java.util.Map<String, Object> entry = new java.util.HashMap<>();
-            entry.put("rank", rank++);
-            entry.put("email", u.getEmail());
-            entry.put("hostel", u.getHostel());
-            entry.put("points", u.getPoints());
-            entry.put("badges", u.getBadges());
-            entry.put("profilePhoto", u.getProfilePhoto());
-            leaderboard.add(entry);
-        }
-        return ResponseEntity.ok(leaderboard);
+    // Get top 10 leaderboard
+    @GetMapping("/api/users/leaderboard")
+    public ResponseEntity<List<Map<String, Object>>> getLeaderboard() {
+        return ResponseEntity.ok(userService.getLeaderboard());
+    }
+
+    // Universal Search: /api/search?q=...
+    @GetMapping("/api/search")
+    public ResponseEntity<Map<String, Object>> search(@RequestParam(value = "q", required = false) String q) {
+        return ResponseEntity.ok(userService.universalSearch(q));
     }
 }

@@ -1,0 +1,35 @@
+{
+  "categories": {
+    "Breakfast": [
+      "Idli", "Rava Idli", "Mini Idli", "Thatte Idli", "Kanchipuram Idli",
+      "Dosa", "Plain Dosa", "Masala Dosa", "Set Dosa", "Neer Dosa", "Benne Dosa", "Khali Dosa",
+      "Poori", "Poori Sagu", "Chapati", "Vegetable Kurma",
+      "Upma", "Khara Bath", "Kesari Bath", "Chow Chow Bath", "Pongal",
+      "Avalakki", "Shavige Bath", "Rice Bath", "Bisibele Bath", "Puliyogare", "Tomato Bath", "Lemon Rice", "Curd Rice",
+      "Bread", "Butter", "Jam", "Boiled Egg", "Omelette",
+      "Tea", "Coffee", "Milk", "Boost", "Horlicks", "Badam Milk",
+      "Sambar", "Coconut Chutney", "Groundnut Chutney", "Tomato Chutney", "Mint Chutney", "Vegetable Sagu"
+    ],
+    "Lunch": [
+      "Steamed Rice", "Jeera Rice", "Vegetable Pulao", "Bisibele Bath", "Puliyogare", "Curd Rice", "Lemon Rice", "Tomato Rice",
+      "Sambar", "Rasam", "Majjige Huli", "Dal Tadka", "Dal Fry", "Rajma", "Chole",
+      "Paneer Butter Masala", "Palak Paneer", "Mixed Vegetable Curry",
+      "Beans Palya", "Cabbage Palya", "Beetroot Palya", "Aloo Gobi", "Potato Fry", "Ladies Finger Fry", "Brinjal Curry", "Bottle Gourd Curry",
+      "Chapati", "Phulka", "Curd", "Buttermilk", "Papad", "Pickle", "Salad",
+      "Kesari Bath", "Payasam", "Gulab Jamun", "Mysore Pak", "Laddu", "Ice Cream"
+    ],
+    "Snacks": [
+      "Tea", "Coffee", "Milk", "Boost", "Horlicks", "Badam Milk",
+      "Bonda", "Mangalore Bonda", "Pakoda", "Onion Pakoda", "Chilli Bajji", "Capsicum Bajji", "Bread Pakoda",
+      "Samosa", "Veg Puff", "Cutlet", "French Fries", "Noodles", "Maggi", "Sweet Corn", "Biscuits"
+    ],
+    "Dinner": [
+      "Chapati", "Rice", "Jeera Rice",
+      "Sambar", "Rasam", "Dal",
+      "Mixed Vegetable Curry", "Paneer Curry", "Palak Paneer", "Veg Kurma",
+      "Beans Palya", "Cabbage Palya", "Brinjal Curry", "Bottle Gourd Curry",
+      "Tomato Rice", "Curd Rice", "Curd", "Papad", "Pickle",
+      "Payasam", "Kesari Bath", "Gulab Jamun", "Ice Cream", "Mysore Pak"
+    ]
+  }
+}

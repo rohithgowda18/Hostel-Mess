@@ -70,6 +70,14 @@ public class Group {
     public void setCreator(String creator) {
         this.creator = creator;
     }
+
+    public String getCreatedBy() {
+        return creator;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.creator = createdBy;
+    }
     
     public Instant getCreatedAt() {
         return createdAt;

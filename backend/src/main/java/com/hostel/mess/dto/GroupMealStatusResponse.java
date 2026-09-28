@@ -25,6 +25,18 @@ public class GroupMealStatusResponse {
         this.expiresAt = expiresAt;
         this.secondsUntilExpiry = calculateSecondsUntilExpiry(expiresAt);
     }
+
+    public GroupMealStatusResponse(com.hostel.mess.model.GroupMealStatus status) {
+        if (status != null) {
+            this.groupId = status.getGroupId();
+            this.mealType = status.getMealType();
+            this.goingUsers = status.getGoingUsers();
+            this.goingCount = status.getGoingUsers() != null ? status.getGoingUsers().size() : 0;
+            this.updatedAt = status.getUpdatedAt();
+            this.expiresAt = status.getExpiresAt();
+            this.secondsUntilExpiry = calculateSecondsUntilExpiry(status.getExpiresAt());
+        }
+    }
     
     private Long calculateSecondsUntilExpiry(Instant expiresAt) {
         if (expiresAt == null) return 0L;

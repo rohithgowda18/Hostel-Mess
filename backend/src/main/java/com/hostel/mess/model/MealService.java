@@ -23,6 +23,7 @@ public class MealService {
     private String status; // SCHEDULED, PREPARING, OPEN, CLOSED, COMPLETED, CANCELLED
     private Integer expectedAttendance = 0;
     private Integer actualAttendance = 0;
+    private Double wasteWeightKg = 0.0;
     private List<String> plannedMenu = new ArrayList<>();
     private String chefSpecial;
     private Long createdAt = System.currentTimeMillis();
@@ -61,6 +62,9 @@ public class MealService {
 
     public Integer getActualAttendance() { return actualAttendance; }
     public void setActualAttendance(Integer actualAttendance) { this.actualAttendance = actualAttendance; }
+
+    public Double getWasteWeightKg() { return wasteWeightKg != null ? wasteWeightKg : 0.0; }
+    public void setWasteWeightKg(Double wasteWeightKg) { this.wasteWeightKg = wasteWeightKg; }
 
     public List<String> getPlannedMenu() { return plannedMenu; }
     public void setPlannedMenu(List<String> plannedMenu) { this.plannedMenu = plannedMenu; }

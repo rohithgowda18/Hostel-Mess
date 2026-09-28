@@ -7,6 +7,8 @@ import java.time.Instant;
 
 @Document(collection = "meal_attendance")
 @CompoundIndex(name = "user_meal_attend_idx", def = "{'userEmail': 1, 'mealType': 1, 'date': 1}", unique = true)
+@CompoundIndex(name = "meal_date_attend_idx", def = "{'mealType': 1, 'date': 1}")
+@CompoundIndex(name = "date_attend_idx", def = "{'date': 1}")
 public class MealAttendance {
     @Id
     private String id;

@@ -1,409 +1,204 @@
 import { cloneElement, isValidElement, useEffect, useState } from 'react';
-import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AppSidebar from '@/components/layout/app-sidebar';
 import TopNavbar from '@/components/layout/top-navbar';
-import { sidebarItems } from '@/config/navigation';
+import { studentMobileNav, adminMobileNav } from '@/config/navigation';
 import { cn } from '@/lib/utils';
-import { messApi } from '@/services/mess-api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { getUser } from '@/services/auth-service';
 import {
-  X,
-  Search,
-  Calendar,
-  Users,
-  MessageSquare,
-  User,
   LayoutDashboard,
   UtensilsCrossed,
-  Building2,
+  Sparkles,
   QrCode,
-  MoreHorizontal
+  Star,
+  MessageSquareWarning,
+  Users,
+  Bell,
+  User,
+  ShieldCheck,
+  ClipboardCheck,
+  TrendingUp,
+  Calendar,
+  MoreHorizontal,
+  X
 } from 'lucide-react';
 
-function DashboardLayout({ user, onLogout, children }) {
+export default function DashboardLayout({ user, onLogout, children }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [activeItem, setActiveItem] = useState('dashboard');
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState(null);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
 
-  // Sync activeItem with current route and query parameters
+  const currentUser = user || getUser() || { email: 'student@hostel.app', role: 'STUDENT' };
+  const isAdmin = currentUser.role === 'ADMIN';
+
+  // Close menus on route navigation
   useEffect(() => {
-    setMoreOpen(false);
-    if (location.pathname.startsWith('/groups')) {
-      setActiveItem('groups');
-    } else if (location.pathname.startsWith('/student-photos')) {
-      setActiveItem('student-photos');
-    } else if (location.pathname.startsWith('/dashboard')) {
-      const tab = searchParams.get('tab');
-      setActiveItem(tab || 'dashboard');
-    } else if (location.pathname.startsWith('/meals')) {
-      setActiveItem('meals');
-    } else if (location.pathname.startsWith('/directory')) {
-      setActiveItem('directory');
-    } else if (location.pathname.startsWith('/qr-checkin')) {
-      setActiveItem('qr-checkin');
-    } else if (location.pathname.startsWith('/feedback')) {
-      setActiveItem('feedback');
-    } else if (location.pathname.startsWith('/profile')) {
-      setActiveItem('profile');
-    }
-  }, [location, searchParams]);
+    setMoreDrawerOpen(false);
+    setMobileSidebarOpen(false);
+  }, [location.pathname]);
 
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults(null);
-      return;
-    }
+  const mobileNavItems = isAdmin ? adminMobileNav : studentMobileNav;
 
-    const delayDebounce = setTimeout(async () => {
-      setSearchLoading(true);
-      try {
-        const data = await messApi.searchUniversal(searchQuery);
-        setSearchResults(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setSearchLoading(false);
-      }
-    }, 300);
+  const secondaryStudentNav = [
+    { label: 'Attendance / Dining Pass', path: '/student/attendance', icon: QrCode },
+    { label: 'Rate Meal Quality', path: '/student/feedback', icon: Star },
+    { label: 'File Complaint / Issue', path: '/student/complaints', icon: MessageSquareWarning },
+    { label: 'Hostel Notices', path: '/student/notices', icon: Bell }
+  ];
 
-    return () => clearTimeout(delayDebounce);
-  }, [searchQuery]);
+  const secondaryAdminNav = [
+    { label: 'Attendance Records', path: '/admin/attendance', icon: ClipboardCheck },
+    { label: 'Ratings & Quality', path: '/admin/ratings', icon: Star },
+    { label: 'Analytics & Trends', path: '/admin/analytics', icon: TrendingUp },
+    { label: 'Student Management', path: '/admin/students', icon: Users },
+    { label: 'Notices Board', path: '/admin/notices', icon: Bell },
+    { label: 'Admin Role Governance', path: '/admin/management', icon: ShieldCheck }
+  ];
 
-  const page = isValidElement(children)
-    ? cloneElement(children, {
-        activeItem,
-        searchQuery
-      })
-    : children;
-
-  const highlightText = (text, highlight) => {
-    if (!text) return '';
-    if (!highlight) return text;
-    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
-    return (
-      <span>
-        {parts.map((part, i) =>
-          part.toLowerCase() === highlight.toLowerCase() ? (
-            <mark key={i} className="bg-amber-300 text-slate-950 font-bold px-0.5 rounded">
-              {part}
-            </mark>
-          ) : (
-            part
-          )
-        )}
-      </span>
-    );
-  };
+  const drawerLinks = isAdmin ? secondaryAdminNav : secondaryStudentNav;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] flex">
+      {/* Desktop & Mobile Sidebar */}
       <AppSidebar
-        items={sidebarItems}
-        activeItem={activeItem}
-        onItemSelect={setActiveItem}
         collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed((prev) => !prev)}
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
+        onToggleCollapse={() => setCollapsed(!collapsed)}
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={() => setMobileSidebarOpen(false)}
       />
 
-      <TopNavbar
-        collapsed={collapsed}
-        onOpenSidebar={() => setMobileOpen(true)}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        user={user}
-        onLogout={onLogout}
-      />
-
-      <main
+      {/* Main Content Area */}
+      <div
         className={cn(
-          'min-h-screen px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-16 transition-all duration-300 md:px-6 md:pb-8 md:pt-20',
-          collapsed ? 'md:pl-20' : 'md:pl-72'
+          'flex-1 flex flex-col min-w-0 transition-all duration-200',
+          collapsed ? 'md:ml-18' : 'md:ml-64'
         )}
       >
-        <div className="mx-auto w-full max-w-7xl relative">
-          {/* Universal Search Results Overlay */}
-          {searchQuery.trim() !== '' && (
-            <div className="absolute inset-x-0 top-0 z-50 max-h-[80vh] overflow-y-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-6 shadow-dropdown space-y-6 overscroll-contain animate-in fade-in-0 zoom-in-95 duration-150">
-              <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <Search className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    Results for "{searchQuery}"
-                  </h2>
-                </div>
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {searchLoading ? (
-                <div className="py-16 text-center text-slate-500 text-sm">
-                  Searching dishes, rooms, students, and groups...
-                </div>
-              ) : searchResults ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {/* Matched Meals */}
-                  <Card className="border-slate-200 dark:border-slate-800">
-                    <CardHeader className="py-3">
-                      <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                        <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" /> Menus & Meals
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {searchResults.meals?.length === 0 ? (
-                        <p className="text-xs text-slate-400">No matching meals</p>
-                      ) : (
-                        searchResults.meals?.map((meal) => (
-                          <div key={meal.id} className="text-xs border-b border-slate-100 dark:border-slate-800/60 pb-2 last:border-0">
-                            <div className="flex justify-between font-semibold mb-0.5 text-slate-800 dark:text-slate-200">
-                              <span>{meal.mealType}</span>
-                              <span className="text-slate-400">{meal.date}</span>
-                            </div>
-                            <p className="text-slate-600 dark:text-slate-400">
-                              {highlightText(meal.items?.join(', '), searchQuery)}
-                            </p>
-                          </div>
-                        ))
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Matched Groups */}
-                  <Card className="border-slate-200 dark:border-slate-800">
-                    <CardHeader className="py-3">
-                      <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                        <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" /> Buddy Groups
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {searchResults.groups?.length === 0 ? (
-                        <p className="text-xs text-slate-400">No matching groups</p>
-                      ) : (
-                        searchResults.groups?.map((group) => (
-                          <div
-                            key={group.id || group._id}
-                            onClick={() => {
-                              setSearchQuery('');
-                              navigate(`/groups/${group.id || group._id}`);
-                            }}
-                            className="text-xs border-b border-slate-100 dark:border-slate-800/60 pb-2 last:border-0 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                          >
-                            <p className="font-semibold text-slate-900 dark:text-slate-100">
-                              {highlightText(group.name, searchQuery)}
-                            </p>
-                            <p className="text-slate-400">Code: {highlightText(group.groupCode, searchQuery)}</p>
-                          </div>
-                        ))
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Matched Complaints */}
-                  <Card className="border-slate-200 dark:border-slate-800">
-                    <CardHeader className="py-3">
-                      <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                        <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" /> Feedback Reports
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {searchResults.complaints?.length === 0 ? (
-                        <p className="text-xs text-slate-400">No matching reports</p>
-                      ) : (
-                        searchResults.complaints?.map((comp) => (
-                          <div key={comp.id} className="text-xs border-b border-slate-100 dark:border-slate-800/60 pb-2 last:border-0">
-                            <div className="flex justify-between font-semibold mb-0.5 text-slate-800 dark:text-slate-200">
-                              <span>{highlightText(comp.foodItem, searchQuery)}</span>
-                              <Badge variant="neutral" className="text-[9px]">{comp.status}</Badge>
-                            </div>
-                            <p className="text-slate-400">Slot: {comp.mealType} | Date: {comp.date}</p>
-                          </div>
-                        ))
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Matched Students */}
-                  <Card className="border-slate-200 dark:border-slate-800">
-                    <CardHeader className="py-3">
-                      <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                        <User className="h-4 w-4 text-blue-600 dark:text-blue-400" /> Hostel Residents
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {searchResults.users?.length === 0 ? (
-                        <p className="text-xs text-slate-400">No matching students</p>
-                      ) : (
-                        searchResults.users?.map((st) => (
-                          <div key={st.id} className="text-xs border-b border-slate-100 dark:border-slate-800/60 pb-2 last:border-0">
-                            <p className="font-semibold text-slate-900 dark:text-slate-100">{highlightText(st.email, searchQuery)}</p>
-                            <p className="text-slate-400">
-                              Hostel: {st.hostel || 'Main'} | Branch: {st.branch || 'General'}
-                            </p>
-                          </div>
-                        ))
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : null}
-            </div>
-          )}
-
-          {page}
-        </div>
-      </main>
-
-      {/* Mobile Drawer "More" Dropup */}
-      {moreOpen && (
-        <button
-          type="button"
-          aria-label="Close menu"
-          className="md:hidden fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs"
-          onClick={() => setMoreOpen(false)}
+        {/* Top Navbar */}
+        <TopNavbar
+          collapsed={collapsed}
+          onOpenSidebar={() => setMobileSidebarOpen(true)}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          user={currentUser}
+          onLogout={onLogout}
         />
-      )}
-      {/* Mobile Drawer "More" Dropup */}
-      {moreOpen && (
-        <button
-          type="button"
-          aria-label="Close menu"
-          className="md:hidden fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs"
-          onClick={() => setMoreOpen(false)}
-        />
-      )}
-      {moreOpen && (
-        <div className="md:hidden fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-dropdown p-2 space-y-1 animate-in fade-in-0 slide-in-from-bottom-2 duration-150">
-          {(user?.role === 'ADMIN'
-            ? [
-                { label: 'Quality Analytics', path: '/admin/quality', icon: Star },
-                { label: 'Waste Tracking', path: '/admin/waste', icon: LayoutDashboard },
-                { label: 'Turnout Forecast', path: '/admin/analytics', icon: LayoutDashboard },
-                { label: 'Students & Rooms', path: '/admin/students', icon: Users },
-                { label: 'Consensus Polls', path: '/admin/polls', icon: MessageSquare },
-                { label: 'Official Notices', path: '/admin/notices', icon: MessageSquare },
-                { label: 'Vendor & SLA', path: '/admin/vendor', icon: Building2 },
-                { label: 'Settings', path: '/profile', icon: User }
-              ]
-            : [
-                { label: 'Give Feedback', path: '/student/feedback', icon: Star },
-                { label: 'Consensus Polls', path: '/student/polls', icon: MessageSquare },
-                { label: 'Official Notices', path: '/student/notices', icon: Calendar },
-                { label: 'Buddy Groups', path: '/groups', icon: Users },
-                { label: 'Hostel & Rooms', path: '/directory', icon: Building2 },
-                { label: 'Profile & Settings', path: '/profile', icon: User }
-              ]
-          ).map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
+
+        {/* Page Content Body */}
+        <main className="flex-1 mt-16 px-4 py-6 md:px-8 max-w-6xl w-full mx-auto pb-24 md:pb-8">
+          {children}
+        </main>
+      </div>
+
+      {/* Mobile Secondary Menu Bottom Sheet */}
+      {moreDrawerOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
+          <div
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
+            onClick={() => setMoreDrawerOpen(false)}
+          />
+          <div className="relative z-10 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 rounded-t-2xl p-4 space-y-2 shadow-xl animate-in slide-in-from-bottom-6 duration-200 pb-safe">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Additional Services
+              </span>
               <button
-                key={item.path}
-                onClick={() => {
-                  setMoreOpen(false);
-                  navigate(item.path);
-                }}
-                className={cn(
-                  'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
-                  isActive
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400'
-                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
-                )}
+                type="button"
+                onClick={() => setMoreDrawerOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
-                <Icon className="h-4 w-4" />
-                {item.label}
+                <X className="h-5 w-5" />
               </button>
-            );
-          })}
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              {drawerLinks.map((item) => {
+                const Icon = item.icon;
+                const active = location.pathname === item.path;
+                return (
+                  <button
+                    key={item.path}
+                    type="button"
+                    onClick={() => {
+                      setMoreDrawerOpen(false);
+                      navigate(item.path);
+                    }}
+                    className={cn(
+                      'flex items-center gap-2.5 p-3 rounded-xl border text-left text-xs font-semibold transition-colors cursor-pointer',
+                      active
+                        ? 'bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800'
+                        : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0 text-teal-700 dark:text-teal-400" />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Fixed Mobile Bottom Navigation Bar (User Spec #2) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800/80 flex items-stretch justify-around min-h-[4rem] pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-1">
-        {(user?.role === 'ADMIN'
-          ? [
-              { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-              { label: 'Attendance', path: '/admin/attendance', icon: UtensilsCrossed },
-              { label: 'Menu', path: '/admin/menu', icon: UtensilsCrossed, isHero: true },
-              { label: 'Issues', path: '/admin/complaints', icon: MessageSquare },
-              { label: 'More', icon: MoreHorizontal, isMore: true }
-            ]
-          : [
-              { label: 'Home', path: '/student/dashboard', icon: LayoutDashboard },
-              { label: 'Meals', path: '/student/meals', icon: UtensilsCrossed },
-              { label: 'Pass', path: '/student/dining', icon: QrCode, isHero: true },
-              { label: 'Complaints', path: '/student/complaints', icon: MessageSquare },
-              { label: 'More', icon: MoreHorizontal, isMore: true }
-            ]
-        ).map((item) => {
+      {/* Mobile-First Bottom Navigation Bar */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around h-16 px-2 pb-safe shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
+        {mobileNavItems.map((item) => {
           const Icon = item.icon;
-          const isActive = item.path ? (location.pathname === item.path || (item.path.includes('dashboard') && location.pathname === '/dashboard')) : moreOpen;
+          const active = location.pathname === item.path;
 
           if (item.isHero) {
             return (
               <button
-                key={item.path}
+                key={item.key}
+                type="button"
                 onClick={() => navigate(item.path)}
-                aria-label="Dining Action"
-                className="flex flex-col items-center justify-center relative -top-3 active:scale-95 transition-transform min-w-[64px]"
+                className="relative -top-3 flex flex-col items-center justify-center cursor-pointer"
               >
-                <div className="w-13 h-13 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/30 border-2 border-white dark:border-slate-900">
+                <div className="h-12 w-12 rounded-full bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-950 flex items-center justify-center shadow-md active:scale-95 transition-transform">
                   <Icon className="h-6 w-6" />
                 </div>
-                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-1">{item.label}</span>
-              </button>
-            );
-          }
-
-          if (item.isMore) {
-            return (
-              <button
-                key="more"
-                onClick={() => setMoreOpen((v) => !v)}
-                aria-label="More navigation options"
-                aria-expanded={moreOpen}
-                className={cn(
-                  'flex flex-col items-center justify-center flex-1 min-h-[56px] py-1 transition-colors active:scale-95',
-                  isActive ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-400'
-                )}
-              >
-                <Icon className="h-5 w-5" />
-                <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+                <span className="text-[10px] font-bold mt-0.5 text-teal-700 dark:text-teal-400">
+                  {item.label}
+                </span>
               </button>
             );
           }
 
           return (
             <button
-              key={item.path}
+              key={item.key}
+              type="button"
               onClick={() => navigate(item.path)}
               className={cn(
-                'flex flex-col items-center justify-center flex-1 min-h-[56px] py-1 transition-colors active:scale-95',
-                isActive
-                  ? 'text-blue-600 dark:text-blue-400 font-bold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                'flex flex-col items-center justify-center flex-1 py-1 text-[11px] font-medium transition-colors cursor-pointer',
+                active
+                  ? 'text-teal-700 dark:text-teal-400 font-bold'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               )}
             >
-              <Icon className="h-5 w-5" />
-              <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+              <Icon className="h-5 w-5 mb-0.5" />
+              <span>{item.label}</span>
             </button>
           );
         })}
+
+        {/* More actions trigger */}
+        <button
+          type="button"
+          onClick={() => setMoreDrawerOpen(true)}
+          className={cn(
+            'flex flex-col items-center justify-center flex-1 py-1 text-[11px] font-medium transition-colors cursor-pointer',
+            moreDrawerOpen
+              ? 'text-teal-700 dark:text-teal-400 font-bold'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+          )}
+        >
+          <MoreHorizontal className="h-5 w-5 mb-0.5" />
+          <span>More</span>
+        </button>
       </nav>
     </div>
   );
 }
-
-export default DashboardLayout;

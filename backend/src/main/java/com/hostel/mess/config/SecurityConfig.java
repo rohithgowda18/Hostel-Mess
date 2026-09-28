@@ -13,15 +13,15 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import com.hostel.mess.security.CustomUserDetailsService;
 import com.hostel.mess.security.JwtAuthenticationFilter;
-import com.hostel.mess.security.JwtTokenProvider;
+import com.hostel.mess.security.JwtService;
 
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
-    public JwtTokenProvider jwtTokenProvider() {
-        return new JwtTokenProvider();
+    public JwtService jwtService() {
+        return new JwtService();
     }
 
     @Bean
@@ -30,8 +30,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, CustomUserDetailsService customUserDetailsService) {
-        return new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService, CustomUserDetailsService customUserDetailsService) {
+        return new JwtAuthenticationFilter(jwtService, customUserDetailsService);
     }
 
     @Bean
@@ -63,11 +63,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/student-photos/**").authenticated()
                 .requestMatchers("/api/search").authenticated()
                 .requestMatchers("/api/favorites/**").authenticated()
-                .requestMatchers("/api/directory/**").authenticated()
                 .requestMatchers("/api/admin/**").authenticated()
                 .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter(jwtTokenProvider(), customUserDetailsService()), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter(jwtService(), customUserDetailsService()), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

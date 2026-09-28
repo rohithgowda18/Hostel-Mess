@@ -3,9 +3,12 @@ package com.hostel.mess.model;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "meal_submissions")
+@CompoundIndex(name = "meal_type_date_sub_idx", def = "{'mealType': 1, 'date': 1}")
+@CompoundIndex(name = "student_meal_date_sub_idx", def = "{'studentEmail': 1, 'mealType': 1, 'date': 1}")
 public class MealSubmission {
     @Id
     private String id;
