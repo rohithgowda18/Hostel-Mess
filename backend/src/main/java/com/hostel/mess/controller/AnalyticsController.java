@@ -29,6 +29,11 @@ public class AnalyticsController {
         return ResponseEntity.ok(service.getOccupancyStats());
     }
 
+    @GetMapping("/kitchen-forecast")
+    public ResponseEntity<?> getKitchenWasteForecast() {
+        return ResponseEntity.ok(service.getKitchenWasteForecast());
+    }
+
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportStatsCsv() {
         String csv = service.generateCsvExport();

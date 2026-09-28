@@ -43,6 +43,13 @@ const MEAL_SLOTS = [
   { key: 'DINNER', name: 'Dinner', icon: Moon, time: '07:30 PM – 09:30 PM', color: 'purple' },
 ];
 
+const SLOT_NUTRITION = {
+  BREAKFAST: { calories: '420 kcal', protein: '14g', carbs: '68g', fats: '11g', tags: ['Pure Vegetarian', 'Contains Dairy'] },
+  LUNCH: { calories: '680 kcal', protein: '24g', carbs: '96g', fats: '18g', tags: ['Balanced Thali', 'High Fiber', 'Jain Option'] },
+  SNACKS: { calories: '290 kcal', protein: '7g', carbs: '42g', fats: '10g', tags: ['Freshly Prepared', 'Hot Beverage'] },
+  DINNER: { calories: '590 kcal', protein: '21g', carbs: '82g', fats: '15g', tags: ['Pure Vegetarian', 'High Protein', 'Gluten-Free Option'] },
+};
+
 const DEFAULT_WEEKLY_SCHEDULE = [
   { day: 'Monday', breakfast: 'Idli, Sambar, Coconut Chutney, Tea/Coffee', lunch: 'Rice, Sambar, Rasam, Beans Palya, Curd', snacks: 'Onion Pakoda, Tea', dinner: 'Chapati, Dal Tadka, Rice, Rasam' },
   { day: 'Tuesday', breakfast: 'Masala Dosa, Potato Palya, Chutney, Coffee', lunch: 'Rice, Majjige Huli, Cabbage Palya, Rasam, Curd', snacks: 'Mangalore Bonda, Tea', dinner: 'Chapati, Veg Kurma, Rice, Rasam' },
@@ -361,6 +368,40 @@ export default function MealsPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Dietary & Macro Nutrition Estimator */}
+                  {SLOT_NUTRITION[meal.rawSlot] && (
+                    <div className="pt-2 pb-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                      <div className="flex flex-wrap gap-1.5">
+                        {SLOT_NUTRITION[meal.rawSlot].tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                          >
+                            🌱 {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-4 gap-2 text-center text-[10px] py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 font-mono">
+                        <div>
+                          <span className="text-slate-400 block text-[9px] uppercase">Cal</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{SLOT_NUTRITION[meal.rawSlot].calories}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[9px] uppercase">Protein</span>
+                          <span className="font-bold text-blue-600 dark:text-blue-400">{SLOT_NUTRITION[meal.rawSlot].protein}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[9px] uppercase">Carbs</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{SLOT_NUTRITION[meal.rawSlot].carbs}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[9px] uppercase">Fats</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{SLOT_NUTRITION[meal.rawSlot].fats}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer action */}

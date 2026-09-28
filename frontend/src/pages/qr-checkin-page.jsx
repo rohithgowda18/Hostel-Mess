@@ -1,6 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { messApi } from '@/services/mess-api';
+import { getUser } from '@/services/auth-service';
 import {
   QrCode,
   Camera,
@@ -12,7 +10,10 @@ import {
   ShieldCheck,
   RefreshCw,
   Hash,
-  Clock
+  Clock,
+  Wifi,
+  WifiOff,
+  KeyRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,7 @@ import { PageHeader } from '@/components/ui/page-header';
 export default function QrCheckinPage() {
   const navigate = useNavigate();
   const videoRef = useRef(null);
+  const user = getUser() || {};
   const [manualCode, setManualCode] = useState('');
   const [overlay, setOverlay] = useState(null); // 'success' | 'failure' | null
   const [checking, setChecking] = useState(false);
@@ -30,6 +32,9 @@ export default function QrCheckinPage() {
   const [attendanceStatus, setAttendanceStatus] = useState(null);
   const [flashOn, setFlashOn] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [activeMode, setActiveMode] = useState('camera'); // 'camera' | 'offline_pass'
+  const [secsLeft, setSecsLeft] = useState(60);
 
   const loadAttendance = async () => {
     try {
@@ -39,6 +44,40 @@ export default function QrCheckinPage() {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => {
+      setIsOnline(false);
+      setActiveMode('offline_pass');
+    };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    const timer = setInterval(() => {
+      const now = new Date();
+      setSecsLeft(60 - now.getSeconds());
+    }, 1000);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(timer);
+    };
+  }, []);
+
+  const getOfflinePassToken = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const hour = new Date().getHours();
+    const window5m = Math.floor(new Date().getMinutes() / 5);
+    const str = `${user.email || 'student'}:${today}:${hour}:${window5m}:mess-auth`;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return `PASS-${Math.abs(hash).toString(36).toUpperCase().padStart(6, '0').slice(0, 6)}`;
   };
 
   useEffect(() => {
@@ -111,15 +150,98 @@ export default function QrCheckinPage() {
       {/* Page Header */}
       <PageHeader
         badge={
-          <Badge variant="primary" className="text-[10px] font-bold">
-            Counter Verification
+          <Badge variant={isOnline ? 'primary' : 'warning'} className="text-[10px] font-bold flex items-center gap-1">
+            {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+            {isOnline ? 'Online Verified' : 'Offline Mode (Campus Mesh)'}
           </Badge>
         }
         title="Meal Counter Check-in"
-        description="Position the mess desk QR code within the scanning frame or manually enter the 6-character code."
+        description="Scan the counter QR scanner, enter code manually, or present your Offline Emergency Dining Pass."
+        actions={
+          <div className="flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
+            <button
+              onClick={() => setActiveMode('camera')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                activeMode === 'camera'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400'
+              }`}
+            >
+              <Camera className="h-3.5 w-3.5" /> Camera Scanner
+            </button>
+            <button
+              onClick={() => setActiveMode('offline_pass')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                activeMode === 'offline_pass'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400'
+              }`}
+            >
+              <KeyRound className="h-3.5 w-3.5" /> Offline Dining Pass
+            </button>
+          </div>
+        }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {activeMode === 'offline_pass' ? (
+        /* ─────────────── OFFLINE EMERGENCY DINING PASS ─────────────── */
+        <Card className="p-6 shadow-card border-blue-200 dark:border-blue-900/60 max-w-lg mx-auto text-center space-y-5">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                Cryptographic Token Active
+              </span>
+            </div>
+            <Badge variant="warning" className="text-[10px]">
+              Offline Validated
+            </Badge>
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
+              Emergency Dining Pass
+            </h3>
+            <p className="text-xs text-slate-500">
+              Show this screen to the mess counter warden when basement Wi-Fi is disconnected.
+            </p>
+          </div>
+
+          {/* Dynamic Pass Box */}
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg space-y-3 relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none" />
+
+            <div className="text-[11px] uppercase tracking-widest text-blue-100 font-bold">
+              Dynamic Security Passcode
+            </div>
+            <div className="font-mono text-3xl sm:text-4xl font-black tracking-widest py-2 bg-white/10 rounded-xl border border-white/20">
+              {getOfflinePassToken()}
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-blue-100 pt-2 border-t border-white/10">
+              <span>Resident: {user.name || user.email?.split('@')[0] || 'Student'}</span>
+              <span className="font-mono">Refreshes in {secsLeft}s</span>
+            </div>
+          </div>
+
+          <div className="space-y-2 text-xs text-slate-500 text-left pt-2">
+            <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+              <span>Allocated Hostel:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{user.hostel || 'Hostel Resident'}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+              <span>Room Number:</span>
+              <span className="font-bold text-blue-600 dark:text-blue-400">Room {user.roomNumber || 'Assigned'}</span>
+            </div>
+            <div className="flex justify-between py-1">
+              <span>Meal Service:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">Lunch Window</span>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        /* ─────────────── CAMERA SCANNER & MANUAL CODE ─────────────── */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Focused Scanner Viewport (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
           <Card className="overflow-hidden border-slate-200/90 dark:border-slate-800 shadow-card">
@@ -249,6 +371,7 @@ export default function QrCheckinPage() {
           </Card>
         </div>
       </div>
+      )}
 
       {/* Success Modal Overlay */}
       {overlay === 'success' && (

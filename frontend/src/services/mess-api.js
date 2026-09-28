@@ -218,6 +218,10 @@ export const messApi = {
     const response = await apiClient.get('/analytics/dashboard');
     return response.data;
   },
+  async getKitchenWasteForecast() {
+    const response = await apiClient.get('/analytics/kitchen-forecast');
+    return response.data;
+  },
 
   // Attendance API
   async setExpectedAttendance(mealType, date, expected) {

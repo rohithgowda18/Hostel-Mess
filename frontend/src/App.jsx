@@ -15,6 +15,7 @@ import DirectoryPage from '@/pages/directory-page';
 import ProfilePage from '@/pages/profile-page';
 import QrCheckinPage from '@/pages/qr-checkin-page';
 import ReportMealPage from '@/pages/report-meal-page';
+import KitchenAnalyticsPage from '@/pages/kitchen-analytics-page';
 
 function App() {
   const [authenticated, setAuthenticated] = useState(() => isAuthenticated());
@@ -114,6 +115,18 @@ function App() {
           authenticated ? (
             <DashboardLayout user={appUser} onLogout={handleLogout}>
               <FeedbackPage />
+            </DashboardLayout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          authenticated ? (
+            <DashboardLayout user={appUser} onLogout={handleLogout}>
+              <KitchenAnalyticsPage />
             </DashboardLayout>
           ) : (
             <Navigate to="/login" replace />

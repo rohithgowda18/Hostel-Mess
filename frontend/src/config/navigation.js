@@ -9,7 +9,8 @@ import {
   UserCheck,
   User,
   Settings,
-  Bell
+  Bell,
+  ChefHat
 } from 'lucide-react';
 
 export const navigationSections = [
@@ -27,6 +28,7 @@ export const navigationSections = [
   {
     title: 'Management & Support',
     items: [
+      { key: 'analytics', label: 'Kitchen & Waste AI', path: '/analytics', icon: ChefHat },
       { key: 'feedback', label: 'Feedback & Reports', path: '/feedback', icon: MessageSquareWarning },
     ]
   }
