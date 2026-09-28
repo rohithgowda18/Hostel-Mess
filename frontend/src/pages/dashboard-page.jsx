@@ -437,44 +437,64 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column (5 Cols): Buddy Groups & Quick Navigation Actions */}
+        {/* Right Column (5 Cols): Live Meal Photo & Quick Actions (User Spec #8) */}
         <div className="lg:col-span-5 space-y-6">
-          {/* Buddy Groups Live Widget */}
-          <Card className="p-5 shadow-card space-y-4">
+          {/* Live Meal Photo Card (Answers: What does the food actually look like?) */}
+          <Card className="p-5 shadow-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <Camera className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  Buddy Dining Groups
+                  Live Food Photo ({mealStatus.mealName})
                 </h4>
               </div>
-              <Badge variant="primary" className="text-[10px]">Social</Badge>
+              <Badge variant="primary" className="text-[10px] uppercase font-bold">
+                Live Evidence
+              </Badge>
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Coordinate dining times with hostel friends and check who is heading down to the mess together right now.
-            </p>
+            {/* Photo Preview Container */}
+            <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 group">
+              <img
+                src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80"
+                alt="Today's live meal"
+                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-3">
+                <div className="text-white text-xs">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="px-1.5 py-0.5 rounded bg-blue-600 text-[9px] font-bold uppercase tracking-wider">
+                      COMMUNITY
+                    </span>
+                    <span className="text-[10px] text-slate-200">Captured at Counter 2</span>
+                  </div>
+                  <p className="font-semibold text-[11px] truncate">
+                    Steamed Basmati Rice with Fresh Dal Tadka & Paneer Curry
+                  </p>
+                </div>
+              </div>
+            </div>
 
-            <div className="pt-1 flex gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => navigate('/groups')}
-                className="flex-1 font-semibold text-xs"
+            <div className="flex items-center justify-between pt-1 text-xs">
+              <button
+                type="button"
+                onClick={() => navigate('/meals?tab=photos')}
+                className="text-blue-600 hover:underline font-bold text-xs flex items-center gap-1 cursor-pointer"
               >
-                Open Buddy Groups <ArrowRight className="h-3.5 w-3.5 ml-1" />
-              </Button>
+                View All Plates (4) <ChevronRight className="h-3.5 w-3.5" />
+              </button>
               <Button
+                size="sm"
                 variant="outline"
-                size="sm"
-                onClick={() => navigate('/feedback')}
-                className="font-semibold text-xs"
+                onClick={() => navigate('/report-meal?slot=' + mealStatus.mealType)}
+                className="text-xs font-semibold gap-1 h-8"
               >
-                Rate Quality
+                <Camera className="h-3.5 w-3.5" /> Upload Photo
               </Button>
             </div>
           </Card>
 
-          {/* Quick Hub Action Grid (User Spec #3) */}
+          {/* Quick Hub Action Grid (User Spec #8) */}
           <div className="space-y-2">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
               Quick Actions
@@ -488,7 +508,18 @@ export default function DashboardPage() {
                   <QrCode className="h-4 w-4" />
                 </div>
                 <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">Dining Pass</h5>
-                <p className="text-[10px] text-slate-400">Counter QR check-in</p>
+                <p className="text-[10px] text-slate-400">Get counter pass</p>
+              </Card>
+
+              <Card
+                onClick={() => navigate('/report-meal?slot=' + mealStatus.mealType)}
+                className="p-3.5 shadow-xs hover:border-emerald-500 cursor-pointer transition-all space-y-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+              >
+                <div className="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <Camera className="h-4 w-4" />
+                </div>
+                <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">Upload Photo</h5>
+                <p className="text-[10px] text-slate-400">Live plate snapshot</p>
               </Card>
 
               <Card
@@ -499,7 +530,7 @@ export default function DashboardPage() {
                   <MessageSquareWarning className="h-4 w-4" />
                 </div>
                 <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">Report Issue</h5>
-                <p className="text-[10px] text-slate-400">File food grievance</p>
+                <p className="text-[10px] text-slate-400">File grievance</p>
               </Card>
 
               <Card
@@ -510,18 +541,7 @@ export default function DashboardPage() {
                   <Star className="h-4 w-4" />
                 </div>
                 <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">Give Feedback</h5>
-                <p className="text-[10px] text-slate-400">Rate taste & hygiene</p>
-              </Card>
-
-              <Card
-                onClick={() => navigate('/meals')}
-                className="p-3.5 shadow-xs hover:border-indigo-500 cursor-pointer transition-all space-y-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
-              >
-                <div className="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                  <UtensilsCrossed className="h-4 w-4" />
-                </div>
-                <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">View Menu</h5>
-                <p className="text-[10px] text-slate-400">Weekly schedule</p>
+                <p className="text-[10px] text-slate-400">Rate meal quality</p>
               </Card>
             </div>
           </div>
