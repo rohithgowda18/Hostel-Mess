@@ -28,15 +28,14 @@ export const studentNavigation = [
   {
     title: 'Community',
     items: [
-      { key: 'feedback', label: 'Rate Meal', path: '/student/feedback', icon: Star },
-      { key: 'complaints', label: 'Complaints', path: '/student/complaints', icon: MessageSquareWarning },
-      { key: 'groups', label: 'Groups', path: '/student/groups', icon: Users }
+      { key: 'groups', label: 'Groups', path: '/student/groups', icon: Users },
+      { key: 'complaints', label: 'Complaints', path: '/student/complaints', icon: MessageSquareWarning }
     ]
   },
   {
     title: 'Other',
     items: [
-      { key: 'notices', label: 'Notices', path: '/student/notices', icon: Bell }
+      { key: 'notices', label: 'Notifications', path: '/student/notices', icon: Bell }
     ]
   }
 ];
@@ -45,8 +44,10 @@ export const studentMobileNav = [
   { key: 'home', label: 'Home', path: '/student/dashboard', icon: LayoutDashboard },
   { key: 'meals', label: 'Meals', path: '/student/meals', icon: UtensilsCrossed },
   { key: 'report', label: 'Report', path: '/student/report-meal', icon: Sparkles, isHero: true },
-  { key: 'community', label: 'Groups', path: '/student/groups', icon: Users },
-  { key: 'profile', label: 'Profile', path: '/student/profile', icon: User }
+  { key: 'attendance', label: 'Attendance', path: '/student/attendance', icon: QrCode },
+  { key: 'groups', label: 'Groups', path: '/student/groups', icon: Users },
+  { key: 'complaints', label: 'Complaints', path: '/student/complaints', icon: MessageSquareWarning },
+  { key: 'notifications', label: 'Notifications', path: '/student/notices', icon: Bell }
 ];
 
 export const adminNavigation = [

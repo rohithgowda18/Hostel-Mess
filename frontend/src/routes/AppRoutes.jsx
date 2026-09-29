@@ -12,7 +12,7 @@ import DashboardPage from '@/pages/student/DashboardPage';
 import MealsPage from '@/pages/student/MealsPage';
 import ReportMealPage from '@/pages/student/ReportMealPage';
 import AttendancePage from '@/pages/student/AttendancePage';
-import FeedbackPage from '@/pages/student/FeedbackPage';
+
 import ComplaintsPage from '@/pages/student/ComplaintsPage';
 import GroupsPage from '@/pages/student/GroupsPage';
 import GroupDetailsPage from '@/pages/student/GroupDetailsPage';
@@ -114,7 +114,7 @@ export function AppRoutes() {
       <Route path="/student/meals" element={withLayout(MealsPage)} />
       <Route path="/student/report-meal" element={withLayout(ReportMealPage)} />
       <Route path="/student/attendance" element={withLayout(AttendancePage)} />
-      <Route path="/student/feedback" element={withLayout(FeedbackPage)} />
+
       <Route path="/student/complaints" element={withLayout(ComplaintsPage)} />
       <Route path="/student/groups" element={withLayout(GroupsPage)} />
       <Route path="/student/groups/:groupId" element={withLayout(GroupDetailsPage)} />
