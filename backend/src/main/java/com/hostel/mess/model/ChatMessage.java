@@ -24,6 +24,9 @@ public class ChatMessage implements Serializable {
     // User ID of message sender
     private String senderId;
     
+    // Email of message sender
+    private String senderEmail;
+    
     // Username of message sender (display name)
     private String senderName;
     
@@ -51,6 +54,20 @@ public class ChatMessage implements Serializable {
         this.chatType = chatType;
         this.chatId = chatId;
         this.senderId = senderId;
+        this.senderName = senderName;
+        this.senderEmail = senderName;
+        this.senderRole = senderRole;
+        this.message = message;
+        this.expiresAt = expiresAt;
+    }
+
+    public ChatMessage(String chatType, String chatId, String senderId, String senderEmail,
+                       String senderName, String senderRole, String message, Instant expiresAt) {
+        this.createdAt = Instant.now();
+        this.chatType = chatType;
+        this.chatId = chatId;
+        this.senderId = senderId;
+        this.senderEmail = senderEmail;
         this.senderName = senderName;
         this.senderRole = senderRole;
         this.message = message;
@@ -87,6 +104,14 @@ public class ChatMessage implements Serializable {
 
     public void setSenderId(String senderId) {
         this.senderId = senderId;
+    }
+
+    public String getSenderEmail() {
+        return senderEmail != null ? senderEmail : senderName;
+    }
+
+    public void setSenderEmail(String senderEmail) {
+        this.senderEmail = senderEmail;
     }
 
     public String getSenderName() {

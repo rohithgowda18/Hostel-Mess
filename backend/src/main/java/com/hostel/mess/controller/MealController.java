@@ -157,14 +157,24 @@ public class MealController {
     // 4. MEAL PHOTOS EVIDENCE
     // ==========================================
 
+    @GetMapping("/api/meals/current/photos")
+    public ResponseEntity<?> getCurrentMealPhotos() {
+        return ResponseEntity.ok(mealService.getCurrentMealPhotos());
+    }
+
     @PostMapping("/api/student-photos/upload")
     public ResponseEntity<?> uploadMealPhoto(
             @RequestParam("images") List<MultipartFile> images,
             @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "caption", required = false) String caption,
             @RequestParam(value = "mealType", required = false) String mealTypeParam,
             Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required to upload photo"));
+        }
         try {
-            MealPhoto saved = mealService.uploadMealPhoto(images, description, mealTypeParam, principal);
+            String text = (caption != null && !caption.trim().isEmpty()) ? caption.trim() : description;
+            MealPhoto saved = mealService.uploadMealPhoto(images, text, mealTypeParam, principal);
             return ResponseEntity.ok(saved);
         } catch (com.hostel.mess.exception.BadRequestException | IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage(), "message", e.getMessage()));

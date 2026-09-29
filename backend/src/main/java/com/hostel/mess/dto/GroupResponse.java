@@ -9,18 +9,20 @@ public class GroupResponse {
     private String groupCode; // 8-character code for sharing via WhatsApp
     private List<String> members;
     private String creator; // Creator email
+    private String creatorId; // Creator user id
     private Integer memberCount;
     private Instant createdAt;
     
     // Constructor
     public GroupResponse() {}
     
-    public GroupResponse(String id, String name, String groupCode, List<String> members, String creator, Instant createdAt) {
+    public GroupResponse(String id, String name, String groupCode, List<String> members, String creator, String creatorId, Instant createdAt) {
         this.id = id;
         this.name = name;
         this.groupCode = groupCode;
         this.members = members;
         this.creator = creator;
+        this.creatorId = creatorId;
         this.memberCount = members != null ? members.size() : 0;
         this.createdAt = createdAt;
     }
@@ -32,6 +34,7 @@ public class GroupResponse {
             this.groupCode = group.getGroupCode();
             this.members = group.getMembers();
             this.creator = group.getCreator();
+            this.creatorId = group.getCreatorId();
             this.memberCount = group.getMembers() != null ? group.getMembers().size() : 0;
             this.createdAt = group.getCreatedAt();
         }
@@ -76,6 +79,14 @@ public class GroupResponse {
     
     public void setCreator(String creator) {
         this.creator = creator;
+    }
+
+    public String getCreatorId() {
+        return creatorId;
+    }
+
+    public void setCreatorId(String creatorId) {
+        this.creatorId = creatorId;
     }
     
     public Integer getMemberCount() {

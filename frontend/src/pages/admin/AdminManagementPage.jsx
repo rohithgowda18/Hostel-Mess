@@ -139,60 +139,60 @@ export default function AdminManagementPage() {
         </div>
       )}
 
-      {/* Security Notice Card */}
-      <Card className="p-4 bg-surface border-border border-l-4 border-l-primary flex items-start gap-3">
-        <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-        <div className="space-y-1 text-xs">
-          <span className="font-bold text-text block">Backend-Enforced Authorization</span>
-          <p className="text-text-secondary leading-relaxed">
+      {/* Security Notice */}
+      <div className="p-4 rounded-md border border-border bg-slate-50/50 dark:bg-slate-800/40 flex items-start gap-3 text-xs">
+        <ShieldCheck className="h-4 w-4 text-teal-800 dark:text-teal-400 shrink-0 mt-0.5" />
+        <div className="space-y-0.5">
+          <span className="font-semibold text-slate-900 dark:text-slate-100 block">Backend-enforced authorization</span>
+          <p className="text-slate-500 leading-relaxed">
             Role elevation is cryptographically authorized and persisted in the database. The system automatically
             rejects any attempt to demote the last remaining administrator to prevent administrative lockout.
           </p>
         </div>
-      </Card>
+      </div>
 
       {/* Search Input */}
       <form onSubmit={handleSearchSubmit} className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search resident students by name, email, or hostel..."
-            className="pl-10 text-xs bg-surface border-border h-10"
+            className="pl-10 text-xs bg-white dark:bg-slate-900 border-border h-9"
           />
         </div>
-        <Button type="submit" size="sm" className="bg-primary hover:bg-primary-hover text-white font-bold text-xs h-10 px-4">
+        <Button type="submit" size="sm" className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 text-white font-semibold text-xs h-9 px-4">
           Search
         </Button>
       </form>
 
       {/* Users & Roles Table */}
-      <Card className="bg-surface border-border overflow-hidden">
-        <div className="p-4 bg-surface-elevated border-b border-border flex items-center justify-between">
-          <h3 className="text-sm font-bold text-text">Resident Directory & Role Assignments</h3>
-          <span className="text-xs text-text-secondary">{users.length} Users Listed</span>
+      <div className="rounded-md border border-border bg-white dark:bg-slate-900 overflow-hidden">
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">User directory</h3>
+          <span className="text-xs text-slate-400">{users.length} users listed</span>
         </div>
 
         {loading ? (
-          <div className="py-16 text-center text-xs text-text-muted">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
+          <div className="py-16 text-center text-xs text-slate-400">
+            <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2 text-teal-800 dark:text-teal-400" />
             Loading user directory...
           </div>
         ) : users.length === 0 ? (
-          <div className="py-16 text-center text-xs text-text-muted">
+          <div className="py-16 text-center text-xs text-slate-400">
             No users found matching your search query.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="bg-surface-elevated text-text-secondary uppercase tracking-wider text-[10px] border-b border-border">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-medium text-[11px] border-b border-border">
                 <tr>
-                  <th className="px-4 py-3">User Details</th>
-                  <th className="px-4 py-3">Hostel / Room</th>
-                  <th className="px-4 py-3">Academic Info</th>
-                  <th className="px-4 py-3">Current Role</th>
-                  <th className="px-4 py-3 text-right">Role Actions</th>
+                  <th className="px-4 py-2.5">User</th>
+                  <th className="px-4 py-2.5">Hostel / room</th>
+                  <th className="px-4 py-2.5">Academic info</th>
+                  <th className="px-4 py-2.5">Role</th>
+                  <th className="px-4 py-2.5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -202,42 +202,46 @@ export default function AdminManagementPage() {
                   const isOperating = actionLoadingId === u.id;
 
                   return (
-                    <tr key={u.id} className="hover:bg-surface-elevated/50 transition-colors">
+                    <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <div
-                            className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs ${
+                            className={`h-7 w-7 rounded flex items-center justify-center font-bold text-xs ${
                               isAdmin
-                                ? 'bg-primary/10 text-primary border border-primary/20'
-                                : 'bg-surface-elevated text-text-secondary border border-border'
+                                ? 'bg-teal-50 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                             }`}
                           >
-                            {isAdmin ? <Shield className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                            {isAdmin ? <Shield className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
                           </div>
                           <div>
-                            <span className="font-bold text-text block">
+                            <span className="font-semibold text-slate-900 dark:text-slate-100 block">
                               {u.name || u.email?.split('@')[0]}
                               {isSelf && (
-                                <span className="ml-1.5 text-[10px] font-bold text-primary">(You)</span>
+                                <span className="ml-1 text-[10px] text-teal-700 dark:text-teal-400">(You)</span>
                               )}
                             </span>
-                            <span className="text-[11px] text-text-muted font-mono">{u.email}</span>
+                            <span className="text-[11px] text-slate-400 font-mono">{u.email}</span>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-4 py-3 text-text-secondary">
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                         {u.hostel || 'Hostel N/A'}{u.room ? ` • Rm ${u.room}` : ''}
                       </td>
 
-                      <td className="px-4 py-3 text-text-secondary">
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                         {u.branch || 'General'}{u.year ? ` • Year ${u.year}` : ''}
                       </td>
 
                       <td className="px-4 py-3">
-                        <Badge variant={isAdmin ? 'primary' : 'default'} className="text-[10px] font-bold">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
+                          isAdmin
+                            ? 'bg-teal-50 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
+                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                        }`}>
                           {u.role}
-                        </Badge>
+                        </span>
                       </td>
 
                       <td className="px-4 py-3 text-right">
@@ -258,7 +262,7 @@ export default function AdminManagementPage() {
                             variant="outline"
                             disabled={isOperating}
                             onClick={() => handleRoleActionClick(u, 'ADMIN')}
-                            className="text-xs font-semibold h-7 px-2.5 gap-1 text-primary border-primary/40 hover:bg-primary/10"
+                            className="text-xs font-semibold h-7 px-2.5 gap-1 text-teal-800 dark:text-teal-300 border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40"
                           >
                             <UserCheck className="h-3 w-3" />
                             Promote to Admin
@@ -272,7 +276,7 @@ export default function AdminManagementPage() {
             </table>
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Confirmation Modal (Section 32) */}
       {confirmModal.open && (

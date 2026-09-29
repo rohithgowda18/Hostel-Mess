@@ -1,28 +1,55 @@
-import { Inbox } from 'lucide-react';
+import { Inbox, UtensilsCrossed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export function EmptyState({
   icon: Icon = Inbox,
-  title = 'No data available',
-  description = 'Nothing to show right now.',
+  title = 'No records available',
+  description = 'There are no active records matching your view at this time.',
   actionLabel,
   onAction,
+  secondaryActionLabel,
+  onSecondaryAction,
   className
 }) {
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 p-8 md:p-12 text-center transition-all', className)}>
-      <div className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-        <Icon className="h-5 w-5" />
+    <div className={cn('py-12 px-4 text-center space-y-3 max-w-sm mx-auto flex flex-col items-center justify-center', className)}>
+      <div className="w-14 h-14 rounded-2xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-center text-primary shadow-xs">
+        <Icon className="h-7 w-7 text-primary" />
       </div>
-      <div className="space-y-1 max-w-sm">
-        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{title}</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{description}</p>
+
+      <div className="space-y-1">
+        <h3 className="text-sm font-bold text-on-surface tracking-tight">{title}</h3>
+        {description && (
+          <p className="text-xs text-on-surface-variant leading-relaxed max-w-xs mx-auto">
+            {description}
+          </p>
+        )}
       </div>
-      {actionLabel && onAction && (
-        <Button variant="outline" size="sm" onClick={onAction} className="mt-2">
-          {actionLabel}
-        </Button>
+
+      {(actionLabel || secondaryActionLabel) && (
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          {actionLabel && onAction && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onAction}
+              className="bg-primary hover:bg-primary-container text-on-primary text-xs font-semibold h-8 px-4 cursor-pointer"
+            >
+              {actionLabel}
+            </Button>
+          )}
+          {secondaryActionLabel && onSecondaryAction && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onSecondaryAction}
+              className="border-outline-variant/30 text-on-surface hover:bg-surface-container text-xs font-semibold h-8 px-3 cursor-pointer"
+            >
+              {secondaryActionLabel}
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );

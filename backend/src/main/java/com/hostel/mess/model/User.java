@@ -49,6 +49,8 @@ public class User {
     private int points = 0;
 
     private List<String> badges = new ArrayList<>();
+
+    private List<String> notifyFriendIds = new ArrayList<>();
     
     // Constructors
     public User() {
@@ -209,6 +211,14 @@ public class User {
 
     public void setBadges(List<String> badges) {
         this.badges = badges;
+    }
+
+    public List<String> getNotifyFriendIds() {
+        return notifyFriendIds != null ? notifyFriendIds : new ArrayList<>();
+    }
+
+    public void setNotifyFriendIds(List<String> notifyFriendIds) {
+        this.notifyFriendIds = notifyFriendIds;
     }
 
     @Override

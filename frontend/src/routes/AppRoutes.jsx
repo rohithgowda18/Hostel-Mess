@@ -18,6 +18,7 @@ import GroupsPage from '@/pages/student/GroupsPage';
 import GroupDetailsPage from '@/pages/student/GroupDetailsPage';
 import NoticesPage from '@/pages/student/NoticesPage';
 import ProfilePage from '@/pages/student/ProfilePage';
+import EmptyStatePage from '@/pages/student/EmptyStatePage';
 
 // Admin Pages
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
@@ -30,6 +31,9 @@ import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage';
 import AdminStudentsPage from '@/pages/admin/AdminStudentsPage';
 import AdminNoticesPage from '@/pages/admin/AdminNoticesPage';
 import AdminManagementPage from '@/pages/admin/AdminManagementPage';
+
+// 404 & Empty State Pages
+import NotFoundPage from '@/pages/NotFoundPage';
 
 export function AppRoutes() {
   const [authenticated, setAuthenticated] = useState(() => isAuthenticated());
@@ -116,6 +120,8 @@ export function AppRoutes() {
       <Route path="/student/groups/:groupId" element={withLayout(GroupDetailsPage)} />
       <Route path="/student/notices" element={withLayout(NoticesPage)} />
       <Route path="/student/profile" element={withLayout(ProfilePage)} />
+      <Route path="/student/empty-state" element={withLayout(EmptyStatePage)} />
+      <Route path="/empty" element={withLayout(EmptyStatePage)} />
 
       {/* ADMIN ROUTES */}
       <Route path="/admin" element={withAdminLayout(AdminDashboardPage)} />
@@ -146,11 +152,8 @@ export function AppRoutes() {
       <Route path="/admin/quality" element={<Navigate to="/admin/ratings" replace />} />
       <Route path="/dashboard" element={<Navigate to={isAdmin ? '/admin' : '/student/dashboard'} replace />} />
 
-      {/* Catch-all fallback */}
-      <Route
-        path="*"
-        element={<Navigate to={authenticated ? (isAdmin ? '/admin' : '/student/dashboard') : '/login'} replace />}
-      />
+      {/* 404 Catch-all fallback */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

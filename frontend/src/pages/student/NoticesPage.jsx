@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getUser } from '@/services/auth-service';
 import { messApi } from '@/services/mess-api';
+import { usePageTitle } from '@/hooks/use-page-title';
+import { useToast } from '@/context/toast-context';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Bell,
   AlertTriangle,
@@ -14,43 +17,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-const INITIAL_NOTICES = [
-  {
-    id: 'n-1',
-    title: 'Dinner Timing Shift Today',
-    priority: 'IMPORTANT',
-    category: 'TIMINGS',
-    message: 'Dinner service will commence at 7:30 PM today due to kitchen deep-cleaning and gas pipeline maintenance.',
-    date: 'Sep 28, 2026',
-    time: '4:20 PM'
-  },
-  {
-    id: 'n-2',
-    title: 'Weekend Special Dining Menu Published',
-    priority: 'NORMAL',
-    category: 'MENU',
-    message: 'Saturday lunch and dinner menus have been updated with special festive meal offerings. View the weekly menu tab for details.',
-    date: 'Sep 27, 2026',
-    time: '11:00 AM'
-  },
-  {
-    id: 'n-3',
-    title: 'RO Water Plant Filter Sanitization Complete',
-    priority: 'NORMAL',
-    category: 'FACILITIES',
-    message: 'Dining hall RO water dispensers have been fully serviced and water testing certified.',
-    date: 'Sep 26, 2026',
-    time: '2:15 PM'
-  }
-];
-
 export default function NoticesPage() {
   const currentUser = getUser() || {};
   const isAdmin = currentUser.role === 'ADMIN';
+  const toast = useToast();
+  usePageTitle('Hostel Notices', 'Announcements, kitchen schedule updates, and mess administration notices.');
 
   const [notices, setNotices] = useState(() => {
     const saved = localStorage.getItem('hostel_mess_notices');
-    return saved ? JSON.parse(saved) : INITIAL_NOTICES;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -74,11 +49,8 @@ export default function NoticesPage() {
           date: n.createdAt ? new Date(n.createdAt).toLocaleDateString() : 'Today',
           time: n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'
         }));
-        setNotices((prev) => {
-          const merged = [...mapped, ...prev.filter((p) => !mapped.some((m) => m.id === p.id))];
-          localStorage.setItem('hostel_mess_notices', JSON.stringify(merged));
-          return merged;
-        });
+        setNotices(mapped);
+        localStorage.setItem('hostel_mess_notices', JSON.stringify(mapped));
       }
     }).catch(() => {});
   }, []);
@@ -110,28 +82,22 @@ export default function NoticesPage() {
 
     setCreateModalOpen(false);
     setForm({ title: '', category: 'MENU', priority: 'IMPORTANT', message: '' });
-    setSuccessMsg('Notice published and broadcasted to residents.');
-    setTimeout(() => setSuccessMsg(''), 4000);
+    toast.success('Notice Published', `"${newNotice.title}" has been broadcast to residents.`);
   };
 
   const pinnedNotice = notices.find((n) => n.priority === 'IMPORTANT');
   const recentNotices = notices.filter((n) => n !== pinnedNotice);
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="max-w-2xl mx-auto space-y-6 pb-12">
       {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+      <div className="flex items-center justify-between border-b border-border pb-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              Hostel Mess Notices
-            </h1>
-            <Badge variant="primary" className="text-[11px] font-bold">
-              Official Circulars
-            </Badge>
-          </div>
-          <p className="text-xs text-text-secondary mt-1">
-            Official dining announcements regarding service schedules, replacements, and facility updates.
+          <h1 className="text-xl font-bold tracking-tight text-on-surface">
+            Notices & Circulars
+          </h1>
+          <p className="text-xs text-on-surface-variant mt-0.5">
+            Hostel mess announcements, service timing adjustments, and dining updates.
           </p>
         </div>
 
@@ -139,77 +105,70 @@ export default function NoticesPage() {
           <Button
             size="sm"
             onClick={() => setCreateModalOpen(true)}
-            className="font-bold gap-1.5 text-xs self-start sm:self-auto"
+            className="text-xs font-semibold bg-primary hover:bg-primary-container text-on-primary shrink-0"
           >
-            <Plus className="h-3.5 w-3.5" /> Publish Notice
+            Publish Notice
           </Button>
         )}
       </div>
 
-      {successMsg && (
-        <div className="p-3 rounded-md bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900/40 text-green-800 dark:text-green-200 text-xs font-semibold flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
-          <span>{successMsg}</span>
-        </div>
-      )}
-
-      {/* Pinned Notice at Top (Section 20) */}
+      {/* Pinned Notice at Top */}
       {pinnedNotice && (
-        <div className="space-y-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
-            <Pin className="h-3.5 w-3.5 text-teal-700 dark:text-teal-400" /> Pinned Important Circular
-          </span>
-          <Card className="bg-surface border-l-4 border-l-teal-700 dark:border-l-teal-400 border-border p-5 space-y-3 shadow-xs">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider">
-                  <AlertTriangle className="h-3 w-3" /> Priority Notice
-                </span>
-                <span className="px-2 py-0.5 rounded-md bg-surface-elevated text-text-secondary text-[10px] font-bold uppercase tracking-wider border border-border">
-                  {pinnedNotice.category}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-text-muted">
-                <Clock className="h-3.5 w-3.5" />
-                <span>{pinnedNotice.date} • {pinnedNotice.time}</span>
-              </div>
-            </div>
+        <div className="space-y-2 p-4 rounded-xl border-l-4 border-l-primary bg-surface-container-low border border-outline-variant/20 shadow-xs">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold text-primary flex items-center gap-1.5">
+              <Pin className="h-3.5 w-3.5" />
+              Pinned Notice • {pinnedNotice.category}
+            </span>
+            <span className="text-on-surface-variant font-mono text-[11px]">
+              {pinnedNotice.date}
+            </span>
+          </div>
 
-            <h3 className="text-base font-bold text-text">{pinnedNotice.title}</h3>
-            <p className="text-xs text-text-secondary leading-relaxed">{pinnedNotice.message}</p>
-          </Card>
+          <h2 className="text-sm font-bold text-on-surface">
+            {pinnedNotice.title}
+          </h2>
+          <p className="text-xs text-on-surface-variant leading-relaxed">
+            {pinnedNotice.message}
+          </p>
         </div>
       )}
 
-      {/* Recent Notices List (Section 20) */}
+      {/* Regular Notices List */}
       <div className="space-y-3">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-text-secondary block">
-          Recent Circulars ({recentNotices.length})
-        </span>
+        <h2 className="text-xs font-bold text-on-surface">
+          Recent Bulletins
+        </h2>
 
-        {recentNotices.length === 0 ? (
-          <div className="text-center py-12 bg-surface border border-border rounded-lg p-8">
-            <Bell className="h-8 w-8 text-text-muted mx-auto mb-2 opacity-50" />
-            <p className="text-xs font-bold text-text">No additional notices posted</p>
+        {recentNotices.length === 0 && !pinnedNotice ? (
+          <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/20 shadow-xs">
+            <EmptyState
+              icon={Bell}
+              title="No Notices Active"
+              description="The hostel mess administration has not published any announcements for today."
+            />
           </div>
+        ) : recentNotices.length === 0 ? (
+          <p className="text-xs text-on-surface-variant py-4 italic">
+            No additional announcements beyond the pinned notice above.
+          </p>
         ) : (
-          recentNotices.map((n) => (
-            <Card key={n.id} className="bg-surface border-border p-4 space-y-2 hover:border-primary/40 transition-colors">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-md bg-surface-elevated text-text-secondary text-[10px] font-bold uppercase tracking-wider border border-border">
-                    {n.category}
-                  </span>
-                  <h4 className="text-sm font-bold text-text">{n.title}</h4>
+          <div className="divide-y divide-border border-y border-border">
+            {recentNotices.map((n) => (
+              <div key={n.id} className="py-3.5 space-y-1 text-xs">
+                <div className="flex items-center justify-between text-slate-500 text-[11px]">
+                  <span>{n.category}</span>
+                  <span className="font-mono">{n.date}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                  <Clock className="h-3 w-3" />
-                  <span>{n.date}</span>
-                </div>
+                <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-xs">
+                  {n.title}
+                </h3>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs">
+                  {n.message}
+                </p>
               </div>
-              <p className="text-xs text-text-secondary leading-relaxed">{n.message}</p>
-            </Card>
-          ))
+            ))}
+          </div>
         )}
       </div>
 

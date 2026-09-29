@@ -1,650 +1,683 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { messApi } from '@/services/mess-api';
+import { usePageTitle } from '@/hooks/use-page-title';
+import { useToast } from '@/context/toast-context';
 import {
-  UtensilsCrossed,
-  Calendar,
-  Camera,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Sparkles,
-  ArrowRight,
-  X,
-  User,
-  Coffee,
-  Sun,
-  Sunset,
-  Moon
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-
-const MEAL_SLOTS = [
-  { key: 'BREAKFAST', name: 'Breakfast', icon: Coffee, time: '07:30 – 09:30', startMins: 7 * 60 + 30, endMins: 9 * 60 + 30 },
-  { key: 'LUNCH', name: 'Lunch', icon: Sun, time: '12:30 – 14:30', startMins: 12 * 60 + 30, endMins: 14 * 60 + 30 },
-  { key: 'SNACKS', name: 'Snacks', icon: Sunset, time: '16:30 – 17:30', startMins: 16 * 60 + 30, endMins: 17 * 60 + 30 },
-  { key: 'DINNER', name: 'Dinner', icon: Moon, time: '19:30 – 21:30', startMins: 19 * 60 + 30, endMins: 21 * 60 + 30 },
-];
+  getMealTimeStatus,
+  formatCountdown,
+  MEAL_WINDOWS
+} from '@/utils/meal-time';
 
 const DAYS_OF_WEEK = [
-  { key: 'monday', label: 'Mon', full: 'Monday' },
-  { key: 'tuesday', label: 'Tue', full: 'Tuesday' },
-  { key: 'wednesday', label: 'Wed', full: 'Wednesday' },
-  { key: 'thursday', label: 'Thu', full: 'Thursday' },
-  { key: 'friday', label: 'Fri', full: 'Friday' },
-  { key: 'saturday', label: 'Sat', full: 'Saturday' },
-  { key: 'sunday', label: 'Sun', full: 'Sunday' }
+  { key: 'monday', label: 'Mon' },
+  { key: 'tuesday', label: 'Tue' },
+  { key: 'wednesday', label: 'Wed' },
+  { key: 'thursday', label: 'Thu' },
+  { key: 'friday', label: 'Fri' },
+  { key: 'saturday', label: 'Sat' },
+  { key: 'sunday', label: 'Sun' }
 ];
 
 export default function MealsPage() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'today';
+  const toast = useToast();
+  usePageTitle(
+    "Today's Meals",
+    'See what is being served now in the hostel dining hall and view real student peer reports.'
+  );
 
-  const [slotInfo, setSlotInfo] = useState(null);
+  // Time & Slot Status
   const [serverOffset, setServerOffset] = useState(0);
+  const [timeStatus, setTimeStatus] = useState(() => getMealTimeStatus(0));
   const [remainingSecs, setRemainingSecs] = useState(0);
 
-  const [selectedSlot, setSelectedSlot] = useState('LUNCH');
-  const [selectedDay, setSelectedDay] = useState(() => {
-    const dayIndex = new Date().getDay();
-    const dayMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    return dayMap[dayIndex];
-  });
-
-  const [todayConsensus, setTodayConsensus] = useState(null);
+  // Data states
+  const [consensus, setConsensus] = useState(null);
   const [weeklyMenu, setWeeklyMenu] = useState(null);
-  const [photos, setPhotos] = useState([]);
-  const [photoFilter, setPhotoFilter] = useState('ALL');
-  const [lightboxPhoto, setLightboxPhoto] = useState(null);
+  const [todayPhotos, setTodayPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [verifyingItem, setVerifyingItem] = useState(null);
 
+  // Modals
+  const [showWeeklyMenuModal, setShowWeeklyMenuModal] = useState(false);
+  const [selectedModalDay, setSelectedModalDay] = useState(() => {
+    const dayMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    return dayMap[new Date().getDay()] || 'monday';
+  });
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
+
   const todayStr = new Date().toISOString().split('T')[0];
+  const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
   const timerRef = useRef(null);
 
-  // 1. Fetch server slot info & sync clock
-  const fetchSlotInfo = async () => {
+  // 1. Fetch server slot & sync server time offset
+  const syncServerSlot = async () => {
     try {
       const data = await messApi.getActiveSlotInfo();
       if (data) {
-        setSlotInfo(data);
         const offset = (data.serverTimeMillis || Date.now()) - Date.now();
         setServerOffset(offset);
-
-        if (data.isActive) {
-          setSelectedSlot(data.activeSlot);
-          if (data.endTimeMillis) {
-            const currentServerTime = Date.now() + offset;
-            const diff = Math.max(0, Math.floor((data.endTimeMillis - currentServerTime) / 1000));
-            setRemainingSecs(diff);
-          }
-        } else if (data.nextSlot?.key) {
-          setSelectedSlot(data.nextSlot.key);
-          setRemainingSecs(0);
-        }
+        const status = getMealTimeStatus(offset);
+        setTimeStatus(status);
+        setRemainingSecs(status.remainingSeconds);
       }
     } catch (err) {
-      console.error('Failed to get slot info:', err);
+      console.error('Failed to sync slot info:', err);
     }
   };
 
   useEffect(() => {
-    fetchSlotInfo();
-    const interval = setInterval(fetchSlotInfo, 30000);
+    syncServerSlot();
+    const interval = setInterval(syncServerSlot, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // 2. Countdown timer
+  // 2. Real-time 1-second countdown
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
 
-    if (slotInfo?.isActive && slotInfo.endTimeMillis) {
-      timerRef.current = setInterval(() => {
-        const currentServerTime = Date.now() + serverOffset;
-        const diff = Math.floor((slotInfo.endTimeMillis - currentServerTime) / 1000);
-
-        if (diff <= 0) {
-          setRemainingSecs(0);
-          clearInterval(timerRef.current);
-          fetchSlotInfo();
-        } else {
-          setRemainingSecs(diff);
-        }
-      }, 1000);
-    }
+    timerRef.current = setInterval(() => {
+      const status = getMealTimeStatus(serverOffset);
+      setTimeStatus(status);
+      setRemainingSecs(status.remainingSeconds);
+    }, 1000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [slotInfo?.isActive, slotInfo?.endTimeMillis, serverOffset]);
+  }, [serverOffset]);
 
-  // Format hh:mm:ss
-  const formatCountdown = (totalSecs) => {
-    const h = Math.floor(totalSecs / 3600);
-    const m = Math.floor((totalSecs % 3600) / 60);
-    const s = totalSecs % 60;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  };
-
-  const handleTabChange = (tabId) => {
-    setSearchParams({ tab: tabId });
-  };
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [consensusData, menuData, photoList] = await Promise.all([
-        messApi.getMealConsensus(selectedSlot, todayStr).catch(() => null),
-        messApi.getWeeklyMenu().catch(() => null),
-        messApi.getStudentPhotosToday().catch(() => [])
-      ]);
-
-      if (consensusData) setTodayConsensus(consensusData);
-      if (menuData) setWeeklyMenu(menuData);
-      if (Array.isArray(photoList)) setPhotos(photoList);
-    } catch (err) {
-      console.error('Failed to load meals data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 3. Load consensus, menu, and photos
+  const activeSlotKey = timeStatus.activeSlot?.key || timeStatus.nextSlot?.key || 'LUNCH';
 
   useEffect(() => {
-    loadData();
-  }, [selectedSlot]);
+    let isMounted = true;
+    const loadMealsData = async () => {
+      setLoading(true);
+      try {
+        const [consensusData, menuData, photoList] = await Promise.all([
+          messApi.getMealConsensus(activeSlotKey, todayStr).catch(() => null),
+          messApi.getWeeklyMenu().catch(() => null),
+          messApi.getStudentPhotosToday().catch(() => [])
+        ]);
 
-  // YES / NO Community Verification Handler
+        if (isMounted) {
+          if (consensusData) setConsensus(consensusData);
+          if (menuData) setWeeklyMenu(menuData);
+          if (Array.isArray(photoList)) setTodayPhotos(photoList);
+        }
+      } catch (err) {
+        console.error('Failed to load meals data:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadMealsData();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeSlotKey, todayStr]);
+
+  // 4. Handle item peer verification
   const handleVerify = async (foodItem, vote) => {
     setVerifyingItem(foodItem);
     try {
-      const updated = await messApi.verifyMealItem(selectedSlot, todayStr, foodItem, vote);
+      const updated = await messApi.verifyMealItem(activeSlotKey, todayStr, foodItem, vote);
       if (updated) {
-        setTodayConsensus(updated);
+        setConsensus(updated);
+        toast.success(
+          'Vote Recorded',
+          `Marked "${foodItem}" as ${vote === 'YES' ? 'currently being served' : 'not present'}.`
+        );
       }
     } catch (err) {
       console.error('Failed to verify item:', err);
+      toast.error('Verification Failed', err.message || 'Could not record vote.');
     } finally {
       setVerifyingItem(null);
     }
   };
 
-  const currentDaySchedule = weeklyMenu ? weeklyMenu[selectedDay] : null;
+  // Determine dishes for the active slot or next slot
+  const currentSlotDishes = (() => {
+    const reported = consensus?.items?.map((i) => i.name) || [];
+    const expected = consensus?.expectedItems || [];
+    const menuSlotDishes = weeklyMenu?.[dayName]?.[activeSlotKey] || [];
+    if (reported.length > 0) return reported;
+    if (expected.length > 0) return expected;
+    return menuSlotDishes;
+  })();
 
-  // Determine slot status relative to current time
-  const getSlotState = (slot) => {
-    if (slotInfo?.activeSlot === slot.key) {
-      return { status: 'ACTIVE', label: 'Serving now' };
-    }
-    const currentMins = new Date(Date.now() + serverOffset).getHours() * 60 + new Date(Date.now() + serverOffset).getMinutes();
-    if (currentMins >= slot.endMins) {
-      return { status: 'CLOSED', label: 'Meal closed' };
-    }
-    return { status: 'UPCOMING', label: 'Scheduled' };
-  };
+  const nextSlotDishes = (() => {
+    if (!timeStatus.nextSlot) return [];
+    return weeklyMenu?.[dayName]?.[timeStatus.nextSlot.key] || [];
+  })();
 
-  const isCurrentSlotActive = slotInfo?.activeSlot === selectedSlot;
+  const reportedFoods = consensus?.items || [];
+  const activeSlot = timeStatus.activeSlot;
+  const nextSlot = timeStatus.nextSlot;
+  const isServing = timeStatus.isActive && activeSlot;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header with Segmented Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            Meals & Dining
+    <div className="w-full space-y-6 pb-12 max-w-5xl mx-auto">
+      {/* ──────────────── 1. HEADER ──────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed text-[11px] uppercase tracking-wider font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'short',
+              day: 'numeric'
+            })}
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold text-on-surface tracking-tight">
+            Today's Meals
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Compare official dining schedules against real-time peer meal reports and live photo proof.
+          <p className="text-xs text-on-surface-variant">
+            See what is being served now and what students are reporting.
           </p>
         </div>
 
-        {/* Segmented Controls: Today, Weekly Menu, Live Photos */}
-        <div className="flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 w-fit">
-          <button
-            onClick={() => handleTabChange('today')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-colors cursor-pointer ${
-              activeTab === 'today'
-                ? 'bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-            }`}
-          >
-            <UtensilsCrossed className="h-3.5 w-3.5" />
-            Today
-          </button>
-          <button
-            onClick={() => handleTabChange('weekly')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-colors cursor-pointer ${
-              activeTab === 'weekly'
-                ? 'bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-            }`}
-          >
-            <Calendar className="h-3.5 w-3.5" />
-            Weekly Menu
-          </button>
-          <button
-            onClick={() => handleTabChange('photos')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-colors cursor-pointer ${
-              activeTab === 'photos'
-                ? 'bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-            }`}
-          >
-            <Camera className="h-3.5 w-3.5" />
-            Live Photos
-          </button>
-        </div>
+        {/* Secondary Action: Weekly Menu */}
+        <button
+          type="button"
+          onClick={() => setShowWeeklyMenuModal(true)}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-semibold border border-outline-variant/20 transition-all self-start sm:self-auto cursor-pointer shadow-xs"
+        >
+          <span className="material-symbols-outlined text-[16px] text-primary">calendar_month</span>
+          <span>View Weekly Menu</span>
+        </button>
       </div>
 
-      {/* ──────────────── TAB 1: TODAY'S MEAL & VERIFICATION ──────────────── */}
-      {activeTab === 'today' && (
-        <div className="space-y-5">
-          {/* Meal Slot Selector Cards with Live State */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {MEAL_SLOTS.map((slot) => {
-              const Icon = slot.icon;
-              const isSelected = selectedSlot === slot.key;
-              const slotState = getSlotState(slot);
+      {/* ──────────────── 2. CURRENT MEAL (PRIMARY CONTENT) ──────────────── */}
+      {isServing ? (
+        <div className="bg-surface-container-lowest rounded-xl p-6 sm:p-7 shadow-sm border border-outline-variant/20 relative overflow-hidden">
+          <div className="absolute -right-16 -top-16 w-60 h-60 bg-primary-fixed/30 rounded-full blur-3xl pointer-events-none" />
 
-              return (
-                <button
-                  key={slot.key}
-                  type="button"
-                  onClick={() => setSelectedSlot(slot.key)}
-                  className={`flex flex-col justify-between p-3 rounded-lg border text-left transition-colors cursor-pointer ${
-                    isSelected
-                      ? 'bg-teal-50/70 border-teal-600 dark:bg-teal-950/40 dark:border-teal-500 shadow-xs'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-1 w-full pb-1">
-                    <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                      <Icon className={`h-3.5 w-3.5 ${isSelected ? 'text-teal-700 dark:text-teal-400' : 'text-slate-400'}`} />
-                      {slot.name}
+          <div className="relative z-10 space-y-5">
+            {/* Status Pill & Time Window */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="inline-flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant text-xs font-bold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                  CURRENTLY SERVING
+                </span>
+                <span className="text-xs text-on-surface-variant font-medium">Mess Hall Open</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs font-mono text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-md border border-outline-variant/10">
+                <span className="material-symbols-outlined text-[16px] text-primary">schedule</span>
+                {activeSlot.time}
+              </div>
+            </div>
+
+            {/* Meal Name & Live Countdown */}
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 pt-1">
+              <div>
+                <span className="text-xs uppercase tracking-wider text-on-surface-variant font-semibold block">
+                  Current Meal
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-on-surface tracking-tight mt-0.5">
+                  {activeSlot.name.toUpperCase()}
+                </h2>
+              </div>
+
+              <div className="inline-flex items-center gap-2 bg-surface-container px-4 py-2 rounded-xl border border-outline-variant/20">
+                <span className="text-xs text-on-surface-variant font-medium">Ends in:</span>
+                <span className="text-xl font-bold font-mono text-primary tracking-tight">
+                  {formatCountdown(remainingSecs)}
+                </span>
+              </div>
+            </div>
+
+            {/* Food items */}
+            <div className="space-y-2 pt-1">
+              <span className="text-[11px] uppercase tracking-wider font-semibold text-outline block">
+                Dishes Being Served
+              </span>
+              {currentSlotDishes.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {currentSlotDishes.map((dish, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1.5 rounded-lg bg-surface-container-low text-xs font-semibold text-on-surface border border-outline-variant/20 shadow-2xs"
+                    >
+                      {dish}
                     </span>
-                    {slotState.status === 'ACTIVE' && (
-                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-on-surface-variant italic">
+                  Menu items are being confirmed by resident peer reports.
+                </p>
+              )}
+            </div>
+
+            {/* Action Buttons: Report & Add Photo */}
+            <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-outline-variant/15">
+              <button
+                type="button"
+                onClick={() => navigate('/student/report-meal')}
+                className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-container text-on-primary text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">edit_note</span>
+                Report {activeSlot.name}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/student/report-meal?photo=1')}
+                title={`Add ${activeSlot.name} meal photo`}
+                className="px-4 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-semibold flex items-center justify-center gap-2 border border-outline-variant/20 transition-all cursor-pointer shadow-xs"
+              >
+                <span className="material-symbols-outlined text-[18px] text-primary">photo_camera</span>
+                Add Photo
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Outside serving windows: NO MEAL CURRENTLY SERVING */
+        <div className="bg-surface-container-lowest rounded-xl p-6 sm:p-7 shadow-sm border border-outline-variant/20 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="inline-flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold">
+                NO MEAL CURRENTLY SERVING
+              </span>
+              <span className="text-xs text-on-surface-variant">Mess Hall Closed</span>
+            </div>
+
+            <div className="text-xs font-mono text-on-surface-variant bg-surface-container-low px-2.5 py-1 rounded-md border border-outline-variant/10">
+              Current Time: {timeStatus.currentTimeStr}
+            </div>
+          </div>
+
+          <div className="pt-1">
+            <span className="text-xs uppercase tracking-wider text-on-surface-variant font-semibold">
+              Next Meal
+            </span>
+            <h2 className="text-2xl font-bold text-on-surface mt-0.5">
+              {nextSlot ? nextSlot.name : 'Breakfast'}
+              <span className="text-sm font-normal text-on-surface-variant font-mono ml-3">
+                {nextSlot ? nextSlot.time : '07:30 – 09:30'}
+              </span>
+            </h2>
+            {timeStatus.lastCompletedSlot && (
+              <p className="text-xs text-on-surface-variant mt-1">
+                {timeStatus.lastCompletedSlot.name} service has concluded. The kitchen is in preparation for the next meal.
+              </p>
+            )}
+          </div>
+
+          {/* Next meal preview dishes */}
+          {nextSlotDishes.length > 0 && (
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[11px] uppercase tracking-wider font-semibold text-outline block">
+                Scheduled for {nextSlot?.name || 'Upcoming Meal'}
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {nextSlotDishes.map((dish, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2.5 py-1 rounded-md bg-surface-container-low text-xs text-on-surface border border-outline-variant/10"
+                  >
+                    {dish}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Photo button behavior: Disabled outside meal window */}
+          <div className="flex items-center gap-2 pt-2 border-t border-outline-variant/10 text-xs text-on-surface-variant">
+            <span className="material-symbols-outlined text-[16px] text-outline">no_photography</span>
+            <span>Photo reporting is available while a meal is being served.</span>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────── 3. AFTER CURRENT MEAL: SIMPLE TODAY TIMELINE ──────────────── */}
+      <div className="bg-surface-container-lowest rounded-xl p-5 sm:p-6 shadow-sm border border-outline-variant/20 space-y-3">
+        <div className="flex items-center justify-between pb-1 border-b border-outline-variant/15">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-outline">
+            Today's Timeline
+          </h2>
+          <span className="text-[11px] text-on-surface-variant">4 Daily Slots</span>
+        </div>
+
+        <div className="divide-y divide-outline-variant/10">
+          {timeStatus.timeline.map((slot) => {
+            const isSlotServing = slot.status === 'serving';
+            const isSlotCompleted = slot.status === 'completed';
+            const slotDishes = weeklyMenu?.[dayName]?.[slot.key] || [];
+
+            return (
+              <div
+                key={slot.key}
+                className={`py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-colors ${
+                  isSlotServing ? 'bg-surface-container-low/70 -mx-3 px-3 rounded-lg' : ''
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Status indicator: ✓ completed, ● serving, ○ upcoming */}
+                  <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                    {isSlotCompleted ? (
+                      <span className="material-symbols-outlined text-[20px] text-secondary">
+                        check_circle
+                      </span>
+                    ) : isSlotServing ? (
+                      <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+                    ) : (
+                      <span className="w-2.5 h-2.5 rounded-full border-2 border-outline-variant" />
                     )}
                   </div>
 
-                  <div className="space-y-0.5 pt-1">
-                    <span className="block text-[11px] font-mono text-slate-500">
-                      {slot.time}
-                    </span>
-                    <span className={`block text-[10px] font-semibold ${
-                      slotState.status === 'ACTIVE'
-                        ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-                        : slotState.status === 'CLOSED'
-                        ? 'text-slate-400'
-                        : 'text-slate-500'
-                    }`}>
-                      {slotState.status === 'ACTIVE'
-                        ? `Ends in ${formatCountdown(remainingSecs)}`
-                        : slotState.label}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Active Status Hero Banner */}
-          <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-            <div>
-              <span className="font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-                {selectedSlot}
-              </span>
-              <span className="text-slate-400 mx-1.5">•</span>
-              {isCurrentSlotActive ? (
-                <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                  Currently serving (Ends in {formatCountdown(remainingSecs)})
-                </span>
-              ) : (
-                <span className="text-slate-500 dark:text-slate-400">
-                  {getSlotState(MEAL_SLOTS.find((s) => s.key === selectedSlot)).label}
-                  {slotInfo?.nextSlot && ` — Next meal: ${slotInfo.nextSlot.name} (${slotInfo.nextSlot.time})`}
-                </span>
-              )}
-            </div>
-
-            {isCurrentSlotActive && (
-              <Button
-                size="sm"
-                onClick={() => navigate('/student/report-meal')}
-                className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs h-8 px-3.5 gap-1 shrink-0"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Report This Meal
-              </Button>
-            )}
-          </div>
-
-          {/* Official Menu vs Community Reports */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* OFFICIAL MENU */}
-            <Card className="p-4 space-y-3 border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Official Menu
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Published by mess administration</p>
-                </div>
-                <Badge variant="secondary" className="text-[10px]">
-                  Scheduled Plan
-                </Badge>
-              </div>
-
-              {todayConsensus?.expectedItems && todayConsensus.expectedItems.length > 0 ? (
-                <ul className="space-y-1.5">
-                  {todayConsensus.expectedItems.map((item, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200"
-                    >
-                      <span className="font-semibold">{item}</span>
-                      <span className="text-[10px] text-slate-400">Standard Scheduled Item</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-center py-8 text-xs text-slate-400">
-                  Official menu items scheduled for this slot are not available.
-                </div>
-              )}
-            </Card>
-
-            {/* COMMUNITY REPORT & VERIFICATION */}
-            <Card className="p-4 space-y-3 border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-teal-800 dark:text-teal-300">
-                    Community Report
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Reported and verified by students</p>
-                </div>
-                {todayConsensus?.totalReporters > 0 && (
-                  <Badge variant="verified" className="text-[10px]">
-                    {todayConsensus.totalReporters} {todayConsensus.totalReporters === 1 ? 'Report' : 'Reports'}
-                  </Badge>
-                )}
-              </div>
-
-              {todayConsensus?.items && todayConsensus.items.length > 0 ? (
-                <div className="space-y-2.5">
-                  {todayConsensus.items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-2 text-xs"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block">
-                            {item.name}
-                          </span>
-                          <span className="text-[11px] text-slate-400">
-                            Reported by {item.votes} {item.votes === 1 ? 'student' : 'students'}
-                          </span>
-                        </div>
-                        <Badge
-                          variant={
-                            item.status === 'Verified' || item.verified
-                              ? 'verified'
-                              : item.status === 'Conflicting reports'
-                              ? 'pending'
-                              : 'secondary'
-                          }
-                          className="text-[10px] font-bold"
-                        >
-                          {item.status || (item.verified ? 'Verified' : 'Awaiting verification')}
-                        </Badge>
-                      </div>
-
-                      {/* Community Verification Interaction */}
-                      <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                          Is this being served?
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            disabled={verifyingItem === item.name}
-                            onClick={() => handleVerify(item.name, 'YES')}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold border border-green-300 bg-green-50 text-green-800 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800 hover:bg-green-100 transition-colors cursor-pointer"
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            YES ({item.yesVotes || 0})
-                          </button>
-                          <button
-                            type="button"
-                            disabled={verifyingItem === item.name}
-                            onClick={() => handleVerify(item.name, 'NO')}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold border border-red-300 bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800 hover:bg-red-100 transition-colors cursor-pointer"
-                          >
-                            <XCircle className="h-3.5 w-3.5" />
-                            NO ({item.noVotes || 0})
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 space-y-2.5">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    No student reports yet for {selectedSlot.toLowerCase()}.
-                  </p>
-                  {isCurrentSlotActive && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate('/student/report-meal')}
-                      className="text-xs font-bold text-teal-700 dark:text-teal-400"
-                    >
-                      Submit First Report
-                    </Button>
-                  )}
-                </div>
-              )}
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {/* ──────────────── TAB 2: WEEKLY MENU ──────────────── */}
-      {activeTab === 'weekly' && (
-        <div className="space-y-5">
-          {/* Day Selector (Mon – Sun) */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-            {DAYS_OF_WEEK.map((d) => {
-              const isSelected = selectedDay === d.key;
-              return (
-                <button
-                  key={d.key}
-                  type="button"
-                  onClick={() => setSelectedDay(d.key)}
-                  className={`flex-1 min-w-[65px] py-2 px-2.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer text-center ${
-                    isSelected
-                      ? 'bg-teal-700 text-white border-teal-700 dark:bg-teal-500 dark:text-slate-950'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  <span className="block text-[10px] uppercase font-normal opacity-80">{d.label}</span>
-                  <span className="block text-xs font-bold">{d.full.slice(0, 3)}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Meal Sections */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {MEAL_SLOTS.map((slot) => {
-              const Icon = slot.icon;
-              const slotItems = currentDaySchedule ? currentDaySchedule[slot.key] : null;
-
-              return (
-                <Card key={slot.key} className="p-4 space-y-3 border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <div>
                     <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4 text-teal-700 dark:text-teal-400" />
-                      <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                      <span
+                        className={`text-xs font-bold ${
+                          isSlotServing ? 'text-primary' : 'text-on-surface'
+                        }`}
+                      >
                         {slot.name}
-                      </h3>
+                      </span>
+                      <span className="text-[11px] font-mono text-on-surface-variant">
+                        {slot.time}
+                      </span>
                     </div>
-                    <span className="text-[11px] text-slate-400 font-mono">{slot.time}</span>
+                    {slotDishes.length > 0 && (
+                      <p className="text-[11px] text-on-surface-variant line-clamp-1">
+                        {slotDishes.slice(0, 4).join(' · ')}
+                      </p>
+                    )}
                   </div>
+                </div>
 
-                  {Array.isArray(slotItems) && slotItems.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {slotItems.map((food, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-medium"
-                        >
-                          {food}
-                        </span>
-                      ))}
-                    </div>
+                <div className="flex items-center gap-2 self-start sm:self-auto pl-9 sm:pl-0">
+                  {isSlotServing ? (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-secondary-fixed text-on-secondary-fixed-variant">
+                      Currently serving
+                    </span>
+                  ) : isSlotCompleted ? (
+                    <span className="text-[11px] font-medium text-on-surface-variant/70">
+                      Completed
+                    </span>
                   ) : (
-                    <p className="text-xs text-slate-400 py-2">
-                      Menu not published for this slot.
-                    </p>
+                    <span className="text-[11px] font-medium text-outline">
+                      Upcoming
+                    </span>
                   )}
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ──────────────── TAB 3: LIVE PHOTOS ──────────────── */}
-      {activeTab === 'photos' && (
-        <div className="space-y-4">
-          {/* Meal Slot Filter for Photos */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-              {['ALL', 'BREAKFAST', 'LUNCH', 'SNACKS', 'DINNER'].map((slot) => (
-                <button
-                  key={slot}
-                  type="button"
-                  onClick={() => setPhotoFilter(slot)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
-                    photoFilter === slot
-                      ? 'bg-teal-700 text-white dark:bg-teal-500 dark:text-slate-950 font-bold'
-                      : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
-                  }`}
-                >
-                  {slot}
-                </button>
-              ))}
-            </div>
-
-            {slotInfo?.isActive && (
-              <Button
-                size="sm"
-                onClick={() => navigate('/student/report-meal')}
-                className="text-xs font-bold gap-1 shrink-0 h-8"
-              >
-                <Camera className="h-3.5 w-3.5" />
-                Upload Photo
-              </Button>
-            )}
-          </div>
-
-          {/* Photo Gallery Grid */}
-          {(() => {
-            const filteredPhotos = photos.filter((p) => {
-              if (photoFilter === 'ALL') return true;
-              return p.mealType?.toUpperCase() === photoFilter;
-            });
-
-            if (filteredPhotos.length === 0) {
-              return (
-                <Card className="p-8 text-center space-y-2 border-dashed border-slate-300 dark:border-slate-700">
-                  <Camera className="h-8 w-8 text-slate-400 mx-auto" />
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    No photo evidence available for today.
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    Students can upload live plate photos inside Report Meal during active serving hours.
-                  </p>
-                </Card>
-              );
-            }
-
-            return (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {filteredPhotos.map((photo, idx) => {
-                  const imgUrl = photo.imageUrls?.[0] || `/api/student-photos/${photo.id}/image`;
-                  return (
-                    <div
-                      key={photo.id || idx}
-                      onClick={() => setLightboxPhoto(photo)}
-                      className="group relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 aspect-square cursor-pointer"
-                    >
-                      <img
-                        src={imgUrl}
-                        alt={photo.description || 'Meal photo'}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent p-2 text-white">
-                        <span className="text-[10px] font-bold uppercase tracking-wider block text-teal-300">
-                          {photo.mealType}
-                        </span>
-                        <span className="text-[11px] font-medium truncate block">
-                          {photo.uploadedBy || 'Resident'}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+                </div>
               </div>
             );
-          })()}
+          })}
+        </div>
+      </div>
+
+      {/* ──────────────── 4. COMMUNITY REPORTS ──────────────── */}
+      <div className="bg-surface-container-lowest rounded-xl p-5 sm:p-6 shadow-sm border border-outline-variant/20 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-outline-variant/15">
+          <div>
+            <h2 className="text-base font-bold text-on-surface">Community Reports</h2>
+            <p className="text-xs text-on-surface-variant">
+              {consensus?.totalReporters
+                ? `${consensus.totalReporters} ${
+                    consensus.totalReporters === 1 ? 'student' : 'students'
+                  } reported this meal`
+                : 'Live verification and peer reports from hostel residents'}
+            </p>
+          </div>
+
+          {isServing && (
+            <button
+              type="button"
+              onClick={() => navigate('/student/report-meal')}
+              className="text-xs font-semibold text-primary hover:underline self-start sm:self-auto cursor-pointer"
+            >
+              + Add peer report
+            </button>
+          )}
+        </div>
+
+        {/* Foods Seen */}
+        <div className="space-y-2.5">
+          <span className="text-xs font-bold uppercase tracking-wider text-outline block">
+            Foods Seen
+          </span>
+
+          {reportedFoods.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {reportedFoods.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-3.5 bg-surface-container-low rounded-xl border border-outline-variant/20 flex items-center justify-between gap-3"
+                >
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-on-surface block truncate">
+                      {item.name}
+                    </span>
+                    <span className="text-[11px] text-secondary font-medium">
+                      {item.yesVotes || 1} peer {item.yesVotes === 1 ? 'confirmation' : 'confirmations'}
+                    </span>
+                  </div>
+
+                  {/* Verification action */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      disabled={verifyingItem === item.name}
+                      onClick={() => handleVerify(item.name, 'YES')}
+                      className="px-2.5 py-1 rounded bg-secondary-container/40 text-secondary hover:bg-secondary-container text-xs font-semibold transition-colors cursor-pointer"
+                      title="Confirm this item is being served"
+                    >
+                      Yes ({item.yesVotes || 0})
+                    </button>
+                    <button
+                      type="button"
+                      disabled={verifyingItem === item.name}
+                      onClick={() => handleVerify(item.name, 'NO')}
+                      className="px-2.5 py-1 rounded bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs font-semibold transition-colors cursor-pointer"
+                      title="Item is not being served"
+                    >
+                      No ({item.noVotes || 0})
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-surface-container-low text-xs text-on-surface-variant italic border border-outline-variant/10">
+              No peer reports filed yet for this meal. {isServing && 'Tap "Report Meal" to report what is being served.'}
+            </div>
+          )}
+        </div>
+
+        {/* Meal Evidence Photos */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-outline block">
+              Recent Meal Photos
+            </span>
+            <span className="text-[11px] text-on-surface-variant">
+              {todayPhotos.length} {todayPhotos.length === 1 ? 'photo' : 'photos'} today
+            </span>
+          </div>
+
+          {todayPhotos.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {todayPhotos.map((photo, idx) => {
+                const imgUrl = photo.imageUrls?.[0] || `/api/student-photos/${photo.id}/image`;
+                return (
+                  <div
+                    key={photo.id || idx}
+                    onClick={() => setLightboxPhoto(photo)}
+                    className="group rounded-xl overflow-hidden border border-outline-variant/20 bg-surface-container aspect-video relative cursor-pointer"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={photo.description || 'Meal verification evidence'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 text-white">
+                      <span className="text-[10px] font-bold block text-secondary-fixed">
+                        {photo.mealType}
+                      </span>
+                      <span className="text-[9px] text-white/80 truncate block">
+                        {photo.uploadedBy || 'Resident'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-surface-container-low text-xs text-on-surface-variant italic border border-outline-variant/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span>No evidence photos submitted today yet.</span>
+              {isServing && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/student/report-meal?photo=1')}
+                  className="text-xs font-semibold text-primary hover:underline self-start sm:self-auto cursor-pointer"
+                >
+                  + Add meal photo
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ──────────────── 5. WEEKLY MENU MODAL (SECONDARY FEATURE) ──────────────── */}
+      {showWeeklyMenuModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setShowWeeklyMenuModal(false)}
+        >
+          <div
+            className="relative max-w-2xl w-full bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/30 shadow-2xl space-y-4 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
+              <div>
+                <h3 className="text-base font-bold text-on-surface">Weekly Dining Menu</h3>
+                <p className="text-xs text-on-surface-variant">Scheduled hostel menu for the week</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowWeeklyMenuModal(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            {/* Day Selector Tabs */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {DAYS_OF_WEEK.map((d) => {
+                const isSelected = selectedModalDay === d.key;
+                return (
+                  <button
+                    key={d.key}
+                    type="button"
+                    onClick={() => setSelectedModalDay(d.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                      isSelected
+                        ? 'bg-primary text-on-primary shadow-xs'
+                        : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 4 slots for selected day */}
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+              {MEAL_WINDOWS.map((slot) => {
+                const dishes = weeklyMenu?.[selectedModalDay]?.[slot.key] || [];
+
+                return (
+                  <div
+                    key={slot.key}
+                    className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/15 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px] text-primary">
+                          {slot.icon}
+                        </span>
+                        <span className="text-xs font-bold text-on-surface">{slot.name}</span>
+                      </div>
+                      <span className="text-[11px] font-mono text-on-surface-variant">
+                        {slot.time}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {Array.isArray(dishes) && dishes.length > 0 ? (
+                        dishes.map((dish, i) => (
+                          <span
+                            key={i}
+                            className="px-2.5 py-1 rounded-md bg-surface-container text-xs text-on-surface border border-outline-variant/10"
+                          >
+                            {dish}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-on-surface-variant italic">
+                          Standard menu scheduled.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Lightbox Modal */}
+      {/* ──────────────── 6. LIGHTBOX MODAL ──────────────── */}
       {lightboxPhoto && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setLightboxPhoto(null)}
         >
           <div
-            className="relative max-w-lg w-full bg-white dark:bg-slate-900 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl"
+            className="relative max-w-lg w-full bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/30 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="p-3.5 border-b border-outline-variant/20 flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400">
-                  {lightboxPhoto.mealType}
-                </span>
-                <span className="text-xs text-slate-500 ml-2">
-                  Uploaded by {lightboxPhoto.uploadedBy || 'Student'}
+                <span className="text-xs font-bold text-primary">{lightboxPhoto.mealType}</span>
+                <span className="text-xs text-on-surface-variant ml-2">
+                  Uploaded by {lightboxPhoto.uploadedBy || 'Resident'}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setLightboxPhoto(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container cursor-pointer"
               >
-                <X className="h-4 w-4" />
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
-            <div className="bg-slate-100 dark:bg-slate-950 max-h-[70vh] flex items-center justify-center">
+            <div className="bg-black/90 max-h-[65vh] flex items-center justify-center">
               <img
                 src={lightboxPhoto.imageUrls?.[0] || `/api/student-photos/${lightboxPhoto.id}/image`}
-                alt={lightboxPhoto.description || 'Meal photo'}
-                className="max-h-[70vh] w-full object-contain"
+                alt={lightboxPhoto.description || 'Meal verification photo'}
+                className="max-h-[65vh] w-full object-contain"
               />
             </div>
             {lightboxPhoto.description && (
-              <div className="p-3 text-xs text-slate-600 dark:text-slate-300">
+              <div className="p-3.5 text-xs text-on-surface border-t border-outline-variant/15">
                 {lightboxPhoto.description}
               </div>
             )}

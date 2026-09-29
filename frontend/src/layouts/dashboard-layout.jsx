@@ -4,7 +4,8 @@ import AppSidebar from '@/components/layout/app-sidebar';
 import TopNavbar from '@/components/layout/top-navbar';
 import { studentMobileNav, adminMobileNav } from '@/config/navigation';
 import { cn } from '@/lib/utils';
-import { getUser } from '@/services/auth-service';
+import { getUser, getToken } from '@/services/auth-service';
+import websocketService from '@/services/websocket-service';
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -34,6 +35,14 @@ export default function DashboardLayout({ user, onLogout, children }) {
   const currentUser = user || getUser() || { email: 'student@hostel.app', role: 'STUDENT' };
   const isAdmin = currentUser.role === 'ADMIN';
 
+  // Persistent WebSocket connection while logged in
+  useEffect(() => {
+    const token = getToken();
+    if (token) {
+      websocketService.connect(token).catch(() => {});
+    }
+  }, [currentUser?.email]);
+
   // Close menus on route navigation
   useEffect(() => {
     setMoreDrawerOpen(false);
@@ -61,7 +70,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
   const drawerLinks = isAdmin ? secondaryAdminNav : secondaryStudentNav;
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] flex">
+    <div className="min-h-screen bg-page text-on-surface flex flex-col md:flex-row max-w-full overflow-x-hidden">
       {/* Desktop & Mobile Sidebar */}
       <AppSidebar
         collapsed={collapsed}
@@ -73,7 +82,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
       {/* Main Content Area */}
       <div
         className={cn(
-          'flex-1 flex flex-col min-w-0 transition-all duration-200',
+          'flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden transition-all duration-200',
           collapsed ? 'md:ml-18' : 'md:ml-64'
         )}
       >
@@ -88,7 +97,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
         />
 
         {/* Page Content Body */}
-        <main className="flex-1 mt-16 px-4 py-6 md:px-8 max-w-6xl w-full mx-auto pb-24 md:pb-8">
+        <main className="flex-1 mt-16 px-3 sm:px-4 py-6 md:px-8 max-w-6xl w-full mx-auto pb-24 md:pb-8 overflow-x-hidden">
           {children}
         </main>
       </div>
@@ -100,15 +109,15 @@ export default function DashboardLayout({ user, onLogout, children }) {
             className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
             onClick={() => setMoreDrawerOpen(false)}
           />
-          <div className="relative z-10 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 rounded-t-2xl p-4 space-y-2 shadow-xl animate-in slide-in-from-bottom-6 duration-200 pb-safe">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="relative z-10 bg-surface-container-lowest border-t border-outline-variant/30 rounded-t-2xl p-4 space-y-2 shadow-xl animate-in slide-in-from-bottom-6 duration-200 pb-safe">
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+              <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
                 Additional Services
               </span>
               <button
                 type="button"
                 onClick={() => setMoreDrawerOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="p-1 text-on-surface-variant hover:text-on-surface"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -128,11 +137,11 @@ export default function DashboardLayout({ user, onLogout, children }) {
                     className={cn(
                       'flex items-center gap-2.5 p-3 rounded-xl border text-left text-xs font-semibold transition-colors cursor-pointer',
                       active
-                        ? 'bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800'
-                        : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                        ? 'bg-primary-fixed/40 text-primary border-primary'
+                        : 'border-outline-variant/20 text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                     )}
                   >
-                    <Icon className="h-4 w-4 shrink-0 text-teal-700 dark:text-teal-400" />
+                    <Icon className="h-4 w-4 shrink-0 text-primary" />
                     <span className="truncate">{item.label}</span>
                   </button>
                 );
@@ -143,7 +152,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
       )}
 
       {/* Mobile-First Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around h-15 px-2 pb-safe shadow-[0_-1px_3px_rgba(0,0,0,0.03)]">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-t border-outline-variant/30 flex items-center justify-around h-16 px-1 pb-safe shadow-[0_-1px_4px_rgba(0,0,0,0.06)]">
         {mobileNavItems.map((item) => {
           const Icon = item.icon;
           const active = location.pathname === item.path;
@@ -156,15 +165,16 @@ export default function DashboardLayout({ user, onLogout, children }) {
               className={cn(
                 'flex flex-col items-center justify-center flex-1 py-1 text-[10px] font-medium transition-colors cursor-pointer',
                 active
-                  ? 'text-teal-800 dark:text-teal-300 font-bold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'text-primary font-bold'
+                  : 'text-on-surface-variant hover:text-on-surface'
               )}
             >
               <div
                 className={cn(
-                  'flex items-center justify-center h-7 w-7 rounded-md mb-0.5 transition-colors',
-                  item.isHero && 'bg-teal-700 text-white dark:bg-teal-500 dark:text-slate-950 shadow-xs',
-                  !item.isHero && active && 'text-teal-700 dark:text-teal-400'
+                  'flex items-center justify-center h-7 w-7 rounded-lg mb-0.5 transition-colors',
+                  item.isHero && 'bg-primary text-on-primary shadow-xs',
+                  !item.isHero && active && 'text-primary',
+                  !item.isHero && !active && 'text-on-surface-variant'
                 )}
               >
                 <Icon className={cn('h-4 w-4', item.isHero && 'h-4.5 w-4.5')} />
@@ -173,6 +183,21 @@ export default function DashboardLayout({ user, onLogout, children }) {
             </button>
           );
         })}
+
+        {/* Dedicated Mobile Menu Drawer Trigger */}
+        <button
+          type="button"
+          onClick={() => setMoreDrawerOpen(true)}
+          className={cn(
+            'flex flex-col items-center justify-center flex-1 py-1 text-[10px] font-medium transition-colors cursor-pointer',
+            moreDrawerOpen ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
+          )}
+        >
+          <div className="flex items-center justify-center h-7 w-7 rounded-lg mb-0.5 text-on-surface-variant">
+            <MoreHorizontal className="h-4 w-4" />
+          </div>
+          <span>More</span>
+        </button>
       </nav>
     </div>
   );

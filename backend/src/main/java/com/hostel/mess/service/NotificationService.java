@@ -25,6 +25,27 @@ public class NotificationService {
         return saved;
     }
 
+    public Notification sendMealCallNotification(String recipientEmail, String recipientId,
+                                                String senderId, String senderName,
+                                                String mealType, String message) {
+        String cleanEmail = recipientEmail.toLowerCase().trim();
+        String title = "🍽️ " + senderName + " is going to " + mealType;
+        Notification notification = new Notification(
+                cleanEmail,
+                recipientId,
+                senderId,
+                senderName,
+                title,
+                message,
+                "MEAL_CALL",
+                mealType,
+                "/student/dashboard"
+        );
+        Notification saved = repository.save(notification);
+        wsService.sendNotification(cleanEmail, saved);
+        return saved;
+    }
+
     public Notification postAnnouncement(String title, String message, String link) {
         Notification notification = new Notification("all", title, message, "ANNOUNCEMENT", link);
         Notification saved = repository.save(notification);

@@ -72,6 +72,52 @@ export const messApi = {
     return response.data;
   },
 
+  async removeGroupMember(groupId, memberEmailOrId) {
+    const response = await apiClient.delete(`/groups/${groupId}/members/${encodeURIComponent(memberEmailOrId)}`);
+    return response.data;
+  },
+
+  async deleteGroup(groupId) {
+    const response = await apiClient.delete(`/groups/${groupId}`);
+    return response.data;
+  },
+
+  // Friends & Meal Call API
+  async getFriends() {
+    const response = await apiClient.get('/friends');
+    return response.data;
+  },
+
+  async sendFriendRequest(targetEmail) {
+    const response = await apiClient.post('/friends/request', { target: targetEmail });
+    return response.data;
+  },
+
+  async acceptFriendRequest(requestId) {
+    const response = await apiClient.post(`/friends/accept/${requestId}`);
+    return response.data;
+  },
+
+  async rejectFriendRequest(requestId) {
+    const response = await apiClient.post(`/friends/reject/${requestId}`);
+    return response.data;
+  },
+
+  async removeFriend(friendId) {
+    const response = await apiClient.delete(`/friends/${friendId}`);
+    return response.data;
+  },
+
+  async updateNotifyFriends(notifyFriendIds) {
+    const response = await apiClient.put('/friends/notify-settings', { notifyFriendIds });
+    return response.data;
+  },
+
+  async sendMealCall() {
+    const response = await apiClient.post('/friends/meal-call');
+    return response.data;
+  },
+
   async markGroupMealGoing(groupId, mealType, userId) {
     const response = await apiClient.post('/group-meal-status/going', { groupId, mealType });
     return response.data;
@@ -91,7 +137,10 @@ export const messApi = {
     const response = await apiClient.get('/chat/messages', {
       params: { chatType, chatId, page, size }
     });
-    return response.data.messages || [];
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return response.data?.messages || response.data?.content || [];
   },
 
   async sendMessage(chatType, chatId, message) {
@@ -162,6 +211,15 @@ export const messApi = {
   },
 
   // Student Photos API
+  async getCurrentMealPhotos() {
+    try {
+      const response = await apiClient.get('/meals/current/photos');
+      return response.data || [];
+    } catch {
+      return [];
+    }
+  },
+
   async getStudentPhotosToday() {
     const response = await apiClient.get('/student-photos/today');
     return response.data;

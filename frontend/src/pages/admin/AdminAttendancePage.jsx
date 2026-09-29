@@ -113,26 +113,31 @@ export default function AdminAttendancePage() {
         </div>
       </div>
 
-      {/* KPI Stats (User Spec #12) */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-          <CardContent className="p-4">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expected Diners</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{expectedCount.toLocaleString()}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-          <CardContent className="p-4">
-            <p className="text-[11px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider">Checked In</p>
-            <p className="text-2xl font-bold text-teal-700 dark:text-teal-400 mt-1">{checkedInCount.toLocaleString()}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-          <CardContent className="p-4">
-            <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Turnout Rate</p>
-            <p className="text-2xl font-bold text-emerald-600 mt-1">{attendancePct}%</p>
-          </CardContent>
-        </Card>
+      {/* Attendance Metric Bar */}
+      <div className="grid grid-cols-3 divide-x divide-border border border-border rounded-md bg-white dark:bg-slate-900 py-3">
+        <div className="px-5 py-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">Expected diners</span>
+          <span className="text-lg font-bold text-slate-900 dark:text-slate-100 block mt-0.5">
+            {expectedCount.toLocaleString()}
+          </span>
+          <span className="text-[11px] text-slate-400">RSVP / enrollment count</span>
+        </div>
+
+        <div className="px-5 py-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">Checked in</span>
+          <span className="text-lg font-bold text-slate-900 dark:text-slate-100 block mt-0.5">
+            {checkedInCount.toLocaleString()}
+          </span>
+          <span className="text-[11px] text-slate-400">Dining pass scans</span>
+        </div>
+
+        <div className="px-5 py-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">Turnout rate</span>
+          <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400 block mt-0.5">
+            {attendancePct}%
+          </span>
+          <span className="text-[11px] text-slate-400">Actual vs expected</span>
+        </div>
       </div>
 
       {/* Meal Slot Filter Tabs */}
@@ -141,13 +146,13 @@ export default function AdminAttendancePage() {
           <button
             key={slot}
             onClick={() => setSelectedMeal(slot)}
-            className={`px-4 py-2 rounded-md text-xs font-bold transition-colors shrink-0 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors shrink-0 cursor-pointer ${
               selectedMeal === slot
-                ? 'bg-teal-700 dark:bg-teal-600 text-white shadow-xs'
-                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                ? 'bg-teal-800 text-white dark:bg-teal-700'
+                : 'bg-white dark:bg-slate-900 border border-border text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
             }`}
           >
-            {slot}
+            {slot.charAt(0) + slot.slice(1).toLowerCase()}
           </button>
         ))}
       </div>
@@ -177,21 +182,21 @@ export default function AdminAttendancePage() {
       </div>
 
       {/* Attendance Table */}
-      <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
+      <div className="rounded-md border border-border bg-white dark:bg-slate-900 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-border text-[11px] font-medium text-slate-600 dark:text-slate-400">
               <tr>
                 <th className="p-3.5 pl-4">Student</th>
                 <th className="p-3.5">Block</th>
                 <th className="p-3.5">Room</th>
-                <th className="p-3.5">Meal Slot</th>
-                <th className="p-3.5">Check-in Time</th>
+                <th className="p-3.5">Meal slot</th>
+                <th className="p-3.5">Check-in time</th>
                 <th className="p-3.5">Verification</th>
                 <th className="p-3.5 text-right pr-4">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-border">
               {filteredRoster.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-slate-400">
@@ -202,19 +207,17 @@ export default function AdminAttendancePage() {
                 filteredRoster.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="p-3.5 pl-4">
-                      <p className="font-bold text-slate-900 dark:text-slate-100">{item.student}</p>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{item.student}</p>
                       <p className="text-[10px] text-slate-400">{item.email}</p>
                     </td>
-                    <td className="p-3.5 font-semibold text-slate-700 dark:text-slate-300">
+                    <td className="p-3.5 text-slate-600 dark:text-slate-300">
                       Block {item.block}
                     </td>
-                    <td className="p-3.5 font-semibold text-slate-700 dark:text-slate-300">
+                    <td className="p-3.5 text-slate-600 dark:text-slate-300">
                       {item.room}
                     </td>
-                    <td className="p-3.5">
-                      <Badge variant="neutral" className="text-[10px] font-bold">
-                        {item.meal}
-                      </Badge>
+                    <td className="p-3.5 font-medium text-slate-700 dark:text-slate-300">
+                      {item.meal}
                     </td>
                     <td className="p-3.5 font-mono text-slate-600 dark:text-slate-400">
                       {item.time}
@@ -223,9 +226,9 @@ export default function AdminAttendancePage() {
                       {item.method}
                     </td>
                     <td className="p-3.5 text-right pr-4">
-                      <Badge variant="success" className="text-[10px] font-bold">
-                        ✓ Present
-                      </Badge>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3 w-3" /> Checked in
+                      </span>
                     </td>
                   </tr>
                 ))
@@ -233,7 +236,7 @@ export default function AdminAttendancePage() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

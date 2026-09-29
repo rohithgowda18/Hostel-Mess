@@ -245,6 +245,43 @@ public class CommunityController {
         }
     }
 
+    @DeleteMapping("/api/groups/{groupId}/members/{memberEmailOrId}")
+    public ResponseEntity<?> removeMember(
+            @PathVariable String groupId,
+            @PathVariable String memberEmailOrId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            String userId = userDetails != null ? userDetails.getUsername() : null;
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
+            }
+            communityService.removeMember(groupId, memberEmailOrId, userId);
+            return ResponseEntity.ok(Map.of("message", "Member removed successfully"));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/api/groups/{groupId}")
+    public ResponseEntity<?> deleteGroup(
+            @PathVariable String groupId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            String userId = userDetails != null ? userDetails.getUsername() : null;
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
+            }
+            communityService.deleteGroup(groupId, userId);
+            return ResponseEntity.ok(Map.of("message", "Group deleted successfully"));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     // ==========================================
     // 4. GROUP MEAL STATUS
     // ==========================================

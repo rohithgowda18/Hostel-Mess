@@ -1,5 +1,6 @@
 package com.hostel.mess.config;
 
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -19,7 +20,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic"); // In-memory broker
+        ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
+        taskScheduler.setPoolSize(1);
+        taskScheduler.setThreadNamePrefix("ws-heartbeat-thread-");
+        taskScheduler.initialize();
+
+        config.enableSimpleBroker("/topic", "/queue")
+                .setTaskScheduler(taskScheduler)
+                .setHeartbeatValue(new long[] { 10000, 10000 });
         config.setApplicationDestinationPrefixes("/app");
     }
 
@@ -30,11 +38,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOriginPatterns(
-                "http://localhost:*",
-                "http://127.0.0.1:*",
-                "https://hostel-hub.rohith.app",
-                "https://*.vercel.app",
-                "https://*.onrender.com").withSockJS();
+        // Pure WebSocket endpoint
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*");
+
+        // SockJS fallback endpoint
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
     }
 }

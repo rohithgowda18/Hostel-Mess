@@ -90,59 +90,59 @@ export default function AdminAnalyticsPage() {
         </Button>
       </div>
 
-      {/* Top 4 Real KPIs (Section 30) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="p-4 bg-surface border-border">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Registered Diners</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{analytics?.totalStudents || 0}</span>
-            <span className="text-xs text-text-muted">students</span>
+      {/* Operations Metric Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border border border-border rounded-md bg-white dark:bg-slate-900 py-3">
+        <div className="px-5 py-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">Registered diners</span>
+          <div className="flex items-baseline gap-1 mt-0.5">
+            <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{analytics?.totalStudents || 0}</span>
+            <span className="text-xs text-slate-400">students</span>
           </div>
-          <p className="text-[11px] text-text-muted mt-1">Total active hostel residents</p>
-        </Card>
+          <span className="text-[11px] text-slate-400">Active residents</span>
+        </div>
 
-        <Card className="p-4 bg-surface border-border">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Attendance Rate</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{attendanceRate}%</span>
-            <span className="text-xs text-text-muted">today</span>
+        <div className="px-5 py-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">Turnout rate</span>
+          <div className="flex items-baseline gap-1 mt-0.5">
+            <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{attendanceRate}%</span>
+            <span className="text-xs text-slate-400">today</span>
           </div>
-          <p className="text-[11px] text-text-muted mt-1">{checkedIn} / {expected} checked in</p>
-        </Card>
+          <span className="text-[11px] text-slate-400">{checkedIn} / {expected} checked in</span>
+        </div>
 
-        <Card className="p-4 bg-surface border-border">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Average Rating</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{analytics?.averageOverallRating || '0.0'}</span>
-            <span className="text-xs text-text-muted">/ 5.0</span>
+        <div className="px-5 py-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">Average rating</span>
+          <div className="flex items-baseline gap-1 mt-0.5">
+            <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{analytics?.averageOverallRating || '0.0'}</span>
+            <span className="text-xs text-slate-400">/ 5.0</span>
           </div>
-          <p className="text-[11px] text-text-muted mt-1">{analytics?.totalRatings || 0} reviews logged</p>
-        </Card>
+          <span className="text-[11px] text-slate-400">{analytics?.totalRatings || 0} reviews</span>
+        </div>
 
-        <Card className="p-4 bg-surface border-border">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Grievances</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-danger">{analytics?.openComplaints || 0}</span>
-            <span className="text-xs text-text-muted">open</span>
+        <div className="px-5 py-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">Open complaints</span>
+          <div className="flex items-baseline gap-1 mt-0.5">
+            <span className="text-lg font-bold text-rose-700 dark:text-rose-400">{analytics?.openComplaints || 0}</span>
+            <span className="text-xs text-slate-400">open</span>
           </div>
-          <p className="text-[11px] text-text-muted mt-1">{analytics?.totalComplaints || 0} total tickets</p>
-        </Card>
+          <span className="text-[11px] text-slate-400">{analytics?.totalComplaints || 0} total tickets</span>
+        </div>
       </div>
 
-      {/* Grid: Ratings & Complaints (Section 30) */}
+      {/* Grid: Ratings & Complaints */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Ratings By Meal Type */}
-        <Card className="p-5 bg-surface border-border space-y-4">
+        <div className="rounded-md border border-border bg-white dark:bg-slate-900 p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="text-sm font-bold text-text flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Star className="h-4 w-4 text-amber-500" />
-              Meal Ratings Breakdown
+              Meal ratings breakdown
             </h3>
-            <span className="text-xs text-text-secondary">{analytics?.totalRatings || 0} Reviews</span>
+            <span className="text-xs text-slate-500">{analytics?.totalRatings || 0} reviews</span>
           </div>
 
           {Object.keys(ratingsByMeal).length === 0 ? (
-            <div className="py-10 text-center text-xs text-text-muted">
+            <div className="py-10 text-center text-xs text-slate-400">
               No meal ratings recorded in the database yet.
             </div>
           ) : (
@@ -154,10 +154,12 @@ export default function AdminAnalyticsPage() {
                 return (
                   <div key={meal} className="space-y-1">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-text">{meal}</span>
-                      <span className="font-bold text-text">{score} / 5.0</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        {meal.charAt(0) + meal.slice(1).toLowerCase()}
+                      </span>
+                      <span className="font-mono text-slate-700 dark:text-slate-300">{score} / 5.0</span>
                     </div>
-                    <div className="w-full bg-surface-elevated border border-border h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
                       <div
                         className="bg-teal-700 dark:bg-teal-500 h-full rounded-full transition-all duration-300"
                         style={{ width: `${pct}%` }}
@@ -168,20 +170,20 @@ export default function AdminAnalyticsPage() {
               })}
             </div>
           )}
-        </Card>
+        </div>
 
         {/* Complaints Breakdown */}
-        <Card className="p-5 bg-surface border-border space-y-4">
+        <div className="rounded-md border border-border bg-white dark:bg-slate-900 p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="text-sm font-bold text-text flex items-center gap-2">
-              <MessageSquareWarning className="h-4 w-4 text-danger" />
-              Complaint Resolution Status
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <MessageSquareWarning className="h-4 w-4 text-rose-600" />
+              Complaint resolution status
             </h3>
-            <span className="text-xs text-text-secondary">{analytics?.totalComplaints || 0} Total</span>
+            <span className="text-xs text-slate-500">{analytics?.totalComplaints || 0} total</span>
           </div>
 
           {Object.keys(complaintsByStatus).length === 0 ? (
-            <div className="py-10 text-center text-xs text-text-muted">
+            <div className="py-10 text-center text-xs text-slate-400">
               No complaints filed yet.
             </div>
           ) : (
@@ -194,15 +196,17 @@ export default function AdminAnalyticsPage() {
                 return (
                   <div key={status} className="space-y-1">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-text">{status}</span>
-                      <span className="font-semibold text-text-secondary">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        {status.charAt(0) + status.slice(1).toLowerCase().replace('_', ' ')}
+                      </span>
+                      <span className="text-slate-500">
                         {count} ({pct}%)
                       </span>
                     </div>
-                    <div className="w-full bg-surface-elevated border border-border h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
-                          isResolved ? 'bg-success' : 'bg-warning'
+                          isResolved ? 'bg-emerald-600' : 'bg-amber-500'
                         }`}
                         style={{ width: `${pct}%` }}
                       />
@@ -212,29 +216,29 @@ export default function AdminAnalyticsPage() {
               })}
             </div>
           )}
-        </Card>
+        </div>
       </div>
 
-      {/* Grid: Resident Distribution & Attendance (Section 30) */}
+      {/* Grid: Resident Distribution & Attendance */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Hostel Distribution */}
-        <Card className="p-5 bg-surface border-border space-y-4">
+        <div className="rounded-md border border-border bg-white dark:bg-slate-900 p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="text-sm font-bold text-text flex items-center gap-2">
-              <Building className="h-4 w-4 text-primary" />
-              Residents by Hostel Block
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Building className="h-4 w-4 text-teal-800 dark:text-teal-400" />
+              Residents by hostel block
             </h3>
           </div>
 
           {Object.keys(hostelDist).length === 0 ? (
-            <div className="py-10 text-center text-xs text-text-muted">
+            <div className="py-10 text-center text-xs text-slate-400">
               No hostel block assignments found.
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {Object.entries(hostelDist).map(([hostel, count]) => (
-                <div key={hostel} className="p-3 rounded-md bg-surface-elevated border border-border">
-                  <span className="text-[10px] uppercase font-bold text-text-muted block truncate">
+                <div key={hostel} className="p-3 rounded-md bg-slate-50 dark:bg-slate-800/50 border border-border">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block truncate">
                     {hostel}
                   </span>
                   <span className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-0.5 block">{count}</span>
@@ -242,26 +246,26 @@ export default function AdminAnalyticsPage() {
               ))}
             </div>
           )}
-        </Card>
+        </div>
 
         {/* Branch / Department Distribution */}
-        <Card className="p-5 bg-surface border-border space-y-4">
+        <div className="rounded-md border border-border bg-white dark:bg-slate-900 p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="text-sm font-bold text-text flex items-center gap-2">
-              <Users className="h-4 w-4 text-teal-700 dark:text-teal-400" />
-              Academic Branch Breakdown
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Users className="h-4 w-4 text-teal-800 dark:text-teal-400" />
+              Academic branch breakdown
             </h3>
           </div>
 
           {Object.keys(branchDist).length === 0 ? (
-            <div className="py-10 text-center text-xs text-text-muted">
+            <div className="py-10 text-center text-xs text-slate-400">
               No branch information registered.
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {Object.entries(branchDist).map(([branch, count]) => (
-                <div key={branch} className="p-3 rounded-md bg-surface-elevated border border-border">
-                  <span className="text-[10px] uppercase font-bold text-text-muted block truncate">
+                <div key={branch} className="p-3 rounded-md bg-slate-50 dark:bg-slate-800/50 border border-border">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block truncate">
                     {branch}
                   </span>
                   <span className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-0.5 block">{count}</span>
@@ -269,7 +273,7 @@ export default function AdminAnalyticsPage() {
               ))}
             </div>
           )}
-        </Card>
+        </div>
       </div>
     </div>
   );

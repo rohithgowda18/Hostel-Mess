@@ -37,8 +37,9 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/", "/index.html", "/static/**", "/public/**", "/ws/**", "/health", "/actuator/health").permitAll()
-                .requestMatchers(HttpMethod.GET, "/uploads/**", "/api/student-photos/*/image", "/api/student-photos/**/image").permitAll()
+                .requestMatchers(HttpMethod.GET, "/uploads/**", "/api/student-photos/*/image").permitAll()
                 .requestMatchers("/api/groups/**").authenticated()
+                .requestMatchers("/api/friends/**").authenticated()
                 .requestMatchers("/api/group-meal-status/**").authenticated()
                 .requestMatchers("/api/complaints/**").authenticated()
                 .requestMatchers("/api/users/**").authenticated()

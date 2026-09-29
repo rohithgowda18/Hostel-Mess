@@ -119,100 +119,103 @@ export default function ComplaintsPage() {
     : complaints.filter((c) => (c.status || 'OPEN').toUpperCase() === statusFilter);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+      <div className="flex items-center justify-between border-b border-border pb-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            Mess Complaints
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            Complaints
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Log grievances directly with the mess committee and monitor resolution progress.
+            Log grievances directly with the mess committee and monitor resolution.
           </p>
         </div>
 
         <Button
           size="sm"
           onClick={() => setModalOpen(true)}
-          className="text-xs font-bold gap-1.5 shrink-0"
+          className="text-xs font-semibold bg-primary hover:bg-primary-container text-on-primary shrink-0"
         >
-          <Plus className="h-4 w-4" />
-          New Complaint
+          New complaint
         </Button>
       </div>
 
       {successMsg && (
-        <div className="p-3 rounded-md bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900/40 text-green-800 dark:text-green-200 text-xs font-semibold flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
-          <span>{successMsg}</span>
+        <div className="p-3 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/40 text-emerald-800 dark:text-emerald-200 text-xs font-semibold">
+          {successMsg}
         </div>
       )}
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-        {['ALL', 'OPEN', 'IN PROGRESS', 'RESOLVED'].map((st) => (
+      {/* Filters: All, Open, In progress, Resolved */}
+      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1">
+        {[
+          { key: 'ALL', label: 'All' },
+          { key: 'OPEN', label: 'Open' },
+          { key: 'IN PROGRESS', label: 'In progress' },
+          { key: 'RESOLVED', label: 'Resolved' }
+        ].map((f) => (
           <button
-            key={st}
+            key={f.key}
             type="button"
-            onClick={() => setStatusFilter(st)}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
-              statusFilter === st
-                ? 'bg-teal-700 text-white dark:bg-teal-500 dark:text-slate-950 font-bold'
-                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+            onClick={() => setStatusFilter(f.key)}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              statusFilter === f.key
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            {st}
+            {f.label}
           </button>
         ))}
       </div>
 
-      {/* Complaints List */}
+      {/* Complaints List as Ticket Rows */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 space-y-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 p-8">
-          <MessageSquareWarning className="h-8 w-8 text-slate-400 mx-auto" />
-          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-            No complaints found.
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-            If you encounter issues with food hygiene, quality, or portion sizing, submit a ticket for administration review.
+        <div className="py-12 space-y-3">
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            No complaints yet.
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md">
+            If you have an issue with food, hygiene, timing, or service, submit a complaint.
           </p>
           <Button
             size="sm"
             variant="outline"
             onClick={() => setModalOpen(true)}
-            className="text-xs font-bold text-teal-700 dark:text-teal-400"
+            className="text-xs font-semibold"
           >
-            Log Complaint
+            New complaint
           </Button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="divide-y divide-border border-y border-border">
           {filtered.map((item, idx) => {
             const statusUpper = (item.status || 'OPEN').toUpperCase();
-            const badgeVariant =
+            const statusColor =
               statusUpper === 'RESOLVED'
-                ? 'verified'
+                ? 'text-emerald-700 dark:text-emerald-400'
                 : statusUpper === 'IN PROGRESS' || statusUpper === 'UNDER INVESTIGATION'
-                ? 'pending'
-                : 'danger';
+                ? 'text-amber-700 dark:text-amber-400'
+                : 'text-red-700 dark:text-red-400';
 
             return (
-              <Card key={item.id || idx} className="p-4 space-y-2">
+              <div key={item.id || idx} className="py-3.5 space-y-1.5 text-xs">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block">
-                      {item.category || item.reasons?.[0] || 'Food Issue'}
+                  <div className="space-y-0.5">
+                    <span className="font-semibold text-slate-900 dark:text-slate-100 text-xs">
+                      {item.category || item.reasons?.[0] || 'Food issue'}
                     </span>
-                    <span className="text-[11px] text-slate-400">
-                      {item.foodItem ? `${item.foodItem} • ` : ''}{item.mealType || 'Meal'} • {item.date || 'Today'}
-                    </span>
+                    <p className="text-slate-500 text-[11px]">
+                      {item.foodItem ? `${item.foodItem} · ` : ''}{item.mealType || 'Meal'} · {item.date || 'Today'}
+                    </p>
                   </div>
-                  <Badge variant={badgeVariant} className="text-[10px] font-bold">
-                    {item.status || 'OPEN'}
-                  </Badge>
+
+                  <span className={`text-[11px] font-semibold capitalize ${statusColor}`}>
+                    {statusUpper.toLowerCase()}
+                  </span>
                 </div>
 
-                <p className="text-xs text-slate-700 dark:text-slate-300">
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-xs">
                   {item.description || item.comment || item.comments?.[0] || 'No description provided.'}
                 </p>
 
@@ -220,12 +223,12 @@ export default function ComplaintsPage() {
                   <div className="pt-1">
                     <img
                       src={item.photoUrl}
-                      alt="Complaint proof"
-                      className="h-20 w-28 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
+                      alt="Complaint photo"
+                      className="h-16 w-24 rounded object-cover border border-border"
                     />
                   </div>
                 )}
-              </Card>
+              </div>
             );
           })}
         </div>

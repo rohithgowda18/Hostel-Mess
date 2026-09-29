@@ -584,7 +584,7 @@ public class MealService {
     }
 
     // ==========================================
-    // MEAL PHOTO EVIDENCE
+    // MEAL PHOTO EVIDENCE & MEAL TRANSITION CLEANUP
     // ==========================================
 
     public MealPhoto uploadMealPhoto(List<MultipartFile> images, String description, String mealTypeParam, Principal principal) throws Exception {
@@ -592,17 +592,35 @@ public class MealService {
             throw new IllegalArgumentException("At least one image is required");
         }
 
-        validateActiveMeal(mealTypeParam, "photo upload");
+        // Validate active meal strictly from current server time (Asia/Kolkata)
+        String activeMeal = getCurrentActiveMealType();
+        if (activeMeal == null) {
+            throw new BadRequestException("No meal is currently being served. Photo upload is closed.");
+        }
+
+        if (mealTypeParam != null && !mealTypeParam.trim().isEmpty()) {
+            if (!mealTypeParam.trim().equalsIgnoreCase(activeMeal)) {
+                throw new BadRequestException("Current meal is " + activeMeal + ". Cannot upload photo for " + mealTypeParam + ".");
+            }
+        }
+
+        // Validate each non-empty file format and size
+        for (MultipartFile image : images) {
+            if (image.isEmpty()) continue;
+            String contentType = image.getContentType();
+            if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+                throw new BadRequestException("Invalid image format. Allowed formats: JPEG, PNG, WEBP.");
+            }
+            if (image.getSize() > 5 * 1024 * 1024) {
+                throw new BadRequestException("Image file size exceeds maximum limit of 5MB.");
+            }
+        }
 
         String uploaderEmail = principal != null ? principal.getName() : "student@hostel.app";
         User user = userRepository.findById(uploaderEmail).orElse(null);
         String uploaderName = (user != null && user.getEmail() != null) ? user.getEmail().split("@")[0] : uploaderEmail.split("@")[0];
 
-        String active = getCurrentActiveMealType();
-        String mealType = (active != null)
-                ? active
-                : ((mealTypeParam != null && !mealTypeParam.trim().isEmpty()) ? mealTypeParam.toUpperCase() : "LUNCH");
-
+        String mealType = activeMeal;
         String today = LocalDate.now(IST).toString();
         List<String> imageUrls = new ArrayList<>();
         String gridFsFileId = null;
@@ -636,6 +654,8 @@ public class MealService {
             }
         }
 
+        String caption = (description != null && !description.trim().isEmpty()) ? description.trim() : null;
+
         MealPhoto photo = new MealPhoto();
         photo.setUserEmail(uploaderEmail);
         photo.setUploadedBy(uploaderName);
@@ -643,7 +663,8 @@ public class MealService {
         photo.setDate(today);
         photo.setImageUrls(imageUrls);
         photo.setGridFsFileId(gridFsFileId);
-        photo.setDescription(description != null ? description : "Meal Photo");
+        photo.setCaption(caption);
+        photo.setDescription(caption);
         photo.setUploadedAt(new Date());
 
         MealPhoto saved = mealPhotoRepository.save(photo);
@@ -653,23 +674,113 @@ public class MealService {
         return saved;
     }
 
+    public List<MealPhoto> getCurrentMealPhotos() {
+        // Run cleanup of previous meal photos if a transition occurred
+        cleanupPreviousMealPhotos();
+
+        String activeMeal = getCurrentActiveMealType();
+        if (activeMeal == null) {
+            return List.of();
+        }
+        String today = LocalDate.now(IST).toString();
+        List<MealPhoto> list = mealPhotoRepository.findByDateAndMealTypeOrderByUploadedAtDesc(today, activeMeal);
+        return list.size() > 100 ? list.subList(0, 100) : list;
+    }
+
     public List<MealPhoto> getTodayPhotos() {
+        cleanupPreviousMealPhotos();
         String today = LocalDate.now(IST).toString();
         List<MealPhoto> list = mealPhotoRepository.findByDate(today);
         return list.size() > 100 ? list.subList(list.size() - 100, list.size()) : list;
     }
 
-    public ResponseEntity<?> streamMealPhotoImage(String id) {
-        Optional<MealPhoto> opt = mealPhotoRepository.findById(id);
-        if (opt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        MealPhoto photo = opt.get();
+    public synchronized int cleanupPreviousMealPhotos() {
+        LocalTime now = LocalTime.now(IST);
+        LocalDate todayDate = LocalDate.now(IST);
+        String today = todayDate.toString();
 
+        List<MealPhoto> allPhotos = mealPhotoRepository.findAll();
+        if (allPhotos.isEmpty()) {
+            return 0;
+        }
+
+        List<MealPhoto> toDelete = new ArrayList<>();
+
+        for (MealPhoto p : allPhotos) {
+            String pDate = p.getDate();
+            String pType = (p.getMealType() != null) ? p.getMealType().toUpperCase() : "";
+
+            // Photos before today:
+            if (pDate == null || !pDate.equals(today)) {
+                // If before 07:30 AM today, keep yesterday's DINNER until breakfast begins at 07:30
+                if (now.isBefore(LocalTime.of(7, 30))
+                        && pDate != null
+                        && pDate.equals(todayDate.minusDays(1).toString())
+                        && "DINNER".equals(pType)) {
+                    continue;
+                }
+                toDelete.add(p);
+                continue;
+            }
+
+            // Photos from today:
+            if (now.isBefore(LocalTime.of(7, 30))) {
+                // Early morning before breakfast starts
+            } else if (now.isBefore(LocalTime.of(12, 30))) {
+                // 07:30 to 12:30: Breakfast period. Breakfast photos remain.
+            } else if (now.isBefore(LocalTime.of(16, 30))) {
+                // 12:30 onwards: Lunch has begun. Delete Breakfast photos!
+                if ("BREAKFAST".equals(pType)) {
+                    toDelete.add(p);
+                }
+            } else if (now.isBefore(LocalTime.of(19, 30))) {
+                // 16:30 onwards: Snacks has begun. Delete Lunch and Breakfast photos!
+                if ("LUNCH".equals(pType) || "BREAKFAST".equals(pType)) {
+                    toDelete.add(p);
+                }
+            } else {
+                // 19:30 onwards: Dinner has begun. Delete Snacks, Lunch, and Breakfast photos!
+                if ("SNACKS".equals(pType) || "LUNCH".equals(pType) || "BREAKFAST".equals(pType)) {
+                    toDelete.add(p);
+                }
+            }
+        }
+
+        if (!toDelete.isEmpty()) {
+            for (MealPhoto p : toDelete) {
+                deletePhotoResources(p);
+            }
+            mealPhotoRepository.deleteAll(toDelete);
+        }
+        return toDelete.size();
+    }
+
+    private void deletePhotoResources(MealPhoto photo) {
         if (photo.getGridFsFileId() != null && gridFsTemplate != null) {
             try {
+                gridFsTemplate.delete(new Query(Criteria.where("_id").is(new ObjectId(photo.getGridFsFileId()))));
+            } catch (Exception ignored) {}
+        }
+        if (photo.getImageUrls() != null) {
+            for (String url : photo.getImageUrls()) {
+                if (url != null && url.startsWith("/" + UPLOAD_DIR)) {
+                    try {
+                        File f = new File(url.substring(1));
+                        if (f.exists()) f.delete();
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+    }
+
+    public ResponseEntity<?> streamMealPhotoImage(String id) {
+        MealPhoto photo = mealPhotoRepository.findById(id).orElse(null);
+        String gridId = (photo != null && photo.getGridFsFileId() != null) ? photo.getGridFsFileId() : id;
+
+        if (gridFsTemplate != null) {
+            try {
                 com.mongodb.client.gridfs.model.GridFSFile gridFile = gridFsTemplate.findOne(
-                        new Query(Criteria.where("_id").is(new ObjectId(photo.getGridFsFileId())))
+                        new Query(Criteria.where("_id").is(new ObjectId(gridId)))
                 );
                 if (gridFile != null) {
                     GridFsResource resource = gridFsTemplate.getResource(gridFile);
@@ -685,7 +796,7 @@ public class MealService {
             } catch (Exception ignored) {}
         }
 
-        if (photo.getImageUrls() != null && !photo.getImageUrls().isEmpty()) {
+        if (photo != null && photo.getImageUrls() != null && !photo.getImageUrls().isEmpty()) {
             for (String url : photo.getImageUrls()) {
                 if (url.startsWith("/" + UPLOAD_DIR)) {
                     File f = new File(url.substring(1));

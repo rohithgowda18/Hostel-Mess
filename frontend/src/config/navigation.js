@@ -17,12 +17,12 @@ import {
 
 export const studentNavigation = [
   {
-    title: 'Dining & Service',
+    title: 'Primary',
     items: [
       { key: 'dashboard', label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
-      { key: 'meals', label: 'Meals & Menu', path: '/student/meals', icon: UtensilsCrossed },
-      { key: 'report-meal', label: 'Report Meal', path: '/student/report-meal', icon: Sparkles, badge: 'Live' },
-      { key: 'attendance', label: 'Attendance / Pass', path: '/student/attendance', icon: QrCode }
+      { key: 'meals', label: 'Meals', path: '/student/meals', icon: UtensilsCrossed },
+      { key: 'report-meal', label: 'Report Meal', path: '/student/report-meal', icon: Sparkles, isAction: true },
+      { key: 'attendance', label: 'Attendance', path: '/student/attendance', icon: QrCode }
     ]
   },
   {
@@ -30,7 +30,12 @@ export const studentNavigation = [
     items: [
       { key: 'feedback', label: 'Rate Meal', path: '/student/feedback', icon: Star },
       { key: 'complaints', label: 'Complaints', path: '/student/complaints', icon: MessageSquareWarning },
-      { key: 'groups', label: 'Groups & Chat', path: '/student/groups', icon: Users },
+      { key: 'groups', label: 'Groups', path: '/student/groups', icon: Users }
+    ]
+  },
+  {
+    title: 'Other',
+    items: [
       { key: 'notices', label: 'Notices', path: '/student/notices', icon: Bell }
     ]
   }

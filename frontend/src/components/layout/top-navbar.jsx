@@ -29,6 +29,7 @@ import {
 import { useTheme } from '@/context/theme-context';
 import { cn } from '@/lib/utils';
 import { messApi } from '@/services/mess-api';
+import websocketService from '@/services/websocket-service';
 import { useNavigate } from 'react-router-dom';
 
 function initials(name) {
@@ -65,6 +66,38 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
   useEffect(() => {
     fetchNotifications();
   }, [user]);
+
+  // Real-time WebSocket notifications subscription
+  useEffect(() => {
+    const userEmail = user?.email;
+    if (!userEmail) return;
+
+    // Request notification permission if supported
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+
+    const unsubscribe = websocketService.subscribeToMyNotifications(userEmail, (notif) => {
+      if (notif && (notif.id || notif.message)) {
+        setNotifications((prev) => [notif, ...prev.filter((n) => n.id !== notif.id)]);
+        setUnreadCount((prev) => prev + 1);
+
+        // Show browser notification if permitted
+        if ('Notification' in window && Notification.permission === 'granted') {
+          try {
+            new Notification(notif.title || 'Hostel Mess Alert', {
+              body: notif.message || '',
+              icon: '/favicon.ico'
+            });
+          } catch {}
+        }
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [user?.email]);
 
   const handleMarkAsRead = async (id) => {
     try {
@@ -104,8 +137,8 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
   return (
     <header
       className={cn(
-        'fixed right-0 top-0 z-30 h-16 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/90 shadow-xs transition-all duration-300',
-        collapsed ? 'md:left-20' : 'md:left-72',
+        'fixed right-0 top-0 z-30 h-16 border-b border-outline-variant/30 bg-surface-container-lowest/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] transition-all duration-300',
+        collapsed ? 'md:left-18' : 'md:left-64',
         'left-0'
       )}
     >
@@ -115,7 +148,7 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
           <Button
             variant="ghost"
             size="iconSm"
-            className="md:hidden text-slate-600 dark:text-slate-300"
+            className="md:hidden text-on-surface-variant hover:text-on-surface"
             onClick={onOpenSidebar}
             aria-label="Open sidebar navigation"
           >
@@ -124,29 +157,39 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
 
           {/* Desktop Search Bar */}
           <div className="relative w-full max-w-md hidden sm:block">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant" />
             <input
               aria-label="Global search"
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Search dishes, rooms, groups, students..."
-              className="w-full bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 rounded-xl py-2 pl-10 pr-4 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none transition-all"
+              placeholder="Search menu items, dietary tags, residents..."
+              className="w-full bg-surface-container-low hover:bg-surface-container focus:bg-surface-container-lowest border border-outline-variant/30 focus:border-primary/40 focus:ring-2 focus:ring-primary/10 rounded-lg py-2 pl-10 pr-4 text-xs text-on-surface placeholder:text-on-surface-variant outline-none transition-all"
             />
           </div>
         </div>
 
         {/* Right: Actions & Profile */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           {/* Mobile Search Icon Toggle */}
           <Button
             variant="ghost"
             size="iconSm"
             aria-label="Toggle mobile search"
-            className="sm:hidden text-slate-600 dark:text-slate-300"
+            className="sm:hidden text-on-surface-variant hover:text-on-surface"
             onClick={() => setMobileSearchOpen((v) => !v)}
           >
             <Search className="h-4 w-4" />
           </Button>
+
+          {/* Quick QR Meal Pass button */}
+          <button
+            type="button"
+            onClick={() => navigate('/student/attendance')}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-low hover:bg-surface-container text-on-surface text-xs font-semibold rounded-lg border border-outline-variant/30 transition-all cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[16px] text-primary">qr_code_2</span>
+            <span>Meal Pass</span>
+          </button>
 
           <InstallButton />
 
@@ -157,23 +200,23 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
                 aria-label="Notifications"
                 variant="ghost"
                 size="iconSm"
-                className="relative rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="relative rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
               >
                 <Bell className="h-4 w-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900" />
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-error ring-2 ring-surface-container-lowest" />
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 max-h-[420px] overflow-y-auto p-2">
-              <div className="flex items-center justify-between px-2.5 py-2 border-b border-slate-100 dark:border-slate-800">
-                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+            <DropdownMenuContent align="end" className="w-80 max-h-[420px] overflow-y-auto p-2 bg-surface-container-lowest border border-outline-variant/30 shadow-lg">
+              <div className="flex items-center justify-between px-2.5 py-2 border-b border-outline-variant/20">
+                <span className="text-xs font-bold text-on-surface uppercase tracking-wider">
                   Notifications {unreadCount > 0 && `(${unreadCount})`}
                 </span>
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllRead}
-                    className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                    className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
                   >
                     Mark all read
                   </button>
@@ -181,44 +224,75 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
               </div>
               <div className="py-1 space-y-1">
                 {notifications.length === 0 ? (
-                  <div className="py-6 text-center text-xs text-slate-400">
+                  <div className="py-6 text-center text-xs text-on-surface-variant">
                     No new notifications
                   </div>
                 ) : (
-                  notifications.map((notif) => (
-                    <div
-                      key={notif.id}
-                      className={cn(
-                        'flex items-start justify-between gap-2 p-2.5 rounded-xl text-xs transition-colors',
-                        !notif.isRead
-                          ? 'bg-blue-50/70 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/40'
-                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                      )}
-                    >
-                      <div className="flex-1 space-y-0.5">
-                        <p className="font-semibold text-slate-900 dark:text-slate-100">{notif.title}</p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">{notif.message}</p>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        {!notif.isRead && (
-                          <button
-                            onClick={() => handleMarkAsRead(notif.id)}
-                            title="Mark as read"
-                            className="p-1 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-950 text-emerald-600"
-                          >
-                            <Check className="h-3 w-3" />
-                          </button>
+                  notifications.map((notif) => {
+                    const isMealCall = notif.type === 'MEAL_CALL' || notif.notificationType === 'MEAL_CALL';
+                    const isFriendReq = notif.type === 'FRIEND_REQUEST' || notif.notificationType === 'FRIEND_REQUEST';
+                    const isFriendAccepted = notif.type === 'FRIEND_REQUEST_ACCEPTED' || notif.notificationType === 'FRIEND_REQUEST_ACCEPTED';
+                    const isGroupMsg = notif.type === 'GROUP_MESSAGE' || notif.type === 'CHAT_MESSAGE';
+
+                    return (
+                      <div
+                        key={notif.id}
+                        className={cn(
+                          'flex items-start justify-between gap-2.5 p-2.5 rounded-lg text-xs transition-colors cursor-pointer group',
+                          !notif.isRead
+                            ? 'bg-primary-fixed/25 border border-primary/30'
+                            : 'hover:bg-surface-container-low border border-transparent'
                         )}
-                        <button
-                          onClick={() => handleDeleteNotif(notif.id)}
-                          title="Delete"
-                          className="p-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-950 text-rose-500"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
+                        onClick={() => {
+                          if (!notif.isRead) handleMarkAsRead(notif.id);
+                          if (notif.link) navigate(notif.link);
+                        }}
+                      >
+                        <div className="mt-0.5 shrink-0 text-base">
+                          {isMealCall && '🍽️'}
+                          {isFriendReq && <span className="material-symbols-outlined text-[18px] text-primary">person_add</span>}
+                          {isFriendAccepted && <span className="material-symbols-outlined text-[18px] text-secondary">diversity_3</span>}
+                          {isGroupMsg && <span className="material-symbols-outlined text-[18px] text-primary">chat</span>}
+                          {!isMealCall && !isFriendReq && !isFriendAccepted && !isGroupMsg && (
+                            <span className="material-symbols-outlined text-[18px] text-outline">notifications</span>
+                          )}
+                        </div>
+
+                        <div className="flex-1 space-y-0.5 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="font-bold text-on-surface truncate">{notif.title}</p>
+                            {notif.createdAt && (
+                              <span className="text-[10px] text-outline font-mono shrink-0">
+                                {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-on-surface-variant leading-snug line-clamp-2">{notif.message}</p>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0 ml-1" onClick={(e) => e.stopPropagation()}>
+                          {!notif.isRead && (
+                            <button
+                              type="button"
+                              onClick={() => handleMarkAsRead(notif.id)}
+                              title="Mark as read"
+                              className="p-1 rounded-md hover:bg-secondary-container/50 text-secondary"
+                            >
+                              <Check className="h-3 w-3" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteNotif(notif.id)}
+                            title="Delete"
+                            className="p-1 rounded-md hover:bg-error-container text-error"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </DropdownMenuContent>
@@ -230,61 +304,65 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
               <Button
                 variant="ghost"
                 size="iconSm"
-                className="rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
                 aria-label="Theme mode"
               >
                 {effectiveTheme === 'dark' ? (
-                  <Moon className="h-4 w-4 text-blue-400" />
+                  <Moon className="h-4 w-4 text-primary-fixed-dim" />
                 ) : (
                   <Sun className="h-4 w-4 text-amber-500" />
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setThemeMode('light')} className={cn(themeMode === 'light' && 'font-bold text-blue-600 dark:text-blue-400')}>
+            <DropdownMenuContent align="end" className="bg-surface-container-lowest border border-outline-variant/30">
+              <DropdownMenuItem onClick={() => setThemeMode('light')} className={cn(themeMode === 'light' && 'font-bold text-primary')}>
                 <Sun className="h-4 w-4 text-amber-500" /> Light Mode
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setThemeMode('dark')} className={cn(themeMode === 'dark' && 'font-bold text-blue-600 dark:text-blue-400')}>
-                <Moon className="h-4 w-4 text-blue-400" /> Dark Mode
+              <DropdownMenuItem onClick={() => setThemeMode('dark')} className={cn(themeMode === 'dark' && 'font-bold text-primary')}>
+                <Moon className="h-4 w-4 text-primary-fixed-dim" /> Dark Mode
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setThemeMode('system')} className={cn(themeMode === 'system' && 'font-bold text-blue-600 dark:text-blue-400')}>
-                <Monitor className="h-4 w-4 text-slate-400" /> System Preference
+              <DropdownMenuItem onClick={() => setThemeMode('system')} className={cn(themeMode === 'system' && 'font-bold text-primary')}>
+                <Monitor className="h-4 w-4 text-outline" /> System Preference
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block" />
+          <div className="h-5 w-px bg-outline-variant/30 mx-1 hidden sm:block" />
 
           {/* User Account Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 rounded-xl p-1 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
+              <button className="flex items-center gap-2 rounded-lg p-1 transition-colors hover:bg-surface-container cursor-pointer">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-blue-600 text-white font-bold text-xs">
+                  <AvatarFallback className="bg-primary-container text-on-primary font-bold text-xs">
                     {initials(displayName)}
                   </AvatarFallback>
                 </Avatar>
+                <div className="hidden md:flex flex-col text-left">
+                  <span className="text-xs font-semibold text-on-surface leading-tight">{displayName}</span>
+                  <span className="text-[10px] text-on-surface-variant leading-none">{displayRole}</span>
+                </div>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 bg-surface-container-lowest border border-outline-variant/30">
               <DropdownMenuLabel>
-                <p className="font-bold text-slate-900 dark:text-slate-100 capitalize">{displayName}</p>
+                <p className="font-bold text-on-surface capitalize">{displayName}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user?.email}</span>
+                  <span className="text-[11px] text-on-surface-variant truncate">{user?.email}</span>
                   <Badge variant="neutral" className="text-[9px] px-1.5 py-0">
                     {displayRole}
                   </Badge>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/profile')}>
+              <DropdownMenuSeparator className="bg-outline-variant/20" />
+              <DropdownMenuItem onClick={() => navigate('/student/profile')} className="cursor-pointer">
                 <User className="h-4 w-4" /> My Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/profile')}>
-                <Settings className="h-4 w-4" /> Account Settings
+              <DropdownMenuItem onClick={() => navigate('/student/attendance')} className="cursor-pointer">
+                <span className="material-symbols-outlined text-[16px] text-primary">qr_code_scanner</span> Dining Pass
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onLogout} className="text-rose-600 dark:text-rose-400">
+              <DropdownMenuSeparator className="bg-outline-variant/20" />
+              <DropdownMenuItem onClick={onLogout} className="text-error cursor-pointer">
                 <LogOut className="h-4 w-4" /> Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>

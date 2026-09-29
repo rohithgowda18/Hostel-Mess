@@ -13,6 +13,7 @@ public class ChatResponse {
     private String chatType;
     private String chatId;
     private String senderId;
+    private String senderEmail;
     private String senderName;
     private String senderRole;
     private String message;
@@ -27,6 +28,7 @@ public class ChatResponse {
         this.chatType = chatMessage.getChatType();
         this.chatId = chatMessage.getChatId();
         this.senderId = chatMessage.getSenderId();
+        this.senderEmail = chatMessage.getSenderEmail();
         this.senderName = chatMessage.getSenderName();
         this.senderRole = chatMessage.getSenderRole();
         this.message = chatMessage.getMessage();
@@ -65,6 +67,14 @@ public class ChatResponse {
     
     public void setSenderId(String senderId) {
         this.senderId = senderId;
+    }
+
+    public String getSenderEmail() {
+        return senderEmail;
+    }
+
+    public void setSenderEmail(String senderEmail) {
+        this.senderEmail = senderEmail;
     }
     
     public String getSenderName() {

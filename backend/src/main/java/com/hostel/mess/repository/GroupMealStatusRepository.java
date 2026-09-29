@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface GroupMealStatusRepository extends MongoRepository<GroupMealStatus, String> {
     Optional<GroupMealStatus> findByGroupIdAndMealType(String groupId, String mealType);
+    void deleteByGroupId(String groupId);
 }

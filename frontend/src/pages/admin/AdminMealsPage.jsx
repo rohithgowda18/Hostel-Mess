@@ -99,12 +99,15 @@ export default function AdminMealsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              Live Meal Operations Desk
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              Meal operations desk
             </h1>
-            <Badge variant={isLive ? 'success' : 'default'} className="text-[11px] font-bold">
-              {isLive ? '● Service In Progress' : 'Slot Inactive'}
-            </Badge>
+            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded ${
+              isLive ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+            }`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${isLive ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-slate-400'}`} />
+              {isLive ? 'Service in progress' : 'Slot inactive'}
+            </span>
           </div>
           <p className="text-xs text-text-secondary mt-1">
             Real-time inspection of official menu adherence, student evidence reports, and dining plate photos.
@@ -119,7 +122,7 @@ export default function AdminMealsPage() {
           className="text-xs gap-1.5 self-start sm:self-auto"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh Evidence
+          Refresh
         </Button>
       </div>
 
@@ -133,86 +136,84 @@ export default function AdminMealsPage() {
             <button
               key={key}
               onClick={() => setSelectedSlotKey(key)}
-              className={`px-4 py-2 rounded-md text-xs font-bold transition-colors shrink-0 flex items-center gap-2 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 isSelected
-                  ? 'bg-teal-700 text-white dark:bg-teal-500 dark:text-slate-950 shadow-xs'
-                  : 'bg-surface border border-border text-text-secondary hover:text-text hover:bg-surface-elevated'
+                  ? 'bg-teal-800 text-white dark:bg-teal-700'
+                  : 'bg-white dark:bg-slate-900 border border-border text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
               <span>{slot.label}</span>
-              <span className={`text-[10px] ${isSelected ? 'text-white/80' : 'text-text-muted'}`}>
-                ({slot.start}–{slot.end})
+              <span className={`text-[11px] ${isSelected ? 'text-white/80' : 'text-slate-400'}`}>
+                {slot.start}–{slot.end}
               </span>
               {isCurrentActive && (
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
               )}
             </button>
           );
         })}
       </div>
 
-      {/* Overview Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 bg-surface border-border">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Service Window</p>
-          <div className="flex items-center gap-2 mt-1.5">
-            <Clock className="h-4 w-4 text-teal-700 dark:text-teal-400" />
-            <span className="text-base font-bold text-text">{getSlotTimeLabel(slotDef)}</span>
-          </div>
-          <p className="text-[11px] text-text-muted mt-1">
-            {isLive ? 'Serving now in Dining Hall' : 'Completed or upcoming dining window'}
-          </p>
-        </Card>
+      {/* Operations Metric Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border border border-border rounded-md bg-white dark:bg-slate-900 py-3">
+        <div className="px-5 py-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">Service window</span>
+          <span className="text-sm font-bold text-slate-900 dark:text-slate-100 block mt-0.5">
+            {getSlotTimeLabel(slotDef)}
+          </span>
+          <span className="text-[11px] text-slate-400">
+            {isLive ? 'Serving now' : 'Scheduled window'}
+          </span>
+        </div>
 
-        <Card className="p-4 bg-surface border-border">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Student Reports</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-teal-700 dark:text-teal-400">{totalSubmissions}</span>
-            <span className="text-xs text-text-muted">submissions</span>
+        <div className="px-5 py-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">Student reports</span>
+          <div className="flex items-baseline gap-1 mt-0.5">
+            <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{totalSubmissions}</span>
+            <span className="text-xs text-slate-400">submissions</span>
           </div>
-          <p className="text-[11px] text-text-muted mt-1">Crowdsourced dining entries</p>
-        </Card>
+          <span className="text-[11px] text-slate-400">Crowdsourced entries</span>
+        </div>
 
-        <Card className="p-4 bg-surface border-border">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Photo Evidence</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{photos.length}</span>
-            <span className="text-xs text-text-muted">uploaded plates</span>
+        <div className="px-5 py-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">Photo evidence</span>
+          <div className="flex items-baseline gap-1 mt-0.5">
+            <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{photos.length}</span>
+            <span className="text-xs text-slate-400">uploaded plates</span>
           </div>
-          <p className="text-[11px] text-text-muted mt-1">Plate photos captured by residents</p>
-        </Card>
+          <span className="text-[11px] text-slate-400">Captured in dining hall</span>
+        </div>
       </div>
 
-      {/* Official vs Community Menu Comparison Card (Section 25) */}
-      <Card className="bg-surface border-border overflow-hidden">
-        <div className="p-4 bg-surface-elevated border-b border-border flex items-center justify-between">
-          <h2 className="text-sm font-bold text-text flex items-center gap-2">
-            <UtensilsCrossed className="h-4 w-4 text-primary" />
-            {slotDef.label} Planned vs Reported Dishes
+      {/* Official vs Community Menu Comparison */}
+      <div className="rounded-md border border-border bg-white dark:bg-slate-900">
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            {slotDef.label}: Planned menu vs Student reports
           </h2>
-          <Badge variant={verifiedCount > 0 ? 'success' : 'default'} className="text-[10px]">
-            {verifiedCount} Verified Dishes
-          </Badge>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+            {verifiedCount} verified dishes
+          </span>
         </div>
 
         <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Official planned */}
           <div className="space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-border">
-              <span className="text-xs font-bold text-text uppercase tracking-wider flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-primary" /> Official Menu
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Official menu
               </span>
-              <span className="text-[11px] text-text-muted">Published Schedule</span>
+              <span className="text-[11px] text-slate-400">Published schedule</span>
             </div>
 
             {officialMenu.length === 0 ? (
-              <p className="text-xs text-text-muted py-4 italic">No official menu published for this slot.</p>
+              <p className="text-xs text-slate-400 py-3 italic">No official menu published for this slot.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {officialMenu.map((item, idx) => (
                   <span
                     key={idx}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-elevated border border-border text-text"
+                    className="px-2.5 py-1 rounded text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-border text-slate-800 dark:text-slate-200"
                   >
                     {item}
                   </span>
@@ -224,26 +225,26 @@ export default function AdminMealsPage() {
           {/* Community consensus */}
           <div className="space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-border">
-              <span className="text-xs font-bold text-text uppercase tracking-wider flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-success" /> Student Reported Consensus
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Student reported consensus
               </span>
-              <span className="text-[11px] text-text-muted">{totalSubmissions} Total Reports</span>
+              <span className="text-[11px] text-slate-400">{totalSubmissions} reports</span>
             </div>
 
             {(!communityConsensus?.verifiedItems || communityConsensus.verifiedItems.length === 0) ? (
-              <p className="text-xs text-text-muted py-4 italic">No verified items reported yet.</p>
+              <p className="text-xs text-slate-400 py-3 italic">No verified items reported yet.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {communityConsensus.verifiedItems.map((item, idx) => {
                   const name = typeof item === 'string' ? item : item.name;
                   const count = item.count || communityConsensus.itemCounts?.[name] || 0;
                   return (
                     <span
                       key={idx}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-success/10 border border-success/30 text-success flex items-center gap-1.5"
+                      className="px-2.5 py-1 rounded text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 flex items-center gap-1.5"
                     >
                       <span>{name}</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-success/20">
+                      <span className="text-[10px] px-1 py-0.2 rounded bg-emerald-100 dark:bg-emerald-900/60 font-mono">
                         {count} YES
                       </span>
                     </span>
@@ -253,17 +254,16 @@ export default function AdminMealsPage() {
             )}
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* Photo Evidence Gallery (Section 25) */}
-      <Card className="bg-surface border-border p-5 space-y-4">
+      {/* Photo Evidence Gallery */}
+      <div className="rounded-md border border-border bg-white dark:bg-slate-900 p-5 space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div>
-            <h3 className="text-sm font-bold text-text flex items-center gap-2">
-              <Camera className="h-4 w-4 text-primary" />
-              Live Plate Photo Evidence ({photos.length})
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              Plate photos ({photos.length})
             </h3>
-            <p className="text-xs text-text-secondary">Resident uploads captured directly from the dining hall</p>
+            <p className="text-xs text-slate-500">Student uploads from the dining hall</p>
           </div>
         </div>
 
@@ -298,37 +298,37 @@ export default function AdminMealsPage() {
             })}
           </div>
         )}
-      </Card>
+      </div>
 
-      {/* Student Submissions Table (Section 25) */}
-      <Card className="bg-surface border-border overflow-hidden">
-        <div className="p-4 bg-surface-elevated border-b border-border">
-          <h3 className="text-sm font-bold text-text">
-            Crowdsourced Student Submissions Log
+      {/* Student Submissions Table */}
+      <div className="rounded-md border border-border bg-white dark:bg-slate-900 overflow-hidden">
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            Student submissions log
           </h3>
-          <p className="text-xs text-text-secondary">Audit log of meal report submissions during this window</p>
+          <p className="text-xs text-slate-500">Audit log of meal report submissions during this window</p>
         </div>
 
         {submissions.length === 0 ? (
-          <div className="py-12 text-center text-xs text-text-muted">
+          <div className="py-12 text-center text-xs text-slate-400">
             No individual submissions recorded yet for {slotDef.label}.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="bg-surface-elevated text-text-secondary uppercase tracking-wider text-[10px] border-b border-border">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-medium text-[11px] border-b border-border">
                 <tr>
-                  <th className="px-4 py-3">Student Reporter</th>
-                  <th className="px-4 py-3">Reported Foods</th>
-                  <th className="px-4 py-3">Timestamp</th>
-                  <th className="px-4 py-3">Consensus State</th>
+                  <th className="px-4 py-2.5">Student reporter</th>
+                  <th className="px-4 py-2.5">Reported foods</th>
+                  <th className="px-4 py-2.5">Timestamp</th>
+                  <th className="px-4 py-2.5">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {submissions.map((sub, idx) => (
-                  <tr key={idx} className="hover:bg-surface-elevated/50 transition-colors">
-                    <td className="px-4 py-3 font-semibold text-text flex items-center gap-2">
-                      <User className="h-3.5 w-3.5 text-text-muted" />
+                  <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <User className="h-3.5 w-3.5 text-slate-400" />
                       <span>{sub.student || sub.userEmail || `Student #${idx + 1}`}</span>
                     </td>
                     <td className="px-4 py-3">
@@ -336,20 +336,20 @@ export default function AdminMealsPage() {
                         {(sub.foodItems || [sub.name]).filter(Boolean).map((food, fIdx) => (
                           <span
                             key={fIdx}
-                            className="px-2 py-0.5 rounded bg-surface-elevated border border-border text-text font-medium text-[11px]"
+                            className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-[11px]"
                           >
                             {food}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-text-muted">
+                    <td className="px-4 py-3 text-slate-500">
                       {sub.time || 'Service window'}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant="success" className="text-[10px]">
-                        Included in Consensus
-                      </Badge>
+                      <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                        Consensus verified
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -357,7 +357,7 @@ export default function AdminMealsPage() {
             </table>
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Lightbox Modal (Section 25) */}
       {activePhoto && (

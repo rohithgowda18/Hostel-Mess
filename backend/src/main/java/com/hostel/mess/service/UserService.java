@@ -229,7 +229,7 @@ public class UserService {
                 user.getId(), user.getEmail(), user.getHostel(), user.getRoomNumber(),
                 user.getYear(), user.getBranch(), user.getRole(),
                 user.getFloor(), user.getDirectoryVisible(), user.getPhoneNumber(),
-                user.getProfilePhoto(), user.getFavoriteFoods()
+                user.getProfilePhoto(), user.getFavoriteFoods(), user.getNotifyFriendIds()
         );
     }
 

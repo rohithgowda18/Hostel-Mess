@@ -19,19 +19,21 @@ public interface ChatMessageRepository extends MongoRepository<ChatMessage, Stri
 
     long deleteByChatTypeAndCreatedAtBefore(String chatType, Instant cutoff);
 
+    long deleteByChatTypeAndChatId(String chatType, String chatId);
+
     List<ChatMessage> findByChatTypeAndChatIdOrderByCreatedAtAsc(String chatType, String chatId);
 
-    @Query("{ 'chatType': ?0, 'chatId': ?1, 'expiresAt': { '$gt': ?2 } }")
+    @Query("{ 'chatType': ?0, 'chatId': ?1, '$or': [ { 'expiresAt': null }, { 'expiresAt': { '$exists': false } }, { 'expiresAt': { '$gt': ?2 } } ] }")
     List<ChatMessage> findNonExpiredByChatTypeAndChatId(String chatType, String chatId, Instant now);
 
-    @Query(value = "{ 'chatType': ?0, 'chatId': ?1, 'expiresAt': { '$gt': ?2 } }", sort = "{ 'createdAt': 1 }")
+    @Query(value = "{ 'chatType': ?0, 'chatId': ?1, '$or': [ { 'expiresAt': null }, { 'expiresAt': { '$exists': false } }, { 'expiresAt': { '$gt': ?2 } } ] }", sort = "{ 'createdAt': 1 }")
     List<ChatMessage> findNonExpiredByChatTypeAndChatIdSorted(String chatType, String chatId, Instant now);
 
-    @Query(value = "{ 'chatType': ?0, 'chatId': ?1, 'expiresAt': { '$gt': ?2 } }", sort = "{ 'createdAt': -1 }")
+    @Query(value = "{ 'chatType': ?0, 'chatId': ?1, '$or': [ { 'expiresAt': null }, { 'expiresAt': { '$exists': false } }, { 'expiresAt': { '$gt': ?2 } } ] }", sort = "{ 'createdAt': 1 }")
     Page<ChatMessage> findNonExpiredByChatTypeAndChatIdPaged(String chatType, String chatId, Instant now, Pageable pageable);
 
     List<ChatMessage> findBySenderIdAndChatTypeAndChatId(String senderId, String chatType, String chatId);
 
-    @Query("{ 'chatType': ?0, 'chatId': ?1, 'expiresAt': { '$gt': ?2 } }")
+    @Query("{ 'chatType': ?0, 'chatId': ?1, '$or': [ { 'expiresAt': null }, { 'expiresAt': { '$exists': false } }, { 'expiresAt': { '$gt': ?2 } } ] }")
     long countNonExpiredByChatTypeAndChatId(String chatType, String chatId, Instant now);
 }

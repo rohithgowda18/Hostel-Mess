@@ -89,12 +89,12 @@ export default function AdminComplaintsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              Student Grievances & Complaints Desk
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              Student complaints
             </h1>
-            <Badge variant="primary" className="text-[11px] font-bold">
-              {complaints.length} Total Tickets
-            </Badge>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+              {complaints.length} tickets
+            </span>
           </div>
           <p className="text-xs text-text-secondary mt-1">
             Review, investigate, and resolve dining complaints submitted by hostel residents.
@@ -109,113 +109,107 @@ export default function AdminComplaintsPage() {
           className="text-xs gap-1.5 self-start sm:self-auto"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh Tickets
+          Refresh
         </Button>
       </div>
 
       {/* Success banner */}
       {successMsg && (
-        <div className="p-3 rounded-md bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900/40 text-green-800 dark:text-green-200 text-xs font-semibold flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+        <div className="p-3 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/40 text-emerald-800 dark:text-emerald-200 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
           <span>{successMsg}</span>
         </div>
       )}
 
-      {/* 3 Status KPI Cards (Section 29) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Card
+      {/* Compact Status Counter Bar */}
+      <div className="grid grid-cols-3 divide-x divide-border border border-border rounded-md bg-white dark:bg-slate-900 py-3">
+        <button
           onClick={() => setStatusFilter('OPEN')}
-          className={`p-4 bg-surface border cursor-pointer transition-colors ${
-            statusFilter === 'OPEN' ? 'border-danger ring-1 ring-danger/40' : 'border-border'
+          className={`px-4 py-1 text-left transition-colors cursor-pointer ${
+            statusFilter === 'OPEN' ? 'bg-rose-50/50 dark:bg-rose-950/20' : ''
           }`}
         >
-          <p className="text-[11px] font-bold text-danger uppercase tracking-wider">Open Tickets</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-danger">{openCount}</span>
-            <span className="text-xs text-text-muted">pending triage</span>
-          </div>
-        </Card>
+          <span className="text-xs text-rose-700 dark:text-rose-400 block font-medium">Open</span>
+          <span className="text-lg font-bold text-slate-900 dark:text-slate-100 block mt-0.5">{openCount}</span>
+          <span className="text-[11px] text-slate-400">Pending triage</span>
+        </button>
 
-        <Card
+        <button
           onClick={() => setStatusFilter('IN_PROGRESS')}
-          className={`p-4 bg-surface border cursor-pointer transition-colors ${
-            statusFilter === 'IN_PROGRESS' ? 'border-amber-500 ring-1 ring-amber-500/40' : 'border-border'
+          className={`px-4 py-1 text-left transition-colors cursor-pointer ${
+            statusFilter === 'IN_PROGRESS' ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''
           }`}
         >
-          <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">In Progress</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">{inProgressCount}</span>
-            <span className="text-xs text-text-muted">under investigation</span>
-          </div>
-        </Card>
+          <span className="text-xs text-amber-700 dark:text-amber-400 block font-medium">In progress</span>
+          <span className="text-lg font-bold text-slate-900 dark:text-slate-100 block mt-0.5">{inProgressCount}</span>
+          <span className="text-[11px] text-slate-400">Under review</span>
+        </button>
 
-        <Card
+        <button
           onClick={() => setStatusFilter('RESOLVED')}
-          className={`p-4 bg-surface border cursor-pointer transition-colors ${
-            statusFilter === 'RESOLVED' ? 'border-emerald-600 ring-1 ring-emerald-600/40' : 'border-border'
+          className={`px-4 py-1 text-left transition-colors cursor-pointer ${
+            statusFilter === 'RESOLVED' ? 'bg-emerald-50/50 dark:bg-emerald-950/20' : ''
           }`}
         >
-          <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Resolved</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{resolvedCount}</span>
-            <span className="text-xs text-text-muted">closed tickets</span>
-          </div>
-        </Card>
+          <span className="text-xs text-emerald-700 dark:text-emerald-400 block font-medium">Resolved</span>
+          <span className="text-lg font-bold text-slate-900 dark:text-slate-100 block mt-0.5">{resolvedCount}</span>
+          <span className="text-[11px] text-slate-400">Closed tickets</span>
+        </button>
       </div>
 
       {/* Filter Row */}
-      <Card className="p-4 bg-surface border-border flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-text-secondary flex items-center gap-1">
-            <Filter className="h-3.5 w-3.5" /> Status:
-          </span>
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-border">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-slate-500 mr-1">Status:</span>
           {STATUS_FILTERS.map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+              className={`px-2.5 py-1 rounded text-xs transition-colors cursor-pointer ${
                 statusFilter === s
-                  ? 'bg-teal-700 text-white dark:bg-teal-500 dark:text-slate-950 font-bold'
-                  : 'bg-surface-elevated border border-border text-text-secondary hover:text-text'
+                  ? 'bg-teal-800 text-white dark:bg-teal-700 font-semibold'
+                  : 'bg-white dark:bg-slate-900 border border-border text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
-              {s}
+              {s.charAt(0) + s.slice(1).toLowerCase().replace('_', ' ')}
             </button>
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-text-secondary">Meal:</span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-slate-500 mr-1">Meal:</span>
           {MEAL_FILTERS.map((m) => (
             <button
               key={m}
               onClick={() => setMealFilter(m)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-2 py-1 rounded text-xs transition-colors cursor-pointer ${
                 mealFilter === m
-                  ? 'bg-primary text-white'
-                  : 'bg-surface-elevated border border-border text-text-secondary hover:text-text'
+                  ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900 font-semibold'
+                  : 'bg-white dark:bg-slate-900 border border-border text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
-              {m}
+              {m.charAt(0) + m.slice(1).toLowerCase()}
             </button>
           ))}
         </div>
-      </Card>
+      </div>
 
-      {/* Complaints List (Section 29) */}
-      <Card className="bg-surface border-border overflow-hidden">
-        <div className="p-4 bg-surface-elevated border-b border-border flex items-center justify-between">
-          <h3 className="text-sm font-bold text-text">Resident Grievance Feed ({filtered.length})</h3>
-          <span className="text-xs text-text-secondary">Click any ticket to inspect & update status</span>
+      {/* Complaints List */}
+      <div className="rounded-md border border-border bg-white dark:bg-slate-900 overflow-hidden">
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            Complaints feed ({filtered.length})
+          </h3>
+          <span className="text-xs text-slate-400">Click any ticket to inspect or update status</span>
         </div>
 
         {loading ? (
-          <div className="py-16 text-center text-xs text-text-muted">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
+          <div className="py-16 text-center text-xs text-slate-400">
+            <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2 text-teal-800 dark:text-teal-400" />
             Loading complaint logs...
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-16 text-center text-xs text-text-muted">
+          <div className="py-16 text-center text-xs text-slate-400">
             No complaints found matching this filter criteria.
           </div>
         ) : (
@@ -229,42 +223,45 @@ export default function AdminComplaintsPage() {
                 <div
                   key={cid}
                   onClick={() => setSelectedComplaint(c)}
-                  className="p-4 hover:bg-surface-elevated/50 transition-colors cursor-pointer space-y-2"
+                  className="p-4 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors cursor-pointer space-y-2"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <Badge
-                        variant={isResolved ? 'success' : isInProgress ? 'warning' : 'danger'}
-                        className="text-[10px] font-bold"
-                      >
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
+                        isResolved
+                          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
+                          : isInProgress
+                          ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+                          : 'bg-rose-50 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300'
+                      }`}>
                         {c.status || 'OPEN'}
-                      </Badge>
-                      <span className="text-xs font-bold text-text">
+                      </span>
+                      <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
                         {c.category || 'General Dining'}
                       </span>
-                      <span className="text-xs text-text-muted">•</span>
-                      <span className="text-xs text-text-secondary">
+                      <span className="text-xs text-slate-300 dark:text-slate-700">•</span>
+                      <span className="text-xs text-slate-500">
                         {c.mealType || 'Meal'} • {c.foodItem || 'Dining Hall'}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400">
                       <Clock className="h-3 w-3" />
                       <span>{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : c.date || 'Today'}</span>
                     </div>
                   </div>
 
-                  <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
                     {c.description || c.comment}
                   </p>
 
-                  <div className="flex items-center justify-between pt-1 text-[11px] text-text-muted">
+                  <div className="flex items-center justify-between pt-1 text-[11px] text-slate-400">
                     <span className="flex items-center gap-1">
                       <User className="h-3 w-3" />
                       {c.studentEmail || c.userEmail || 'Resident Student'}
                     </span>
-                    <span className="text-primary font-semibold flex items-center gap-0.5">
-                      View Ticket <ChevronRight className="h-3 w-3" />
+                    <span className="text-teal-800 dark:text-teal-400 font-semibold flex items-center gap-0.5">
+                      View ticket <ChevronRight className="h-3 w-3" />
                     </span>
                   </div>
                 </div>
@@ -272,7 +269,7 @@ export default function AdminComplaintsPage() {
             })}
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Complaint Detail & Action Modal (Section 29) */}
       {selectedComplaint && (

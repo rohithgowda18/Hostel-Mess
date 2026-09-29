@@ -18,6 +18,7 @@ export const ENDPOINTS = {
     SERVICES_STATUS: (id) => `/meal-services/${id}/status`,
     PHOTOS_UPLOAD: '/student-photos/upload',
     PHOTOS_TODAY: '/student-photos/today',
+    PHOTOS_CURRENT: '/meals/current/photos',
     PHOTOS_IMAGE: (id) => `/student-photos/${id}/image`,
     FAVORITES: '/favorites'
   },

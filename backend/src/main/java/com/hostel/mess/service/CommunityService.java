@@ -51,6 +51,9 @@ public class CommunityService {
     @Autowired(required = false)
     private WebSocketEventService wsService;
 
+    @Autowired(required = false)
+    private NotificationService notificationService;
+
     // ==========================================
     // 1. FOOD RATINGS
     // ==========================================
@@ -267,7 +270,7 @@ public class CommunityService {
         List<String> members = new ArrayList<>();
         members.add(user.getEmail());
 
-        Group group = new Group(name, groupCode, members, user.getEmail());
+        Group group = new Group(name, groupCode, members, user.getEmail(), user.getId());
         return groupRepository.save(group);
     }
 
@@ -316,13 +319,110 @@ public class CommunityService {
 
         group.getMembers().remove(userEmail);
         if (group.getMembers().isEmpty()) {
-            groupRepository.delete(group);
+            deleteGroupInternal(group);
         } else {
-            if (userEmail.equals(group.getCreatedBy())) {
-                group.setCreatedBy(group.getMembers().get(0));
+            if (group.isOwner(user.getId(), userEmail)) {
+                // Transfer ownership to first remaining member
+                String nextOwner = group.getMembers().get(0);
+                group.setCreatedBy(nextOwner);
+                userRepository.findByEmail(nextOwner).ifPresent(u -> group.setCreatorId(u.getId()));
             }
             groupRepository.save(group);
         }
+    }
+
+    public void removeMember(String groupId, String memberEmailOrId, String currentUserId) {
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + currentUserId));
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found: " + groupId));
+
+        if (!group.isOwner(currentUser.getId(), currentUser.getEmail())) {
+            throw new org.springframework.security.access.AccessDeniedException("Only the group admin can remove members");
+        }
+
+        if (group.isOwner(null, memberEmailOrId) || currentUser.getEmail().equalsIgnoreCase(memberEmailOrId) || currentUser.getId().equals(memberEmailOrId)) {
+            throw new RuntimeException("Group admin cannot remove themselves. Delete the group instead.");
+        }
+
+        boolean removed = group.getMembers().removeIf(m -> m.equalsIgnoreCase(memberEmailOrId) || m.equals(memberEmailOrId));
+        if (!removed) {
+            throw new RuntimeException("Member not found in group: " + memberEmailOrId);
+        }
+
+        groupRepository.save(group);
+
+        if (wsService != null) {
+            wsService.broadcast("/topic/chat/" + groupId, Map.of(
+                    "type", "MEMBER_REMOVED",
+                    "member", memberEmailOrId,
+                    "groupId", groupId,
+                    "message", memberEmailOrId + " was removed from the group by the admin."
+            ));
+        }
+
+        if (notificationService != null) {
+            notificationService.createAndSend(
+                    memberEmailOrId,
+                    "Removed from Group",
+                    "You have been removed from group \"" + group.getName() + "\" by the group admin.",
+                    "GROUP_MEMBER_REMOVED",
+                    "/student/groups"
+            );
+        }
+    }
+
+    public void deleteGroup(String groupId, String currentUserId) {
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + currentUserId));
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found: " + groupId));
+
+        if (!group.isOwner(currentUser.getId(), currentUser.getEmail())) {
+            throw new org.springframework.security.access.AccessDeniedException("Only the group admin can delete this group");
+        }
+
+        // Notify members
+        if (wsService != null) {
+            wsService.broadcast("/topic/chat/" + groupId, Map.of(
+                    "type", "GROUP_DELETED",
+                    "groupId", groupId,
+                    "groupName", group.getName(),
+                    "message", "This group was deleted by the admin."
+            ));
+        }
+
+        if (notificationService != null) {
+            for (String memberEmail : group.getMembers()) {
+                if (!memberEmail.equalsIgnoreCase(currentUser.getEmail())) {
+                    notificationService.createAndSend(
+                            memberEmail,
+                            "Group Deleted",
+                            "Group \"" + group.getName() + "\" has been deleted by the group admin.",
+                            "GROUP_DELETED",
+                            "/student/groups"
+                    );
+                }
+            }
+        }
+
+        deleteGroupInternal(group);
+    }
+
+    private void deleteGroupInternal(Group group) {
+        String groupId = group.getId();
+        // 1. Delete all messages for this group
+        try {
+            chatRepository.deleteByChatTypeAndChatId("GROUP", groupId);
+        } catch (Exception ignored) {}
+
+        // 2. Delete all group meal status records
+        try {
+            groupMealStatusRepository.deleteByGroupId(groupId);
+        } catch (Exception ignored) {}
+
+        // 3. Delete group
+        groupRepository.delete(group);
     }
 
     private String generateUniqueGroupCode() {
@@ -446,12 +546,16 @@ public class CommunityService {
         }
 
         Instant expiresAt = "UNIVERSAL".equalsIgnoreCase(targetType) ? Instant.now().plusSeconds(24 * 3600) : null;
-        ChatMessage chatMessage = new ChatMessage(targetType, chatId, senderId, senderEmail, "STUDENT", message, expiresAt);
+        String displayName = (senderEmail != null && senderEmail.contains("@"))
+                ? senderEmail.split("@")[0]
+                : (senderEmail != null ? senderEmail : "Student");
+        ChatMessage chatMessage = new ChatMessage(targetType, chatId, senderId, senderEmail, displayName, "STUDENT", message, expiresAt);
         ChatMessage saved = chatRepository.save(chatMessage);
         ChatResponse response = new ChatResponse(saved);
 
         if (wsService != null) {
             wsService.broadcast("/topic/chat/" + chatId, response);
+            wsService.broadcastAppEvent("CHAT_MESSAGE", response);
         }
 
         return response;

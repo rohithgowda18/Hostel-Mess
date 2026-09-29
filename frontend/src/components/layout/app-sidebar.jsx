@@ -55,34 +55,34 @@ export default function AppSidebar({
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 transition-all duration-200',
+          'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-outline-variant/30 bg-surface-container-lowest transition-all duration-200',
           'w-64',
           collapsed ? 'md:w-18' : 'md:w-64',
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >
         {/* Brand Header */}
-        <div className="flex h-16 items-center justify-between border-b border-slate-100 dark:border-slate-800 px-4">
+        <div className="flex h-16 items-center justify-between border-b border-outline-variant/20 px-4">
           <div className={cn('flex items-center gap-3', collapsed && 'md:justify-center md:w-full')}>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-white shadow-xs">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
               <Utensils className="h-5 w-5" />
             </div>
             <div className={cn(collapsed && 'md:hidden')}>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                  Hostel Mess Pro
+              <div className="flex items-center gap-1.5">
+                <span className="text-base font-bold tracking-tight text-primary">
+                  MessMaster
                 </span>
                 <span className={cn(
-                  'rounded-md px-1.5 py-0.2 text-[10px] font-bold border',
+                  'rounded px-1.5 py-0.2 text-[10px] font-bold',
                   isAdmin
-                    ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
-                    : 'bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800'
+                    ? 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300'
+                    : 'bg-primary-fixed text-on-primary-fixed'
                 )}>
                   {isAdmin ? 'ADMIN' : 'STUDENT'}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                {isAdmin ? 'Operations Console' : 'Campus Dining'}
+              <p className="text-[11px] font-medium text-on-surface-variant">
+                {isAdmin ? 'Operations Console' : 'Hostel Portal'}
               </p>
             </div>
           </div>
@@ -90,24 +90,41 @@ export default function AppSidebar({
           <button
             type="button"
             onClick={onMobileClose}
-            className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            className="md:hidden p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
+        {/* Live Mess Status Widget */}
+        {!collapsed && (
+          <div className="px-3 pt-3">
+            <div className="bg-surface-container-low rounded-lg p-2.5 flex items-center justify-between border border-outline-variant/20">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse" />
+                <span className="text-xs text-on-surface-variant font-medium">Mess Hall Status</span>
+              </div>
+              <span className="text-[11px] font-semibold text-secondary px-2 py-0.5 rounded bg-secondary-container/40">
+                Open
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Navigation Section Links */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
           {sections.map((section, idx) => (
             <div key={idx} className="space-y-1">
               {!collapsed && section.title && (
-                <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <p className="px-2.5 pb-0.5 text-[11px] font-semibold uppercase tracking-wider text-outline">
                   {section.title}
                 </p>
               )}
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const active = isCurrentActive(item);
+                const isAction = item.isAction;
+
                 return (
                   <button
                     key={item.key}
@@ -115,18 +132,23 @@ export default function AppSidebar({
                     onClick={() => handleNavigate(item.path)}
                     title={collapsed ? item.label : undefined}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition-colors cursor-pointer',
+                      'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs transition-all cursor-pointer text-left',
                       active
-                        ? 'bg-teal-50 text-teal-800 border border-teal-200/80 font-bold dark:bg-teal-950/50 dark:text-teal-300 dark:border-teal-900/60'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100',
+                        ? 'bg-primary text-on-primary font-medium shadow-sm'
+                        : isAction
+                        ? 'text-primary font-semibold hover:bg-primary-fixed/30'
+                        : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface',
                       collapsed && 'md:justify-center md:px-0'
                     )}
                   >
-                    <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-teal-700 dark:text-teal-300' : 'text-slate-400 dark:text-slate-500')} />
+                    <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-on-primary' : isAction ? 'text-primary' : 'text-on-surface-variant')} />
                     <span className={cn('truncate', collapsed && 'md:hidden')}>{item.label}</span>
-                    {!collapsed && item.badge && (
-                      <span className="ml-auto rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-200 text-[10px] font-bold px-1.5 py-0.5">
-                        {item.badge}
+                    {!collapsed && isAction && (
+                      <span className={cn(
+                        'ml-auto text-[10px] font-semibold px-1.5 py-0.2 rounded',
+                        active ? 'bg-white/20 text-white' : 'bg-primary-fixed text-primary'
+                      )}>
+                        Action
                       </span>
                     )}
                   </button>
@@ -137,43 +159,47 @@ export default function AppSidebar({
         </div>
 
         {/* Bottom Profile and Controls */}
-        <div className="border-t border-slate-100 dark:border-slate-800 p-3 space-y-1">
-          <button
-            type="button"
-            onClick={() => handleNavigate('/student/profile')}
-            className={cn(
-              'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60 cursor-pointer',
-              collapsed && 'md:justify-center md:px-0'
-            )}
-          >
-            <User className="h-4 w-4 shrink-0 text-slate-400" />
-            <span className={cn('truncate text-left', collapsed && 'md:hidden')}>
-              <span className="block font-bold text-slate-900 dark:text-slate-100 truncate">
-                {user.email?.split('@')[0] || 'My Profile'}
-              </span>
-              <span className="block text-[10px] text-slate-400 truncate">
-                {user.email || 'student@hostel.app'}
-              </span>
-            </span>
-          </button>
+        <div className="border-t border-outline-variant/20 p-3 space-y-1 bg-surface-container-lowest">
+          <div className="rounded-lg bg-surface-container p-2 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => handleNavigate('/student/profile')}
+              className={cn(
+                'flex items-center gap-2.5 text-left min-w-0 cursor-pointer',
+                collapsed && 'md:justify-center md:w-full'
+              )}
+            >
+              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-xs shrink-0">
+                {user.email?.slice(0, 2)?.toUpperCase() || 'ST'}
+              </div>
+              <div className={cn('truncate', collapsed && 'md:hidden')}>
+                <span className="block text-xs font-semibold text-on-surface truncate">
+                  {user.name || user.email?.split('@')[0] || 'Resident Diner'}
+                </span>
+                <span className="block text-[10px] text-on-surface-variant truncate">
+                  {user.roomNumber ? `Room ${user.roomNumber}` : user.hostel || 'Hostel Resident'}
+                </span>
+              </div>
+            </button>
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            className={cn(
-              'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 cursor-pointer',
-              collapsed && 'md:justify-center md:px-0'
-            )}
-          >
-            <LogOut className="h-4 w-4 shrink-0" />
-            <span className={cn(collapsed && 'md:hidden')}>Sign Out</span>
-          </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Sign out"
+              className={cn(
+                'p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-error transition-colors cursor-pointer',
+                collapsed && 'md:hidden'
+              )}
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
 
           {/* Desktop Collapse Toggle */}
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="hidden md:flex w-full items-center justify-center py-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs"
+            className="hidden md:flex w-full items-center justify-center py-1 rounded-lg text-outline hover:text-on-surface text-xs"
           >
             {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
           </button>

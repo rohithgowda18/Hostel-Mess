@@ -17,6 +17,7 @@ public class UserInfo {
     private String phoneNumber;
     private String profilePhoto;
     private List<String> favoriteFoods = new ArrayList<>();
+    private List<String> notifyFriendIds = new ArrayList<>();
     
     // Constructors
     public UserInfo() {}
@@ -35,6 +36,13 @@ public class UserInfo {
         this.phoneNumber = phoneNumber;
         this.profilePhoto = profilePhoto;
         this.favoriteFoods = favoriteFoods;
+    }
+
+    public UserInfo(String id, String email, String hostel, String roomNumber, String year, String branch, String role,
+                    Integer floor, Boolean directoryVisible, String phoneNumber, String profilePhoto, List<String> favoriteFoods,
+                    List<String> notifyFriendIds) {
+        this(id, email, hostel, roomNumber, year, branch, role, floor, directoryVisible, phoneNumber, profilePhoto, favoriteFoods);
+        this.notifyFriendIds = notifyFriendIds != null ? notifyFriendIds : new ArrayList<>();
     }
 
     public String getId() { return id; }
@@ -72,4 +80,7 @@ public class UserInfo {
 
     public List<String> getFavoriteFoods() { return favoriteFoods != null ? favoriteFoods : new ArrayList<>(); }
     public void setFavoriteFoods(List<String> favoriteFoods) { this.favoriteFoods = favoriteFoods; }
+
+    public List<String> getNotifyFriendIds() { return notifyFriendIds != null ? notifyFriendIds : new ArrayList<>(); }
+    public void setNotifyFriendIds(List<String> notifyFriendIds) { this.notifyFriendIds = notifyFriendIds; }
 }

@@ -15,6 +15,7 @@ public class Group {
     private String groupCode; // Unique 8-character code to join group (shareable via WhatsApp)
     private List<String> members; // List of user emails
     private String creator; // Creator email
+    private String creatorId; // Creator user id
     private Instant createdAt;
     
     // Constructors
@@ -28,6 +29,11 @@ public class Group {
         this.groupCode = groupCode;
         this.members = members;
         this.creator = creator;
+    }
+
+    public Group(String name, String groupCode, List<String> members, String creator, String creatorId) {
+        this(name, groupCode, members, creator);
+        this.creatorId = creatorId;
     }
     
     // Getters and Setters
@@ -78,6 +84,14 @@ public class Group {
     public void setCreatedBy(String createdBy) {
         this.creator = createdBy;
     }
+
+    public String getCreatorId() {
+        return creatorId;
+    }
+
+    public void setCreatorId(String creatorId) {
+        this.creatorId = creatorId;
+    }
     
     public Instant getCreatedAt() {
         return createdAt;
@@ -85,5 +99,21 @@ public class Group {
     
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    /**
+     * Checks if given user ID or email is the owner/creator of this group.
+     */
+    public boolean isOwner(String userId, String userEmail) {
+        if (userId != null && userId.equals(this.creatorId)) {
+            return true;
+        }
+        if (userEmail != null && userEmail.equalsIgnoreCase(this.creator)) {
+            return true;
+        }
+        if (userId != null && userId.equalsIgnoreCase(this.creator)) {
+            return true;
+        }
+        return false;
     }
 }

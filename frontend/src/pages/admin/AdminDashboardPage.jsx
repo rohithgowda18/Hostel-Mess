@@ -145,107 +145,69 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* KPI Row (Section 24) */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Card className="p-4 bg-surface border-border">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Students Expected</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.expectedToday}</span>
-            <span className="text-xs text-text-muted">RSVPs</span>
-          </div>
-          <p className="text-[11px] text-text-muted mt-1">Today's total expected diners</p>
-        </Card>
-
-        <Card className="p-4 bg-surface border-border">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Checked In</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.checkedIn}</span>
-            <span className="text-xs font-semibold text-text-muted">({attendanceRate}%)</span>
-          </div>
-          <p className="text-[11px] text-text-muted mt-1">Scanned dining passes</p>
-        </Card>
-
-        <Card className="p-4 bg-surface border-border">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Meal Reports</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-teal-700 dark:text-teal-400">{stats.mealReportsToday}</span>
-            <span className="text-xs text-text-muted">today</span>
-          </div>
-          <p className="text-[11px] text-text-muted mt-1">Student dining submissions</p>
-        </Card>
-
-        <Card className="p-4 bg-surface border-border">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Verified Items</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{verifiedCount}</span>
-            <span className="text-xs text-text-muted">current meal</span>
-          </div>
-          <p className="text-[11px] text-text-muted mt-1">Community peer confirmed</p>
-        </Card>
-
-        <Card className="p-4 bg-surface border-border col-span-2 md:col-span-1">
-          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Open Complaints</p>
-          <div className="flex items-baseline gap-1 mt-1.5">
-            <span className={`text-2xl font-bold ${stats.openComplaints > 0 ? 'text-danger' : 'text-emerald-600 dark:text-emerald-400'}`}>
-              {stats.openComplaints}
-            </span>
-            <span className="text-xs text-text-muted">active</span>
-          </div>
-          <p className="text-[11px] text-text-muted mt-1">Requires staff attention</p>
-        </Card>
+      {/* Compact Operational Metrics Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-border text-xs">
+        <div>
+          <span className="text-[11px] text-slate-500 block">Expected diners</span>
+          <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.expectedToday}</span>
+        </div>
+        <div>
+          <span className="text-[11px] text-slate-500 block">Checked in</span>
+          <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
+            {stats.checkedIn} <span className="text-xs font-normal text-slate-500">({attendanceRate}%)</span>
+          </span>
+        </div>
+        <div>
+          <span className="text-[11px] text-slate-500 block">Meal reports</span>
+          <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.mealReportsToday}</span>
+        </div>
+        <div>
+          <span className="text-[11px] text-slate-500 block">Verified items</span>
+          <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{verifiedCount}</span>
+        </div>
+        <div>
+          <span className="text-[11px] text-slate-500 block">Open complaints</span>
+          <span className={`text-lg font-bold ${stats.openComplaints > 0 ? 'text-red-600' : 'text-slate-900 dark:text-slate-100'}`}>
+            {stats.openComplaints}
+          </span>
+        </div>
       </div>
 
-      {/* CURRENT MEAL: Official menu vs Community Reported Menu (Section 24) */}
-      <Card className="bg-surface border-border overflow-hidden">
-        <div className="p-4 md:p-5 border-b border-border flex flex-wrap items-center justify-between gap-3 bg-surface-elevated">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-md bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 flex items-center justify-center font-bold">
-              <UtensilsCrossed className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-text">
-                  {slotDef.label} Operational Status
-                </h2>
-                <Badge variant={isLive ? 'success' : 'default'} className="text-[10px]">
-                  {isLive ? 'LIVE NOW' : 'NEXT / UPCOMING'}
-                </Badge>
-              </div>
-              <p className="text-xs text-text-secondary">
-                Scheduled Slot: {getSlotTimeLabel(slotDef)} • Verified items appear based on student consensus
-              </p>
-            </div>
+      {/* Current Meal Operational Status */}
+      <div className="space-y-4 pt-2">
+        <div className="flex items-baseline justify-between border-b border-border pb-2">
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              {slotDef.label} status
+            </h2>
+            <span className="text-xs text-slate-500 font-mono">
+              {getSlotTimeLabel(slotDef)} · {isLive ? 'Serving now' : 'Scheduled'}
+            </span>
           </div>
 
-          <Button
-            size="sm"
-            variant="outline"
+          <button
+            type="button"
             onClick={() => navigate('/admin/meals')}
-            className="text-xs font-semibold gap-1"
+            className="text-xs text-teal-700 dark:text-teal-400 hover:underline cursor-pointer"
           >
-            Review Evidence <ChevronRight className="h-3.5 w-3.5" />
-          </Button>
+            Review live evidence →
+          </button>
         </div>
 
-        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Official Menu Column */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-border">
-              <span className="text-xs font-bold text-text uppercase tracking-wider flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-primary" />
-                Official Planned Menu
-              </span>
-              <span className="text-[11px] text-text-muted">Published by Administration</span>
-            </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Official planned menu */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 pb-1 border-b border-border">
+              Official planned menu
+            </h3>
             {officialMenu.length === 0 ? (
-              <p className="text-xs text-text-muted py-4 italic">No official menu scheduled for this slot.</p>
+              <p className="text-xs text-slate-400 py-2 italic">No official menu scheduled for this slot.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 pt-1">
                 {officialMenu.map((dish, idx) => (
                   <span
                     key={idx}
-                    className="px-3 py-1.5 rounded-md text-xs font-medium bg-surface-elevated border border-border text-text"
+                    className="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-medium"
                   >
                     {dish}
                   </span>
@@ -254,35 +216,26 @@ export default function AdminDashboardPage() {
             )}
           </div>
 
-          {/* Community Reported Menu Column */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-border">
-              <span className="text-xs font-bold text-text uppercase tracking-wider flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                Community Reported Dishes
-              </span>
-              <span className="text-[11px] text-text-muted">
-                {communityConsensus?.totalSubmissions || 0} student reports
-              </span>
-            </div>
-
+          {/* Community reported dishes */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 pb-1 border-b border-border">
+              Community reported dishes ({communityConsensus?.totalSubmissions || 0} reports)
+            </h3>
             {(!communityConsensus?.verifiedItems || communityConsensus.verifiedItems.length === 0) ? (
-              <p className="text-xs text-text-muted py-4 italic">
-                No verified community reports logged yet for this meal.
-              </p>
+              <p className="text-xs text-slate-400 py-2 italic">No verified community reports yet for this meal.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 pt-1">
                 {communityConsensus.verifiedItems.map((item, idx) => {
                   const dishName = typeof item === 'string' ? item : item.name;
                   const count = item.count || communityConsensus.itemCounts?.[dishName] || 0;
                   return (
                     <span
                       key={idx}
-                      className="px-3 py-1.5 rounded-md text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 flex items-center gap-2"
+                      className="px-2.5 py-1 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-semibold flex items-center gap-1.5"
                     >
                       <span>{dishName}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60">
-                        {count} reports
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal">
+                        ({count})
                       </span>
                     </span>
                   );
@@ -291,135 +244,108 @@ export default function AdminDashboardPage() {
             )}
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* Grid: Attendance Summary & Open Complaints (Section 24) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Attendance Summary (6 cols) */}
-        <Card className="lg:col-span-6 bg-surface border-border p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-text flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-teal-700 dark:text-teal-400" />
-                Meal Attendance Progress
-              </h3>
-              <p className="text-xs text-text-secondary">Expected attendance vs scanned check-ins</p>
-            </div>
-            <Button
-              size="sm"
-              variant="ghost"
+      <hr className="border-border" />
+
+      {/* Grid: Attendance Progress & Active Complaints */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Attendance Summary */}
+        <div className="space-y-3">
+          <div className="flex items-baseline justify-between">
+            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Meal attendance progress
+            </h3>
+            <button
+              type="button"
               onClick={() => navigate('/admin/attendance')}
-              className="text-xs font-bold text-teal-700 dark:text-teal-400 p-0 h-auto"
+              className="text-xs text-teal-700 dark:text-teal-400 hover:underline cursor-pointer"
             >
-              Full Roster →
-            </Button>
+              Full roster →
+            </button>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex justify-between items-center text-xs font-semibold">
-              <span className="text-text-secondary">Turnout Rate</span>
-              <span className="text-text font-bold">{attendanceRate}% Recorded</span>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between text-slate-600 dark:text-slate-400">
+              <span>Turnout rate</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{attendanceRate}% ({stats.checkedIn} / {stats.expectedToday})</span>
             </div>
-            <div className="w-full bg-surface-elevated border border-border h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
               <div
                 className="bg-teal-700 dark:bg-teal-500 h-full rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(100, attendanceRate)}%` }}
               />
             </div>
-
-            <div className="grid grid-cols-3 gap-2 pt-2 text-center">
-              <div className="p-2.5 rounded-md bg-surface-elevated border border-border">
-                <span className="text-[10px] uppercase font-bold text-text-muted block">Expected</span>
-                <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.expectedToday}</span>
-              </div>
-              <div className="p-2.5 rounded-md bg-surface-elevated border border-border">
-                <span className="text-[10px] uppercase font-bold text-text-muted block">Checked In</span>
-                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{stats.checkedIn}</span>
-              </div>
-              <div className="p-2.5 rounded-md bg-surface-elevated border border-border">
-                <span className="text-[10px] uppercase font-bold text-text-muted block">Pending</span>
-                <span className="text-lg font-bold text-slate-500 dark:text-slate-400">
-                  {Math.max(0, stats.expectedToday - stats.checkedIn)}
-                </span>
-              </div>
-            </div>
           </div>
-        </Card>
+        </div>
 
-        {/* Open Complaints (6 cols) */}
-        <Card className="lg:col-span-6 bg-surface border-border p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-text flex items-center gap-2">
-                <MessageSquareWarning className="h-4 w-4 text-warning" />
-                Active Student Grievances
-              </h3>
-              <p className="text-xs text-text-secondary">Unresolved dining and hygiene feedback</p>
-            </div>
-            <Button
-              size="sm"
-              variant="ghost"
+        {/* Active Grievances */}
+        <div className="space-y-3">
+          <div className="flex items-baseline justify-between">
+            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Active student grievances
+            </h3>
+            <button
+              type="button"
               onClick={() => navigate('/admin/complaints')}
-              className="text-xs font-bold text-teal-700 dark:text-teal-400 p-0 h-auto"
+              className="text-xs text-teal-700 dark:text-teal-400 hover:underline cursor-pointer"
             >
-              Manage All →
-            </Button>
+              Manage all →
+            </button>
           </div>
 
           {recentComplaints.length === 0 ? (
-            <div className="py-8 text-center text-xs text-text-muted">
-              <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400 mx-auto mb-1 opacity-70" />
+            <p className="text-xs text-slate-400 py-2">
               All student complaints have been addressed and resolved.
-            </div>
+            </p>
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y divide-border border-y border-border">
               {recentComplaints.map((c) => (
                 <div
                   key={c.id || c._id}
                   onClick={() => navigate('/admin/complaints')}
-                  className="flex items-center justify-between p-3 rounded-md border border-border bg-surface-elevated hover:border-teal-500 cursor-pointer transition-colors text-xs"
+                  className="py-2.5 flex items-center justify-between text-xs cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 px-1 -mx-1"
                 >
-                  <div className="space-y-0.5 max-w-[70%]">
-                    <span className="font-bold text-text block truncate">
+                  <div className="space-y-0.5 truncate max-w-[75%]">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block">
                       {c.category || 'General'}: {c.description}
                     </span>
-                    <span className="text-[10px] text-text-muted">
-                      {c.mealType || 'Meal'} • {c.createdAt ? new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today'}
+                    <span className="text-[11px] text-slate-400">
+                      {c.mealType || 'Meal'} · {c.createdAt ? new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today'}
                     </span>
                   </div>
-                  <Badge variant={c.status === 'IN_PROGRESS' ? 'warning' : 'danger'} className="text-[10px]">
+                  <span className={`text-[10px] font-semibold ${c.status === 'IN_PROGRESS' ? 'text-amber-700' : 'text-red-600'}`}>
                     {c.status || 'OPEN'}
-                  </Badge>
+                  </span>
                 </div>
               ))}
             </div>
           )}
-        </Card>
+        </div>
       </div>
 
-      {/* Pinned / Important Admin Notice (Section 24) */}
+      {/* Broadcast Notice Footer if present */}
       {importantNotice && (
-        <Card className="p-4 bg-surface border-l-4 border-l-primary border-border flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <Bell className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+        <>
+          <hr className="border-border" />
+          <div className="flex items-start justify-between gap-4 text-xs">
             <div className="space-y-0.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                Broadcasted Notice: {importantNotice.title}
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                Notice: {importantNotice.title}
               </span>
-              <p className="text-xs text-text-secondary leading-relaxed">
+              <p className="text-slate-500 leading-relaxed">
                 {importantNotice.message}
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => navigate('/admin/notices')}
+              className="text-xs text-teal-700 dark:text-teal-400 hover:underline shrink-0 cursor-pointer"
+            >
+              Manage notices →
+            </button>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => navigate('/admin/notices')}
-            className="text-xs shrink-0"
-          >
-            Manage Notices
-          </Button>
-        </Card>
+        </>
       )}
     </div>
   );

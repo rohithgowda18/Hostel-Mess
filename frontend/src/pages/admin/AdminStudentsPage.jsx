@@ -139,7 +139,13 @@ export default function AdminStudentsPage() {
                       </td>
 
                       <td className="px-4 py-3 font-mono text-text-secondary">
-                        {st.email}
+                        <a
+                          href={`mailto:${st.email}`}
+                          className="hover:text-primary hover:underline transition-colors"
+                          title="Click to email student"
+                        >
+                          {st.email}
+                        </a>
                       </td>
 
                       <td className="px-4 py-3 text-text">
@@ -218,7 +224,23 @@ export default function AdminStudentsPage() {
             <div className="space-y-2.5 text-xs">
               <div className="flex justify-between py-1.5 border-b border-border">
                 <span className="text-text-secondary">Email</span>
-                <span className="font-mono text-text">{selectedStudent.email}</span>
+                <a
+                  href={`mailto:${selectedStudent.email}`}
+                  className="font-mono text-primary hover:underline"
+                  title="Compose email to student"
+                >
+                  {selectedStudent.email}
+                </a>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-border">
+                <span className="text-text-secondary">Phone Contact</span>
+                <a
+                  href={`tel:${selectedStudent.phone || '+918023456789'}`}
+                  className="font-mono text-primary hover:underline flex items-center gap-1"
+                  title="Call student"
+                >
+                  {selectedStudent.phone || '+91 80 2345 6789'}
+                </a>
               </div>
               <div className="flex justify-between py-1.5 border-b border-border">
                 <span className="text-text-secondary">Hostel Block</span>

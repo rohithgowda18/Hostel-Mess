@@ -25,10 +25,15 @@ export function ThemeProvider({ children }) {
       const active = computeTheme(currentMode);
       setEffectiveTheme(active);
       const root = document.documentElement;
-      if (active === 'dark') {
+      const isDark = active === 'dark';
+      if (isDark) {
         root.classList.add('dark');
+        document.body.classList.add('dark');
+        root.setAttribute('data-theme', 'dark');
       } else {
         root.classList.remove('dark');
+        document.body.classList.remove('dark');
+        root.setAttribute('data-theme', 'light');
       }
     };
 

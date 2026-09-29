@@ -14,11 +14,22 @@ public class CleanupScheduler {
 
     private final ChatMessageRepository chatRepository;
     private final ComplaintRepository complaintRepository;
+    private final com.hostel.mess.service.MealService mealService;
 
     @Autowired
-    public CleanupScheduler(ChatMessageRepository chatRepository, ComplaintRepository complaintRepository) {
+    public CleanupScheduler(
+            ChatMessageRepository chatRepository,
+            ComplaintRepository complaintRepository,
+            com.hostel.mess.service.MealService mealService) {
         this.chatRepository = chatRepository;
         this.complaintRepository = complaintRepository;
+        this.mealService = mealService;
+    }
+
+    // Runs every minute to enforce exact meal-transition photo deletion
+    @Scheduled(fixedRate = 60000)
+    public void cleanupPreviousMealPhotos() {
+        mealService.cleanupPreviousMealPhotos();
     }
 
     // Runs every hour
