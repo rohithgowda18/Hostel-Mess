@@ -154,12 +154,12 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
   return (
     <header
       className={cn(
-        'fixed right-0 top-0 z-30 h-16 border-b border-outline-variant/30 bg-surface-container-lowest/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] transition-all duration-300',
+        'fixed right-0 top-0 z-30 h-14 md:h-16 border-b border-outline-variant/30 bg-surface-container-lowest/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] transition-all duration-300',
         collapsed ? 'md:left-20' : 'md:left-64',
         'left-0'
       )}
     >
-      <div className="flex h-full items-center justify-between gap-3 px-4 md:px-6">
+      <div className="flex h-full items-center justify-between gap-2 px-3 sm:px-4 md:gap-3 md:px-6">
         {/* Left: Brand logo on mobile */}
         <div className="flex items-center gap-2">
           <span className="md:hidden text-sm font-bold text-primary tracking-tight">MessMaster</span>

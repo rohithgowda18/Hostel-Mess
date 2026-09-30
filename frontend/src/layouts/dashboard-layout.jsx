@@ -33,7 +33,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
   useEffect(() => {
     const token = getToken();
     if (token) {
-      websocketService.connect(token).catch(() => {});
+      websocketService.connect(token).catch(() => { });
     }
   }, [currentUser?.email]);
 
@@ -48,7 +48,10 @@ export default function DashboardLayout({ user, onLogout, children }) {
   // Determine if current route is under "More"
   const isMoreActive = moreNavItems.some((item) => location.pathname === item.path);
 
-  const isItemActive = (item) => location.pathname === item.path;
+  const isItemActive = (item) => (
+    location.pathname === item.path ||
+    (item.path !== '/student/dashboard' && location.pathname.startsWith(`${item.path}/`))
+  );
 
   return (
     <div className="min-h-screen bg-page text-on-surface flex flex-col md:flex-row max-w-full overflow-x-hidden">
@@ -57,7 +60,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(!collapsed)}
         mobileOpen={false}
-        onMobileClose={() => {}}
+        onMobileClose={() => { }}
       />
 
       {/* Main Content Area */}
@@ -70,13 +73,13 @@ export default function DashboardLayout({ user, onLogout, children }) {
         {/* Top Navbar */}
         <TopNavbar
           collapsed={collapsed}
-          onOpenSidebar={() => {}} // sidebar not used on mobile anymore
+          onOpenSidebar={() => { }} // sidebar not used on mobile anymore
           user={currentUser}
           onLogout={onLogout}
         />
 
         {/* Page Content Body */}
-        <main className="flex-1 mt-16 px-3 sm:px-4 py-6 md:px-8 max-w-6xl w-full mx-auto pb-24 md:pb-8 overflow-x-hidden">
+        <main className="flex-1 mt-14 md:mt-16 px-3 sm:px-4 py-5 sm:py-6 md:px-8 max-w-6xl w-full mx-auto pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8 overflow-x-hidden">
           {children}
         </main>
       </div>
@@ -84,7 +87,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
       {/* ───────── Mobile Bottom Navigation ───────── */}
       {/* Only visible on mobile (md:hidden) */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-container-lowest border-t border-outline-variant/30 flex items-stretch h-16 shadow-[0_-1px_4px_rgba(0,0,0,0.06)]"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-container-lowest border-t border-outline-variant/30 flex items-stretch min-h-16 shadow-[0_-1px_4px_rgba(0,0,0,0.06)]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {mobileNavItems.map((item) => {
@@ -96,7 +99,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
               type="button"
               onClick={() => navigate(item.path)}
               className={cn(
-                'flex flex-col items-center justify-center flex-1 gap-0.5 text-[10px] font-medium transition-colors cursor-pointer pt-1',
+                'flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 pt-1 text-[10px] font-medium transition-colors cursor-pointer touch-manipulation',
                 active ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'
               )}
               aria-label={item.label}
@@ -123,7 +126,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
             type="button"
             onClick={() => setMoreDrawerOpen(true)}
             className={cn(
-              'flex flex-col items-center justify-center flex-1 gap-0.5 text-[10px] font-medium transition-colors cursor-pointer pt-1',
+              'flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 pt-1 text-[10px] font-medium transition-colors cursor-pointer touch-manipulation',
               isMoreActive || moreDrawerOpen
                 ? 'text-primary'
                 : 'text-on-surface-variant hover:text-on-surface'
@@ -156,7 +159,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
           />
 
           {/* Sheet */}
-          <div className="relative z-10 bg-surface-container-lowest border-t border-outline-variant/30 rounded-t-2xl shadow-xl animate-in slide-in-from-bottom-4 duration-200">
+          <div className="relative z-10 max-h-[85dvh] overflow-y-auto overscroll-contain bg-surface-container-lowest border-t border-outline-variant/30 rounded-t-2xl shadow-xl animate-in slide-in-from-bottom-4 duration-200">
             {/* Handle + header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/20">
               <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
@@ -186,7 +189,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
                       navigate(item.path);
                     }}
                     className={cn(
-                      'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors cursor-pointer text-left',
+                      'w-full min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors cursor-pointer text-left touch-manipulation',
                       active
                         ? 'bg-primary-fixed/30 text-primary'
                         : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
