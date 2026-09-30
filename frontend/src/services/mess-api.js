@@ -88,6 +88,11 @@ export const messApi = {
     return response.data;
   },
 
+  async searchFriendStudents(query) {
+    const response = await apiClient.get('/friends/search', { params: { q: query } });
+    return response.data;
+  },
+
   async sendFriendRequest(targetEmail) {
     const response = await apiClient.post('/friends/request', { target: targetEmail });
     return response.data;

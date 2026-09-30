@@ -1,11 +1,13 @@
 package com.hostel.mess.model;
 
+import java.time.Instant;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import java.time.Instant;
 
 @Document(collection = "notifications")
 public class Notification {
+
     @Id
     private String id;
     private String recipientEmail;
@@ -16,6 +18,7 @@ public class Notification {
     private String message;
     private String type; // FRIEND_REQUEST, FRIEND_REQUEST_ACCEPTED, MEAL_CALL, GROUP_MESSAGE, ADMIN_NOTICE, etc.
     private String notificationType;
+    private String relatedId;
     private String mealType; // For MEAL_CALL notifications (BREAKFAST, LUNCH, SNACKS, DINNER)
     private boolean isRead;
     private Instant createdAt;
@@ -37,7 +40,7 @@ public class Notification {
     }
 
     public Notification(String recipientEmail, String recipientId, String senderId, String senderName,
-                        String title, String message, String type, String mealType, String link) {
+            String title, String message, String type, String mealType, String link) {
         this(recipientEmail, title, message, type, link);
         this.recipientId = recipientId;
         this.senderId = senderId;
@@ -46,28 +49,66 @@ public class Notification {
         this.notificationType = type;
     }
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() {
+        return id;
+    }
 
-    public String getRecipientEmail() { return recipientEmail; }
-    public void setRecipientEmail(String recipientEmail) { this.recipientEmail = recipientEmail; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public String getRecipientId() { return recipientId; }
-    public void setRecipientId(String recipientId) { this.recipientId = recipientId; }
+    public String getRecipientEmail() {
+        return recipientEmail;
+    }
 
-    public String getSenderId() { return senderId; }
-    public void setSenderId(String senderId) { this.senderId = senderId; }
+    public void setRecipientEmail(String recipientEmail) {
+        this.recipientEmail = recipientEmail;
+    }
 
-    public String getSenderName() { return senderName; }
-    public void setSenderName(String senderName) { this.senderName = senderName; }
+    public String getRecipientId() {
+        return recipientId;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public void setRecipientId(String recipientId) {
+        this.recipientId = recipientId;
+    }
 
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
+    public String getSenderId() {
+        return senderId;
+    }
 
-    public String getType() { return type; }
+    public void setSenderId(String senderId) {
+        this.senderId = senderId;
+    }
+
+    public String getSenderName() {
+        return senderName;
+    }
+
+    public void setSenderName(String senderName) {
+        this.senderName = senderName;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getType() {
+        return type;
+    }
+
     public void setType(String type) {
         this.type = type;
         if (this.notificationType == null) {
@@ -78,6 +119,7 @@ public class Notification {
     public String getNotificationType() {
         return notificationType != null ? notificationType : type;
     }
+
     public void setNotificationType(String notificationType) {
         this.notificationType = notificationType;
         if (this.type == null) {
@@ -85,15 +127,43 @@ public class Notification {
         }
     }
 
-    public String getMealType() { return mealType; }
-    public void setMealType(String mealType) { this.mealType = mealType; }
+    public String getRelatedId() {
+        return relatedId;
+    }
 
-    public boolean isRead() { return isRead; }
-    public void setRead(boolean read) { isRead = read; }
+    public void setRelatedId(String relatedId) {
+        this.relatedId = relatedId;
+    }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public String getMealType() {
+        return mealType;
+    }
 
-    public String getLink() { return link; }
-    public void setLink(String link) { this.link = link; }
+    public void setMealType(String mealType) {
+        this.mealType = mealType;
+    }
+
+    public boolean isRead() {
+        return isRead;
+    }
+
+    public void setRead(boolean read) {
+        isRead = read;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getLink() {
+        return link;
+    }
+
+    public void setLink(String link) {
+        this.link = link;
+    }
 }

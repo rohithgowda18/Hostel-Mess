@@ -1,11 +1,13 @@
 package com.hostel.mess.service;
 
-import com.hostel.mess.model.Notification;
-import com.hostel.mess.repository.NotificationRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.hostel.mess.model.Notification;
+import com.hostel.mess.repository.NotificationRepository;
 
 @Service
 public class NotificationService {
@@ -17,17 +19,22 @@ public class NotificationService {
     private WebSocketEventService wsService;
 
     public Notification createAndSend(String recipientEmail, String title, String message, String type, String link) {
+        return createAndSend(recipientEmail, title, message, type, link, null);
+    }
+
+    public Notification createAndSend(String recipientEmail, String title, String message, String type, String link, String relatedId) {
         String cleanEmail = recipientEmail.toLowerCase().trim();
         Notification notification = new Notification(cleanEmail, title, message, type, link);
+        notification.setRelatedId(relatedId);
         Notification saved = repository.save(notification);
-        
+
         wsService.sendNotification(cleanEmail, saved);
         return saved;
     }
 
     public Notification sendMealCallNotification(String recipientEmail, String recipientId,
-                                                String senderId, String senderName,
-                                                String mealType, String message) {
+            String senderId, String senderName,
+            String mealType, String message) {
         String cleanEmail = recipientEmail.toLowerCase().trim();
         String title = "🍽️ " + senderName + " is going to " + mealType;
         Notification notification = new Notification(
@@ -49,7 +56,7 @@ public class NotificationService {
     public Notification postAnnouncement(String title, String message, String link) {
         Notification notification = new Notification("all", title, message, "ANNOUNCEMENT", link);
         Notification saved = repository.save(notification);
-        
+
         // Broadcast announcement to all users via universal channel
         wsService.broadcastAppEvent("ANNOUNCEMENT", saved);
         return saved;

@@ -2,17 +2,13 @@ import { useEffect, useState } from 'react';
 import {
   Bell,
   LogOut,
-  Menu,
   Moon,
-  Search,
-  Settings,
   Sun,
   User,
   Check,
-  Trash2,
-  Monitor,
   X,
-  Building
+  Trash2,
+  Monitor
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -50,7 +46,6 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   const fetchNotifications = async () => {
     try {
@@ -74,7 +69,7 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
 
     // Request notification permission if supported
     if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().catch(() => {});
+      Notification.requestPermission().catch(() => { });
     }
 
     const unsubscribe = websocketService.subscribeToMyNotifications(userEmail, (notif) => {
@@ -89,7 +84,7 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
               body: notif.message || '',
               icon: '/favicon.ico'
             });
-          } catch {}
+          } catch { }
         }
       }
     });
@@ -124,6 +119,28 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
     }
   };
 
+  const handleFriendRequestAction = async (notification, action) => {
+    const requestId = notification.relatedId || notification.requestId || notification.friendshipId;
+    if (!requestId) {
+      navigate('/student/profile');
+      return;
+    }
+
+    try {
+      if (action === 'accept') {
+        await messApi.acceptFriendRequest(requestId);
+      } else {
+        await messApi.rejectFriendRequest(requestId);
+      }
+
+      setNotifications((prev) => prev.filter((item) => item.id !== notification.id));
+      if (!notification.isRead) setUnreadCount((prev) => Math.max(0, prev - 1));
+      await messApi.deleteNotification(notification.id).catch(() => { });
+    } catch (err) {
+      console.error('Failed to update friend request:', err);
+    }
+  };
+
   const handleMarkAllRead = async () => {
     try {
       await messApi.markAllNotificationsAsRead();
@@ -138,58 +155,21 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
     <header
       className={cn(
         'fixed right-0 top-0 z-30 h-16 border-b border-outline-variant/30 bg-surface-container-lowest/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] transition-all duration-300',
-        collapsed ? 'md:left-18' : 'md:left-64',
+        collapsed ? 'md:left-20' : 'md:left-64',
         'left-0'
       )}
     >
       <div className="flex h-full items-center justify-between gap-3 px-4 md:px-6">
-        {/* Left: Mobile hamburger & Global Search input */}
-        <div className="flex flex-1 items-center gap-3">
-          <Button
-            variant="ghost"
-            size="iconSm"
-            className="md:hidden text-on-surface-variant hover:text-on-surface"
-            onClick={onOpenSidebar}
-            aria-label="Open sidebar navigation"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-
-          {/* Desktop Search Bar */}
-          <div className="relative w-full max-w-md hidden sm:block">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-on-surface-variant" />
-            <input
-              aria-label="Global search"
-              value={searchQuery}
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Search menu items, dietary tags, residents..."
-              className="w-full bg-surface-container-low hover:bg-surface-container focus:bg-surface-container-lowest border border-outline-variant/30 focus:border-primary/40 focus:ring-2 focus:ring-primary/10 rounded-lg py-2 pl-10 pr-4 text-xs text-on-surface placeholder:text-on-surface-variant outline-none transition-all"
-            />
-          </div>
+        {/* Left: Brand logo on mobile */}
+        <div className="flex items-center gap-2">
+          <span className="md:hidden text-sm font-bold text-primary tracking-tight">MessMaster</span>
         </div>
 
         {/* Right: Actions & Profile */}
         <div className="flex items-center gap-1.5 sm:gap-3">
-          {/* Mobile Search Icon Toggle */}
-          <Button
-            variant="ghost"
-            size="iconSm"
-            aria-label="Toggle mobile search"
-            className="sm:hidden text-on-surface-variant hover:text-on-surface"
-            onClick={() => setMobileSearchOpen((v) => !v)}
-          >
-            <Search className="h-4 w-4" />
-          </Button>
 
-          {/* Quick QR Meal Pass button */}
-          <button
-            type="button"
-            onClick={() => navigate('/student/attendance')}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-low hover:bg-surface-container text-on-surface text-xs font-semibold rounded-lg border border-outline-variant/30 transition-all cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[16px] text-primary">qr_code_2</span>
-            <span>Meal Pass</span>
-          </button>
+
+
 
           <InstallButton />
 
@@ -271,7 +251,26 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0 ml-1" onClick={(e) => e.stopPropagation()}>
-                          {!notif.isRead && (
+                          {isFriendReq ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleFriendRequestAction(notif, 'accept')}
+                                title="Accept friend request"
+                                className="p-1 rounded-md hover:bg-secondary-container/50 text-secondary"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleFriendRequestAction(notif, 'reject')}
+                                title="Reject friend request"
+                                className="p-1 rounded-md hover:bg-error-container text-error"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </>
+                          ) : !notif.isRead && (
                             <button
                               type="button"
                               onClick={() => handleMarkAsRead(notif.id)}
@@ -281,14 +280,16 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
                               <Check className="h-3 w-3" />
                             </button>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteNotif(notif.id)}
-                            title="Delete"
-                            className="p-1 rounded-md hover:bg-error-container text-error"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
+                          {!isFriendReq && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteNotif(notif.id)}
+                              title="Delete"
+                              className="p-1 rounded-md hover:bg-error-container text-error"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -370,31 +371,8 @@ function TopNavbar({ collapsed, onOpenSidebar, searchQuery, onSearchChange, user
         </div>
       </div>
 
-      {/* Mobile Search Overlay Bar */}
-      {mobileSearchOpen && (
-        <div className="sm:hidden absolute inset-x-0 top-16 z-30 border-b border-slate-200 bg-white p-3 shadow-md dark:border-slate-800 dark:bg-slate-900">
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              autoFocus
-              aria-label="Global search"
-              value={searchQuery}
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Search dishes, rooms, groups..."
-              className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 pl-10 pr-9 text-sm text-slate-900 dark:text-slate-100 outline-none"
-            />
-            <button
-              onClick={() => {
-                setMobileSearchOpen(false);
-                onSearchChange('');
-              }}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
+
+
     </header>
   );
 }

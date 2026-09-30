@@ -9,7 +9,7 @@ import { useToast } from '@/context/toast-context';
 export default function ProfilePage() {
   const navigate = useNavigate();
   const toast = useToast();
-  usePageTitle('Profile & Preferences', 'Manage dietary preferences, notifications, theme options, and dining hall allocations.');
+  usePageTitle('Profile & Preferences', 'Manage notifications, theme options, and dining hall allocations.');
   const { themeMode, setThemeMode } = useTheme();
   const [userProfile, setUserProfile] = useState(getUser() || {});
   const [stats, setStats] = useState({
@@ -24,14 +24,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const [dietaryPrefs, setDietaryPrefs] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('mess_dietary_prefs')) || ['veg'];
-    } catch {
-      return ['veg'];
-    }
-  });
-
   const [notifications, setNotifications] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('mess_notifications')) || {
@@ -44,14 +36,6 @@ export default function ProfilePage() {
     }
   });
 
-  const toggleDietary = (id) => {
-    setDietaryPrefs((prev) => {
-      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
-      localStorage.setItem('mess_dietary_prefs', JSON.stringify(next));
-      return next;
-    });
-  };
-
   const toggleNotification = (key) => {
     setNotifications((prev) => {
       const next = { ...prev, [key]: !prev[key] };
@@ -62,7 +46,7 @@ export default function ProfilePage() {
 
   const handleSave = () => {
     setSaveSuccess(true);
-    toast.success('Settings Saved', 'Your dietary preferences and notification settings have been updated.');
+    toast.success('Settings Saved', 'Your notification settings have been updated.');
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
@@ -75,9 +59,12 @@ export default function ProfilePage() {
   });
   const [selectedNotifyIds, setSelectedNotifyIds] = useState([]);
   const [activeFriendTab, setActiveFriendTab] = useState('friends'); // 'friends' | 'notify' | 'incoming' | 'sent'
-  const [newFriendEmail, setNewFriendEmail] = useState('');
-  const [sendingFriendReq, setSendingFriendReq] = useState(false);
   const [savingNotifyPrefs, setSavingNotifyPrefs] = useState(false);
+  const [studentSearchQuery, setStudentSearchQuery] = useState('');
+  const [studentSearchResults, setStudentSearchResults] = useState([]);
+  const [studentSearchLoading, setStudentSearchLoading] = useState(false);
+  const [studentSearchError, setStudentSearchError] = useState('');
+  const [studentSearchActionId, setStudentSearchActionId] = useState(null);
 
   const loadFriends = async () => {
     try {
@@ -91,20 +78,61 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSendFriendRequest = async (e) => {
-    e.preventDefault();
-    const target = newFriendEmail.trim();
-    if (!target || sendingFriendReq) return;
-    setSendingFriendReq(true);
+  useEffect(() => {
+    const query = studentSearchQuery.trim();
+    let cancelled = false;
+
+    if (query.length < 2) {
+      setStudentSearchResults([]);
+      setStudentSearchLoading(false);
+      setStudentSearchError('');
+      return undefined;
+    }
+
+    setStudentSearchLoading(true);
+    setStudentSearchError('');
+    const timer = setTimeout(async () => {
+      try {
+        const results = await messApi.searchFriendStudents(query);
+        if (!cancelled) setStudentSearchResults(Array.isArray(results) ? results : []);
+      } catch (err) {
+        if (!cancelled) {
+          setStudentSearchResults([]);
+          setStudentSearchError('Unable to search students. Try again.');
+        }
+      } finally {
+        if (!cancelled) setStudentSearchLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [studentSearchQuery]);
+
+  const handleStudentSearchAction = async (student) => {
+    if (!student?.id || studentSearchActionId) return;
+    setStudentSearchActionId(student.id);
     try {
-      await messApi.sendFriendRequest(target);
-      toast.success('Request Sent', `Friend request sent to ${target}`);
-      setNewFriendEmail('');
+      if (student.relationshipStatus === 'INCOMING') {
+        await messApi.acceptFriendRequest(student.friendshipId);
+        setStudentSearchResults((prev) => prev.map((result) => (
+          result.id === student.id ? { ...result, relationshipStatus: 'FRIENDS' } : result
+        )));
+        toast.success('Friend Accepted', `${student.displayName} is now your friend.`);
+      } else {
+        await messApi.sendFriendRequest(student.id);
+        setStudentSearchResults((prev) => prev.map((result) => (
+          result.id === student.id ? { ...result, relationshipStatus: 'PENDING' } : result
+        )));
+        toast.success('Request Sent', `Friend request sent to ${student.displayName}.`);
+      }
       loadFriends();
     } catch (err) {
-      toast.error('Request Failed', err.response?.data?.error || err.message || 'Could not send request');
+      toast.error('Friend Request Failed', err.response?.data?.error || err.message || 'Could not update friendship.');
     } finally {
-      setSendingFriendReq(false);
+      setStudentSearchActionId(null);
     }
   };
 
@@ -143,6 +171,32 @@ export default function ProfilePage() {
     setSelectedNotifyIds((prev) =>
       prev.includes(friendId) ? prev.filter((id) => id !== friendId) : [...prev, friendId]
     );
+  };
+
+  const handleQuickNotifyToggle = async (friendId) => {
+    if (savingNotifyPrefs) return;
+
+    const nextIds = selectedNotifyIds.includes(friendId)
+      ? selectedNotifyIds.filter((id) => id !== friendId)
+      : [...selectedNotifyIds, friendId];
+
+    setSelectedNotifyIds(nextIds);
+    setSavingNotifyPrefs(true);
+    try {
+      const res = await messApi.updateNotifyFriends(nextIds);
+      if (res?.notifyFriendIds) setSelectedNotifyIds(res.notifyFriendIds);
+      toast.success(
+        nextIds.includes(friendId) ? 'Notify Friend Added' : 'Notify Friend Removed',
+        nextIds.includes(friendId)
+          ? 'This friend will receive your meal calls.'
+          : 'This friend will no longer receive your meal calls.'
+      );
+    } catch (err) {
+      setSelectedNotifyIds(selectedNotifyIds);
+      toast.error('Preferences Failed', err.message || 'Could not update Notify Friends.');
+    } finally {
+      setSavingNotifyPrefs(false);
+    }
   };
 
   const handleSaveNotify = async () => {
@@ -213,7 +267,7 @@ export default function ProfilePage() {
             Resident Profile & Account Preferences
           </h1>
           <p className="text-xs text-on-surface-variant">
-            Manage your dining credentials, residence information, and dietary preferences.
+            Manage your dining credentials, residence information, and account preferences.
           </p>
         </div>
 
@@ -428,33 +482,30 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setActiveFriendTab('friends')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    activeFriendTab === 'friends'
-                      ? 'bg-primary text-on-primary shadow-xs'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeFriendTab === 'friends'
+                    ? 'bg-primary text-on-primary shadow-xs'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                    }`}
                 >
                   My Friends ({friendsData.friends?.length || 0})
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveFriendTab('notify')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    activeFriendTab === 'notify'
-                      ? 'bg-primary text-on-primary shadow-xs'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeFriendTab === 'notify'
+                    ? 'bg-primary text-on-primary shadow-xs'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                    }`}
                 >
                   Notify Friends ({selectedNotifyIds.length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveFriendTab('incoming')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
-                    activeFriendTab === 'incoming'
-                      ? 'bg-primary text-on-primary shadow-xs'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${activeFriendTab === 'incoming'
+                    ? 'bg-primary text-on-primary shadow-xs'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                    }`}
                 >
                   <span>Incoming</span>
                   {(friendsData.incomingRequests?.length || 0) > 0 && (
@@ -466,11 +517,10 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setActiveFriendTab('sent')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    activeFriendTab === 'sent'
-                      ? 'bg-primary text-on-primary shadow-xs'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeFriendTab === 'sent'
+                    ? 'bg-primary text-on-primary shadow-xs'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                    }`}
                 >
                   Sent ({friendsData.sentRequests?.length || 0})
                 </button>
@@ -480,25 +530,91 @@ export default function ProfilePage() {
             {/* TAB 1: MY FRIENDS */}
             {activeFriendTab === 'friends' && (
               <div className="space-y-4">
-                {/* Send Request Bar */}
-                <form onSubmit={handleSendFriendRequest} className="flex gap-2">
-                  <input
-                    type="email"
-                    required
-                    value={newFriendEmail}
-                    onChange={(e) => setNewFriendEmail(e.target.value)}
-                    placeholder="Enter student's email to add friend..."
-                    className="flex-1 px-3.5 py-2 rounded-xl bg-surface-container-low border border-outline-variant/20 text-xs text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                  <button
-                    type="submit"
-                    disabled={sendingFriendReq || !newFriendEmail.trim()}
-                    className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-container text-on-primary text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">person_add</span>
-                    <span>{sendingFriendReq ? 'Sending...' : 'Send Request'}</span>
-                  </button>
-                </form>
+                {/* Student directory search */}
+                <div className="space-y-2">
+                  <div className="relative">
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">
+                      search
+                    </span>
+                    <input
+                      type="search"
+                      value={studentSearchQuery}
+                      onChange={(e) => setStudentSearchQuery(e.target.value)}
+                      placeholder="Search students by name"
+                      aria-label="Search students by name"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/20 text-xs text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+
+                  {studentSearchQuery.trim().length > 0 && studentSearchQuery.trim().length < 2 && (
+                    <p className="px-1 text-[11px] text-on-surface-variant">Enter at least 2 characters to search.</p>
+                  )}
+
+                  {studentSearchLoading && (
+                    <div className="flex items-center gap-2 px-1 text-[11px] text-on-surface-variant">
+                      <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+                      <span>Searching students...</span>
+                    </div>
+                  )}
+
+                  {studentSearchError && (
+                    <p className="px-1 text-[11px] text-error">{studentSearchError}</p>
+                  )}
+
+                  {!studentSearchLoading && !studentSearchError && studentSearchQuery.trim().length >= 2 && studentSearchResults.length === 0 && (
+                    <p className="px-1 text-[11px] text-on-surface-variant">No students found.</p>
+                  )}
+
+                  {studentSearchResults.length > 0 && (
+                    <div className="space-y-1.5">
+                      {studentSearchResults.map((student) => {
+                        const isActionInProgress = studentSearchActionId === student.id;
+                        const isDisabled = isActionInProgress || ['FRIENDS', 'PENDING'].includes(student.relationshipStatus);
+                        const actionLabel = student.relationshipStatus === 'FRIENDS'
+                          ? 'Friends'
+                          : student.relationshipStatus === 'PENDING'
+                            ? 'Pending'
+                            : student.relationshipStatus === 'INCOMING'
+                              ? 'Accept'
+                              : isActionInProgress
+                                ? 'Sending...'
+                                : 'Send Request';
+
+                        return (
+                          <div
+                            key={student.id}
+                            className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/15 flex items-center justify-between gap-3 text-xs"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-bold text-primary shrink-0 uppercase">
+                                {student.displayName?.slice(0, 2) || 'ST'}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-on-surface truncate">{student.displayName}</p>
+                                <p className="text-[11px] text-on-surface-variant truncate">
+                                  {student.hostel
+                                    ? `${student.hostel}${student.roomNumber ? ` • Room ${student.roomNumber}` : ''}`
+                                    : 'Campus Resident'}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={isDisabled}
+                              onClick={() => handleStudentSearchAction(student)}
+                              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all shrink-0 ${isDisabled
+                                ? 'bg-surface-container text-on-surface-variant cursor-not-allowed opacity-80'
+                                : 'bg-primary hover:bg-primary-container text-on-primary cursor-pointer shadow-xs'
+                                }`}
+                            >
+                              {actionLabel}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
 
                 {/* Friends List */}
                 <div className="space-y-2">
@@ -529,6 +645,21 @@ export default function ProfilePage() {
                           )}
                           <button
                             type="button"
+                            onClick={() => handleQuickNotifyToggle(friend.id)}
+                            disabled={savingNotifyPrefs}
+                            title={selectedNotifyIds.includes(friend.id) ? 'Remove from Notify Friends' : 'Add to Notify Friends'}
+                            aria-label={selectedNotifyIds.includes(friend.id) ? `Remove ${friend.email} from Notify Friends` : `Add ${friend.email} to Notify Friends`}
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${selectedNotifyIds.includes(friend.id)
+                                ? 'text-secondary hover:bg-secondary-container/30'
+                                : 'text-on-surface-variant hover:text-primary hover:bg-primary-fixed/30'
+                              }`}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">
+                              {selectedNotifyIds.includes(friend.id) ? 'notifications_active' : 'notification_add'}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => handleRemoveFriend(friend.id, friend.email)}
                             title="Remove friend"
                             className="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors cursor-pointer"
@@ -542,7 +673,7 @@ export default function ProfilePage() {
                     <div className="py-8 text-center text-xs text-on-surface-variant italic space-y-1">
                       <span className="material-symbols-outlined text-[28px] text-outline">group_off</span>
                       <p>You have not added any mutual friends yet.</p>
-                      <p className="text-[11px] text-outline">Send a friend request above using their student email.</p>
+                      <p className="text-[11px] text-outline">Search for a student above to send a friend request.</p>
                     </div>
                   )}
                 </div>
@@ -698,52 +829,6 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Dietary Requirements & Allergies */}
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/20 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-on-surface">Dietary Requirements & Allergies</h3>
-                <p className="text-[11px] text-on-surface-variant">Informs kitchen staff for customized batch preparation</p>
-              </div>
-              <span className="material-symbols-outlined text-[20px] text-on-surface-variant">nutrition</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {[
-                { id: 'veg', label: 'Vegetarian', desc: 'Veg service lane' },
-                { id: 'lactose', label: 'Lactose Intolerant', desc: 'No dairy/butter' },
-                { id: 'peanut', label: 'Peanut Allergy', desc: 'Nut-free prep' },
-                { id: 'halal', label: 'Halal Certified', desc: 'Dedicated griddle' },
-                { id: 'jain', label: 'Jain Diet Option', desc: 'No root vegetables' },
-                { id: 'gluten', label: 'Gluten-Free Choice', desc: 'Millet/Rice rotis' }
-              ].map((item) => {
-                const isSelected = dietaryPrefs.includes(item.id);
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => toggleDietary(item.id)}
-                    className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-secondary-container/30 border-secondary text-on-surface shadow-xs'
-                        : 'bg-surface-container-low border-outline-variant/20 text-on-surface-variant hover:bg-surface-container'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-on-surface">{item.label}</span>
-                      <span className={`material-symbols-outlined text-[16px] ${
-                        isSelected ? 'text-secondary' : 'text-outline-variant'
-                      }`}>
-                        {isSelected ? 'check_circle' : 'radio_button_unchecked'}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-on-surface-variant block">{item.desc}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* Notification Protocols */}
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/20 space-y-4">
             <div className="flex items-center justify-between">
@@ -818,11 +903,10 @@ export default function ProfilePage() {
                     key={t.id}
                     type="button"
                     onClick={() => setThemeMode(t.id)}
-                    className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-primary-fixed/40 border-primary text-on-surface shadow-xs ring-1 ring-primary'
-                        : 'bg-surface-container-low border-outline-variant/20 text-on-surface-variant hover:bg-surface-container'
-                    }`}
+                    className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${isSelected
+                      ? 'bg-primary-fixed/40 border-primary text-on-surface shadow-xs ring-1 ring-primary'
+                      : 'bg-surface-container-low border-outline-variant/20 text-on-surface-variant hover:bg-surface-container'
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-bold text-on-surface flex items-center gap-1.5">

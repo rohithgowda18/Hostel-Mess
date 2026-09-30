@@ -10,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpStatus;
 
 import com.hostel.mess.security.CustomUserDetailsService;
 import com.hostel.mess.security.JwtAuthenticationFilter;
@@ -57,6 +58,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").authenticated()
                 .anyRequest().authenticated()
                 )
+                .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, authException)
+                        -> response.sendError(HttpStatus.UNAUTHORIZED.value(), "Authentication required")))
                 .addFilterBefore(jwtAuthFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

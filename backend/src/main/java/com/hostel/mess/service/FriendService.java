@@ -1,14 +1,23 @@
 package com.hostel.mess.service;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import com.hostel.mess.dto.StudentSearchResult;
 import com.hostel.mess.model.Friendship;
-import com.hostel.mess.model.Notification;
 import com.hostel.mess.model.User;
 import com.hostel.mess.repository.FriendshipRepository;
 import com.hostel.mess.repository.UserRepository;
@@ -38,7 +47,6 @@ public class FriendService {
         if (targetIdentifier == null || targetIdentifier.trim().isEmpty()) {
             throw new RuntimeException("Student email or ID is required");
         }
-
         User sender = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("Sender user not found"));
 
@@ -92,6 +100,60 @@ public class FriendService {
         Friendship saved = friendshipRepository.save(friendship);
         sendRequestNotification(sender, target, saved.getId());
         return saved;
+    }
+
+    /**
+     * Search visible student directory entries without exposing private user
+     * fields. Names are derived from the existing email local-part because User
+     * has no name field.
+     */
+    public List<StudentSearchResult> searchStudents(String currentUserId, String query) {
+        if (query == null || query.trim().length() < 2) {
+            return Collections.emptyList();
+        }
+
+        String escapedQuery = java.util.regex.Pattern.quote(query.trim());
+        List<User> candidates = userRepository.searchVisibleStudentsByEmail(
+                escapedQuery,
+                PageRequest.of(0, 20)
+        );
+
+        return candidates.stream()
+                .filter(user -> !currentUserId.equals(user.getId()))
+                .map(user -> {
+                    Optional<Friendship> relationship = friendshipRepository.findRelationship(currentUserId, user.getId());
+                    String status = "NONE";
+                    String friendshipId = null;
+
+                    if (relationship.isPresent()) {
+                        Friendship friendship = relationship.get();
+                        friendshipId = friendship.getId();
+                        if ("ACCEPTED".equalsIgnoreCase(friendship.getStatus())) {
+                            status = "FRIENDS";
+                        } else if ("PENDING".equalsIgnoreCase(friendship.getStatus())) {
+                            status = currentUserId.equals(friendship.getRequesterId()) ? "PENDING" : "INCOMING";
+                        }
+                    }
+
+                    return new StudentSearchResult(
+                            user.getId(),
+                            toDisplayName(user.getEmail()),
+                            user.getHostel(),
+                            user.getRoomNumber(),
+                            status,
+                            friendshipId
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    private String toDisplayName(String email) {
+        String localPart = email == null ? "Student" : email.split("@", 2)[0];
+        String[] words = localPart.replaceAll("[._-]+", " ").trim().split("\\s+");
+        return Arrays.stream(words)
+                .filter(word -> !word.isBlank())
+                .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase())
+                .collect(Collectors.joining(" "));
     }
 
     /**
@@ -160,7 +222,8 @@ public class FriendService {
     }
 
     /**
-     * Get complete friends data: accepted friends, incoming requests, sent requests, notify list.
+     * Get complete friends data: accepted friends, incoming requests, sent
+     * requests, notify list.
      */
     public Map<String, Object> getFriendsData(String currentUserId) {
         User currentUser = userRepository.findById(currentUserId)
@@ -222,8 +285,8 @@ public class FriendService {
     }
 
     /**
-     * Update Notify Friends preference.
-     * Backend strictly verifies that all selected users are actually mutual accepted friends.
+     * Update Notify Friends preference. Backend strictly verifies that all
+     * selected users are actually mutual accepted friends.
      */
     public List<String> updateNotifyFriends(String currentUserId, List<String> requestedIds) {
         User currentUser = userRepository.findById(currentUserId)
@@ -327,7 +390,8 @@ public class FriendService {
                 "New Friend Request",
                 sender.getEmail() + " sent you a hostel friend request.",
                 "FRIEND_REQUEST",
-                "/student/profile"
+                "/student/profile",
+                requestId
         );
     }
 
