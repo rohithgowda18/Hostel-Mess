@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.hostel.mess.exception.BadRequestException;
 import com.hostel.mess.model.MealAttendance;
 import com.hostel.mess.service.AttendanceService;
 
@@ -39,8 +40,13 @@ public class AttendanceController {
             return ResponseEntity.badRequest().body(Map.of("error", "mealType, date, and expected are required fields"));
         }
 
-        MealAttendance saved = attendanceService.setExpectedAttendance(userEmail, mealType, date, expected);
-        return ResponseEntity.ok(saved);
+        try {
+            MealAttendance saved = attendanceService.setExpectedAttendance(userEmail, mealType, date, expected);
+            return ResponseEntity.ok(saved);
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage(), "message", e.getMessage()));
+        }
     }
 
     @GetMapping("/my-status")

@@ -1,8 +1,8 @@
-import { cloneElement, isValidElement, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppSidebar from '@/components/layout/app-sidebar';
 import TopNavbar from '@/components/layout/top-navbar';
-import { studentMobileNav, adminMobileNav } from '@/config/navigation';
+import { studentMobileNav, studentMoreNav, adminMobileNav } from '@/config/navigation';
 import { cn } from '@/lib/utils';
 import { getUser, getToken } from '@/services/auth-service';
 import websocketService from '@/services/websocket-service';
@@ -10,26 +10,20 @@ import {
   LayoutDashboard,
   UtensilsCrossed,
   Sparkles,
-  QrCode,
-  Star,
-  MessageSquareWarning,
   Users,
+  MoreHorizontal,
+  X,
+  QrCode,
+  MessageSquareWarning,
   Bell,
   User,
-  ShieldCheck,
-  ClipboardCheck,
-  TrendingUp,
-  Calendar,
-  MoreHorizontal,
-  X
+  ChevronRight
 } from 'lucide-react';
 
 export default function DashboardLayout({ user, onLogout, children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
 
   const currentUser = user || getUser() || { email: 'student@hostel.app', role: 'STUDENT' };
@@ -43,55 +37,40 @@ export default function DashboardLayout({ user, onLogout, children }) {
     }
   }, [currentUser?.email]);
 
-  // Close menus on route navigation
+  // Close More drawer on navigation
   useEffect(() => {
     setMoreDrawerOpen(false);
-    setMobileSidebarOpen(false);
   }, [location.pathname]);
 
   const mobileNavItems = isAdmin ? adminMobileNav : studentMobileNav;
+  const moreNavItems = isAdmin ? [] : studentMoreNav;
 
-  const secondaryStudentNav = [
-    { label: 'Attendance / Dining Pass', path: '/student/attendance', icon: QrCode },
-    { label: 'Rate Meal Quality', path: '/student/feedback', icon: Star },
-    { label: 'File Complaint / Issue', path: '/student/complaints', icon: MessageSquareWarning },
-    { label: 'Hostel Notices', path: '/student/notices', icon: Bell }
-  ];
+  // Determine if current route is under "More"
+  const isMoreActive = moreNavItems.some((item) => location.pathname === item.path);
 
-  const secondaryAdminNav = [
-    { label: 'Attendance Records', path: '/admin/attendance', icon: ClipboardCheck },
-    { label: 'Ratings & Quality', path: '/admin/ratings', icon: Star },
-    { label: 'Analytics & Trends', path: '/admin/analytics', icon: TrendingUp },
-    { label: 'Student Management', path: '/admin/students', icon: Users },
-    { label: 'Notices Board', path: '/admin/notices', icon: Bell },
-    { label: 'Admin Role Governance', path: '/admin/management', icon: ShieldCheck }
-  ];
-
-  const drawerLinks = isAdmin ? secondaryAdminNav : secondaryStudentNav;
+  const isItemActive = (item) => location.pathname === item.path;
 
   return (
     <div className="min-h-screen bg-page text-on-surface flex flex-col md:flex-row max-w-full overflow-x-hidden">
-      {/* Desktop & Mobile Sidebar */}
+      {/* Desktop Sidebar — hidden on mobile */}
       <AppSidebar
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(!collapsed)}
-        mobileOpen={mobileSidebarOpen}
-        onMobileClose={() => setMobileSidebarOpen(false)}
+        mobileOpen={false}
+        onMobileClose={() => {}}
       />
 
       {/* Main Content Area */}
       <div
         className={cn(
           'flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden transition-all duration-200',
-          collapsed ? 'md:ml-18' : 'md:ml-64'
+          collapsed ? 'md:ml-20' : 'md:ml-64'
         )}
       >
         {/* Top Navbar */}
         <TopNavbar
           collapsed={collapsed}
-          onOpenSidebar={() => setMobileSidebarOpen(true)}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onOpenSidebar={() => {}} // sidebar not used on mobile anymore
           user={currentUser}
           onLogout={onLogout}
         />
@@ -102,47 +81,121 @@ export default function DashboardLayout({ user, onLogout, children }) {
         </main>
       </div>
 
-      {/* Mobile Secondary Menu Bottom Sheet */}
+      {/* ───────── Mobile Bottom Navigation ───────── */}
+      {/* Only visible on mobile (md:hidden) */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-container-lowest border-t border-outline-variant/30 flex items-stretch h-16 shadow-[0_-1px_4px_rgba(0,0,0,0.06)]"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        {mobileNavItems.map((item) => {
+          const Icon = item.icon;
+          const active = isItemActive(item);
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => navigate(item.path)}
+              className={cn(
+                'flex flex-col items-center justify-center flex-1 gap-0.5 text-[10px] font-medium transition-colors cursor-pointer pt-1',
+                active ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'
+              )}
+              aria-label={item.label}
+              aria-current={active ? 'page' : undefined}
+            >
+              <div
+                className={cn(
+                  'flex items-center justify-center w-8 h-6 rounded-lg transition-colors',
+                  item.isHero && 'bg-primary text-on-primary w-10 h-7 rounded-xl',
+                  !item.isHero && active && 'text-primary',
+                  !item.isHero && !active && 'text-on-surface-variant'
+                )}
+              >
+                <Icon className={cn('h-4 w-4', item.isHero && 'h-4 w-4')} />
+              </div>
+              <span className="truncate leading-none">{item.label}</span>
+            </button>
+          );
+        })}
+
+        {/* More button — only for students */}
+        {!isAdmin && (
+          <button
+            type="button"
+            onClick={() => setMoreDrawerOpen(true)}
+            className={cn(
+              'flex flex-col items-center justify-center flex-1 gap-0.5 text-[10px] font-medium transition-colors cursor-pointer pt-1',
+              isMoreActive || moreDrawerOpen
+                ? 'text-primary'
+                : 'text-on-surface-variant hover:text-on-surface'
+            )}
+            aria-label="More navigation"
+            aria-expanded={moreDrawerOpen}
+          >
+            <div
+              className={cn(
+                'flex items-center justify-center w-8 h-6 rounded-lg',
+                (isMoreActive || moreDrawerOpen) ? 'text-primary' : 'text-on-surface-variant'
+              )}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </div>
+            <span className="leading-none">More</span>
+          </button>
+        )}
+      </nav>
+
+      {/* ───────── More Drawer (bottom sheet) ───────── */}
       {moreDrawerOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
-          <div
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
+          {/* Backdrop */}
+          <button
+            type="button"
+            aria-label="Close more menu"
+            className="fixed inset-0 bg-slate-950/50 backdrop-blur-sm"
             onClick={() => setMoreDrawerOpen(false)}
           />
-          <div className="relative z-10 bg-surface-container-lowest border-t border-outline-variant/30 rounded-t-2xl p-4 space-y-2 shadow-xl animate-in slide-in-from-bottom-6 duration-200 pb-safe">
-            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+
+          {/* Sheet */}
+          <div className="relative z-10 bg-surface-container-lowest border-t border-outline-variant/30 rounded-t-2xl shadow-xl animate-in slide-in-from-bottom-4 duration-200">
+            {/* Handle + header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/20">
               <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-                Additional Services
+                More
               </span>
               <button
                 type="button"
                 onClick={() => setMoreDrawerOpen(false)}
-                className="p-1 text-on-surface-variant hover:text-on-surface"
+                className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+                aria-label="Close"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              {drawerLinks.map((item) => {
+
+            {/* Destination list */}
+            <div className="px-3 py-3 space-y-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}>
+              {moreNavItems.map((item) => {
                 const Icon = item.icon;
-                const active = location.pathname === item.path;
+                const active = isItemActive(item);
                 return (
                   <button
-                    key={item.path}
+                    key={item.key}
                     type="button"
                     onClick={() => {
                       setMoreDrawerOpen(false);
                       navigate(item.path);
                     }}
                     className={cn(
-                      'flex items-center gap-2.5 p-3 rounded-xl border text-left text-xs font-semibold transition-colors cursor-pointer',
+                      'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors cursor-pointer text-left',
                       active
-                        ? 'bg-primary-fixed/40 text-primary border-primary'
-                        : 'border-outline-variant/20 text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                        ? 'bg-primary-fixed/30 text-primary'
+                        : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                     )}
+                    aria-current={active ? 'page' : undefined}
                   >
-                    <Icon className="h-4 w-4 shrink-0 text-primary" />
-                    <span className="truncate">{item.label}</span>
+                    <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-primary' : 'text-on-surface-variant')} />
+                    <span className="flex-1">{item.label}</span>
+                    {active && <ChevronRight className="h-3.5 w-3.5 text-primary" />}
                   </button>
                 );
               })}
@@ -150,55 +203,6 @@ export default function DashboardLayout({ user, onLogout, children }) {
           </div>
         </div>
       )}
-
-      {/* Mobile-First Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-t border-outline-variant/30 flex items-center justify-around h-16 px-1 pb-safe shadow-[0_-1px_4px_rgba(0,0,0,0.06)]">
-        {mobileNavItems.map((item) => {
-          const Icon = item.icon;
-          const active = location.pathname === item.path;
-
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => navigate(item.path)}
-              className={cn(
-                'flex flex-col items-center justify-center flex-1 py-1 text-[10px] font-medium transition-colors cursor-pointer',
-                active
-                  ? 'text-primary font-bold'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              )}
-            >
-              <div
-                className={cn(
-                  'flex items-center justify-center h-7 w-7 rounded-lg mb-0.5 transition-colors',
-                  item.isHero && 'bg-primary text-on-primary shadow-xs',
-                  !item.isHero && active && 'text-primary',
-                  !item.isHero && !active && 'text-on-surface-variant'
-                )}
-              >
-                <Icon className={cn('h-4 w-4', item.isHero && 'h-4.5 w-4.5')} />
-              </div>
-              <span className="truncate">{item.label}</span>
-            </button>
-          );
-        })}
-
-        {/* Dedicated Mobile Menu Drawer Trigger */}
-        <button
-          type="button"
-          onClick={() => setMoreDrawerOpen(true)}
-          className={cn(
-            'flex flex-col items-center justify-center flex-1 py-1 text-[10px] font-medium transition-colors cursor-pointer',
-            moreDrawerOpen ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
-          )}
-        >
-          <div className="flex items-center justify-center h-7 w-7 rounded-lg mb-0.5 text-on-surface-variant">
-            <MoreHorizontal className="h-4 w-4" />
-          </div>
-          <span>More</span>
-        </button>
-      </nav>
     </div>
   );
 }

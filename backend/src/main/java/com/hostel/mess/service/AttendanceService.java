@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.hostel.mess.exception.BadRequestException;
 import com.hostel.mess.model.MealAttendance;
 import com.hostel.mess.model.User;
 import com.hostel.mess.repository.MealAttendanceRepository;
@@ -26,6 +27,9 @@ public class AttendanceService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private MealService mealService;
 
     @Autowired(required = false)
     private WebSocketEventService wsService;
@@ -55,6 +59,9 @@ public class AttendanceService {
     }
 
     public MealAttendance setExpectedAttendance(String userEmail, String mealType, String date, Boolean expected) {
+        // Enforce: attendance declaration only allowed during an active meal window
+        mealService.validateActiveMeal(mealType, "attendance declaration");
+
         String mType = mealType.toUpperCase();
         Optional<MealAttendance> attendanceOpt = attendanceRepository.findByUserEmailAndMealTypeAndDate(userEmail, mType, date);
         MealAttendance attendance;

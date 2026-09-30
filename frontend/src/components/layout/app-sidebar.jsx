@@ -57,7 +57,7 @@ export default function AppSidebar({
         className={cn(
           'fixed inset-y-0 left-0 z-40 flex flex-col border-r border-outline-variant/30 bg-surface-container-lowest transition-all duration-200',
           'w-64',
-          collapsed ? 'md:w-18' : 'md:w-64',
+          collapsed ? 'md:w-20' : 'md:w-64',
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >

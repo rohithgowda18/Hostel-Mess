@@ -40,14 +40,21 @@ export const studentNavigation = [
   }
 ];
 
+// Primary bottom nav — max 5 items, "more" is handled separately
 export const studentMobileNav = [
   { key: 'home', label: 'Home', path: '/student/dashboard', icon: LayoutDashboard },
   { key: 'meals', label: 'Meals', path: '/student/meals', icon: UtensilsCrossed },
   { key: 'report', label: 'Report', path: '/student/report-meal', icon: Sparkles, isHero: true },
+  { key: 'groups', label: 'Groups', path: '/student/groups', icon: Users }
+];
+
+// Secondary destinations shown inside the More drawer
+export const studentMoreNav = [
   { key: 'attendance', label: 'Attendance', path: '/student/attendance', icon: QrCode },
-  { key: 'groups', label: 'Groups', path: '/student/groups', icon: Users },
   { key: 'complaints', label: 'Complaints', path: '/student/complaints', icon: MessageSquareWarning },
-  { key: 'notifications', label: 'Notifications', path: '/student/notices', icon: Bell }
+  { key: 'notifications', label: 'Notifications', path: '/student/notifications', icon: Bell },
+  { key: 'notices', label: 'Notices', path: '/student/notices', icon: Bell },
+  { key: 'profile', label: 'Profile', path: '/student/profile', icon: User }
 ];
 
 export const adminNavigation = [

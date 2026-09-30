@@ -99,7 +99,7 @@ export default function GroupsPage() {
                   [gid]: status.goingUsers.length
                 }));
               }
-            } catch {}
+            } catch { }
           }
         });
 
@@ -108,10 +108,10 @@ export default function GroupsPage() {
           const toSelect = targetSelectId
             ? groups.find((g) => (g.id || g._id) === targetSelectId) || groups[0]
             : activeGroup
-            ? groups.find((g) => (g.id || g._id) === (activeGroup.id || activeGroup._id)) || groups[0]
-            : initialGroupId
-            ? groups.find((g) => (g.id || g._id) === initialGroupId) || groups[0]
-            : groups[0];
+              ? groups.find((g) => (g.id || g._id) === (activeGroup.id || activeGroup._id)) || groups[0]
+              : initialGroupId
+                ? groups.find((g) => (g.id || g._id) === initialGroupId) || groups[0]
+                : groups[0];
 
           setActiveGroup(toSelect);
         } else {
@@ -191,7 +191,7 @@ export default function GroupsPage() {
           setMobileViewingGroup(false);
           return;
         } else {
-          messApi.getGroupDetails(targetId).then(setActiveGroup).catch(() => {});
+          messApi.getGroupDetails(targetId).then(setActiveGroup).catch(() => { });
         }
         return;
       }
@@ -377,24 +377,6 @@ export default function GroupsPage() {
     }
   };
 
-  // 8. Leave Group
-  const handleLeaveGroup = async () => {
-    if (!activeGroup) return;
-    const targetId = activeGroup.id || activeGroup._id;
-    const groupName = activeGroup.name || 'this group';
-    if (!window.confirm(`Are you sure you want to leave "${groupName}"?`)) return;
-
-    try {
-      await messApi.leaveGroup(targetId);
-      toast.info('Left Group', `You have left "${groupName}".`);
-      setActiveGroup(null);
-      setMobileViewingGroup(false);
-      loadGroups();
-    } catch (err) {
-      toast.error('Leave Failed', err.message || 'Could not leave group.');
-    }
-  };
-
   // Copy Group Code
   const copyGroupCode = (code) => {
     if (!code) return;
@@ -406,18 +388,18 @@ export default function GroupsPage() {
 
   const isUserGoing = Boolean(
     currentEmail &&
-      goingUsers.some(
-        (u) =>
-          u?.toLowerCase() === currentEmail.toLowerCase() ||
-          u === currentUser.id
-      )
+    goingUsers.some(
+      (u) =>
+        u?.toLowerCase() === currentEmail.toLowerCase() ||
+        u === currentUser.id
+    )
   );
 
   const activeGroupMembers = Array.isArray(activeGroup?.members)
     ? activeGroup.members
     : activeGroup?.members
-    ? [activeGroup.members]
-    : [];
+      ? [activeGroup.members]
+      : [];
 
   const isCreator =
     activeGroup?.createdBy &&
@@ -522,9 +504,8 @@ export default function GroupsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* ──── LEFT COLUMN: MY GROUPS LIST (lg:col-span-4) ──── */}
           <div
-            className={`space-y-3 ${
-              mobileViewingGroup ? 'hidden lg:block' : 'block'
-            } lg:col-span-4`}
+            className={`space-y-3 ${mobileViewingGroup ? 'hidden lg:block' : 'block'
+              } lg:col-span-4`}
           >
             <div className="flex items-center justify-between px-1">
               <span className="text-xs font-bold uppercase tracking-wider text-outline">
@@ -548,11 +529,10 @@ export default function GroupsPage() {
                       setActiveGroup(grp);
                       setMobileViewingGroup(true);
                     }}
-                    className={`bg-surface-container-lowest rounded-xl p-4 shadow-sm border transition-all cursor-pointer ${
-                      isSelected
+                    className={`bg-surface-container-lowest rounded-xl p-4 shadow-sm border transition-all cursor-pointer ${isSelected
                         ? 'border-primary ring-1 ring-primary/20 bg-surface-container-low/40'
                         : 'border-outline-variant/20 hover:border-outline-variant/50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 space-y-1">
@@ -565,11 +545,10 @@ export default function GroupsPage() {
                       </div>
 
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                          goingCount > 0
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${goingCount > 0
                             ? 'bg-secondary-fixed text-on-secondary-fixed-variant'
                             : 'bg-surface-container text-on-surface-variant'
-                        }`}
+                          }`}
                       >
                         {goingCount > 0
                           ? `${goingCount} going for ${currentMealSlot.name.toLowerCase()}`
@@ -593,9 +572,8 @@ export default function GroupsPage() {
 
           {/* ──── RIGHT COLUMN: SELECTED GROUP DETAILS & CHAT (lg:col-span-8) ──── */}
           <div
-            className={`space-y-5 ${
-              !mobileViewingGroup ? 'hidden lg:block' : 'block'
-            } lg:col-span-8`}
+            className={`space-y-5 ${!mobileViewingGroup ? 'hidden lg:block' : 'block'
+              } lg:col-span-8`}
           >
             {activeGroup ? (
               <div className="space-y-5">
@@ -696,11 +674,10 @@ export default function GroupsPage() {
                         type="button"
                         disabled={submittingGoing}
                         onClick={() => handleToggleGoing(true)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
-                          isUserGoing
+                        className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${isUserGoing
                             ? 'bg-secondary text-on-secondary ring-2 ring-secondary/30'
                             : 'bg-primary hover:bg-primary-container text-on-primary'
-                        }`}
+                          }`}
                       >
                         <span className="material-symbols-outlined text-[16px]">
                           {isUserGoing ? 'check_circle' : 'restaurant'}
@@ -740,11 +717,10 @@ export default function GroupsPage() {
                                   {formatDisplayName(memberEmail, currentEmail)}
                                 </span>
                                 <span
-                                  className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                                    isGoing
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded ${isGoing
                                       ? 'bg-secondary-fixed text-on-secondary-fixed-variant'
                                       : 'text-on-surface-variant/70'
-                                  }`}
+                                    }`}
                                 >
                                   {isGoing ? 'Going' : 'Not declared'}
                                 </span>
@@ -780,11 +756,10 @@ export default function GroupsPage() {
                         return (
                           <div
                             key={idx}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 ${
-                              isMe
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 ${isMe
                                 ? 'bg-primary-fixed/30 border-primary text-on-surface font-semibold'
                                 : 'bg-surface-container-low border-outline-variant/20 text-on-surface'
-                            }`}
+                              }`}
                           >
                             <span className="material-symbols-outlined text-[16px] text-outline">
                               person
@@ -852,11 +827,10 @@ export default function GroupsPage() {
                               )}
                             </div>
                             <div
-                              className={`max-w-[80%] rounded-xl px-3.5 py-2 text-xs leading-relaxed ${
-                                isMe
+                              className={`max-w-[80%] rounded-xl px-3.5 py-2 text-xs leading-relaxed ${isMe
                                   ? 'bg-primary text-on-primary rounded-tr-none'
                                   : 'bg-surface-container-low text-on-surface border border-outline-variant/15 rounded-tl-none'
-                              }`}
+                                }`}
                             >
                               {msg.message || msg.content}
                             </div>
